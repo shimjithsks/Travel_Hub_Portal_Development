@@ -4,18 +4,20 @@ import { createUserWithEmailAndPassword, updateProfile } from 'firebase/auth';
 import { doc, serverTimestamp, setDoc } from 'firebase/firestore';
 import { auth, db } from '../firebase/firebase';
 import { useAuth } from '../context/AuthContext';
+import LoginModal from '../components/LoginModal';
 
 export default function Register() {
   const { user, isFirebaseConfigured } = useAuth();
   const navigate = useNavigate();
 
-  const [role, setRole] = useState('customer');
+  const role = 'customer'; // Fixed role as customer
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState('');
+  const [showLoginModal, setShowLoginModal] = useState(false);
 
   if (user) return <Navigate to="/dashboard" replace />;
 
@@ -75,15 +77,8 @@ export default function Register() {
           {error ? <div className="alert alert-danger">{error}</div> : null}
           <form onSubmit={onSubmit}>
             <div className="mb-3">
-              <label className="form-label">Account type</label>
-              <select className="form-select" value={role} onChange={(e) => setRole(e.target.value)}>
-                <option value="customer">Customer</option>
-                <option value="operator">Tour Operator</option>
-              </select>
-            </div>
-            <div className="mb-3">
               <label className="form-label">Name</label>
-              <input className="form-control" value={name} onChange={(e) => setName(e.target.value)} placeholder={role === 'operator' ? 'Business name' : 'Your name'} />
+              <input className="form-control" value={name} onChange={(e) => setName(e.target.value)} placeholder="Your name" />
             </div>
             <div className="mb-3">
               <label className="form-label">Email</label>
@@ -103,10 +98,17 @@ export default function Register() {
           </form>
           <div className="mt-3">
             <span>Already have an account? </span>
-            <Link to="/login">Sign in</Link>
+            <button 
+              type="button"
+              onClick={() => setShowLoginModal(true)} 
+              style={{ background: 'none', border: 'none', color: '#0d6efd', textDecoration: 'underline', cursor: 'pointer', padding: 0 }}
+            >
+              Sign in
+            </button>
           </div>
         </div>
       </div>
+      <LoginModal isOpen={showLoginModal} onClose={() => setShowLoginModal(false)} />
     </div>
   );
 }

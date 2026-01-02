@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import LoginModal from './LoginModal';
@@ -7,9 +7,29 @@ import './NavbarNew.css';
 export default function Navbar() {
   const [isOpen, setIsOpen] = useState(false);
   const [showDropdown, setShowDropdown] = useState(null);
+  const [showUserDropdown, setShowUserDropdown] = useState(false);
   const [showLoginModal, setShowLoginModal] = useState(false);
   const navigate = useNavigate();
   const { user, role, signOut } = useAuth();
+  const userDropdownRef = useRef(null);
+
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (userDropdownRef.current && !userDropdownRef.current.contains(event.target)) {
+        setShowUserDropdown(false);
+      }
+    };
+
+    if (showUserDropdown) {
+      setTimeout(() => {
+        document.addEventListener('click', handleClickOutside);
+      }, 0);
+    }
+
+    return () => {
+      document.removeEventListener('click', handleClickOutside);
+    };
+  }, [showUserDropdown]);
 
   const toggleMenu = () => {
     setIsOpen(!isOpen);
@@ -19,7 +39,29 @@ export default function Navbar() {
 
   const handleLogout = async () => {
     await signOut();
+    setShowDropdown(null);
+    setShowUserDropdown(false);
     navigate('/');
+  };
+
+  const toggleUserDropdown = () => {
+    setShowUserDropdown(!showUserDropdown);
+  };
+
+  const handleMenuNavigation = (path) => {
+    setShowUserDropdown(false);
+    navigate(path);
+  };
+
+  // Get user's first name and initial
+  const getUserName = () => {
+    if (!user) return '';
+    return user.displayName || user.email?.split('@')[0] || 'User';
+  };
+
+  const getUserInitial = () => {
+    const name = getUserName();
+    return name.charAt(0).toUpperCase();
   };
 
   return (
@@ -87,9 +129,34 @@ export default function Navbar() {
                 </div>
 
                 {user ? (
-                  <button className="login-btn" onClick={handleLogout} type="button">
-                    Logout
-                  </button>
+                  <div className="user-dropdown-wrapper" ref={userDropdownRef}>
+                    <button className="user-profile-btn" onClick={toggleUserDropdown}>
+                      <div className="user-avatar">
+                        {getUserInitial()}
+                      </div>
+                      <span className="user-greeting">Hi {getUserName()}</span>
+                      <i className={`fas fa-chevron-down ${showUserDropdown ? 'rotated' : ''}`}></i>
+                    </button>
+                    {showUserDropdown && (
+                      <div className="user-dropdown-menu">
+                        <button onClick={() => handleMenuNavigation('/customer/my-bookings')}>
+                          <i className="fas fa-suitcase"></i> My Booking
+                        </button>
+                        <button onClick={() => handleMenuNavigation('/customer/my-refund')}>
+                          <i className="fas fa-undo"></i> My Refund
+                        </button>
+                        <button onClick={() => handleMenuNavigation('/customer/my-ecash')}>
+                          <i className="fas fa-wallet"></i> My eCash
+                        </button>
+                        <button onClick={() => handleMenuNavigation('/customer/my-profile')}>
+                          <i className="fas fa-user"></i> My Profile
+                        </button>
+                        <button onClick={handleLogout} className="logout-menu-item">
+                          <i className="fas fa-sign-out-alt"></i> Logout
+                        </button>
+                      </div>
+                    )}
+                  </div>
                 ) : (
                   <button className="login-btn" onClick={() => setShowLoginModal(true)}>
                     Login / Signup

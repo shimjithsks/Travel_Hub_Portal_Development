@@ -594,3 +594,134 @@
     display: none;
   }
 }
+
+/* User Profile Dropdown */
+.user-dropdown-wrapper {
+  position: relative;
+}
+
+.user-profile-btn {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: white;
+  border: 1px solid #e2e8f0;
+  border-radius: 50px;
+  padding: 6px 16px 6px 6px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  font-weight: 600;
+  color: #2d3748;
+}
+
+.user-profile-btn:hover {
+  border-color: var(--primary-orange, #FF9933);
+  box-shadow: 0 4px 12px rgba(255, 153, 51, 0.2);
+  transform: translateY(-1px);
+}
+
+.user-avatar {
+  width: 36px;
+  height: 36px;
+  background: linear-gradient(135deg, var(--primary-blue, #003D5C), var(--accent-blue, #1A5F7A));
+  color: white;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+.user-greeting {
+  font-size: 14px;
+  color: #2d3748;
+  white-space: nowrap;
+}
+
+.user-profile-btn i {
+  font-size: 12px;
+  color: #718096;
+  transition: transform 0.3s ease;
+}
+
+.user-profile-btn i.rotated {
+  transform: rotate(180deg);
+}
+
+.user-dropdown-menu {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15);
+  min-width: 220px;
+  padding: 8px 0;
+  z-index: 1000;
+  border: 1px solid #e2e8f0;
+  animation: dropdownFadeIn 0.3s ease;
+}
+
+@keyframes dropdownFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.user-dropdown-menu a,
+.user-dropdown-menu button {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 20px;
+  color: #2d3748;
+  text-decoration: none;
+  font-size: 14px;
+  font-weight: 500;
+  transition: all 0.2s ease;
+  border: none;
+  background: none;
+  width: 100%;
+  text-align: left;
+  cursor: pointer;
+}
+
+.user-dropdown-menu a:hover,
+.user-dropdown-menu button:hover {
+  background: var(--light-orange, #FFF5E6);
+  color: var(--primary-orange, #FF9933);
+}
+
+.user-dropdown-menu a i,
+.user-dropdown-menu button i {
+  width: 18px;
+  font-size: 16px;
+  color: var(--primary-blue, #003D5C);
+}
+
+.user-dropdown-menu a:hover i,
+.user-dropdown-menu button:hover i {
+  color: var(--primary-orange, #FF9933);
+}
+
+.logout-menu-item {
+  border-top: 1px solid #e2e8f0;
+  margin-top: 4px;
+  padding-top: 12px !important;
+}
+
+.logout-menu-item:hover {
+  background: #fee2e2;
+  color: #dc2626;
+}
+
+.logout-menu-item:hover i {
+  color: #dc2626;
+}

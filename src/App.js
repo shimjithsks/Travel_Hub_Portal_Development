@@ -35,6 +35,10 @@ import DashboardRedirect from './components/auth/DashboardRedirect';
 import RequireRole from './components/auth/RequireRole';
 import OperatorDashboard from './pages/operator/OperatorDashboard';
 import CustomerDashboard from './pages/customer/CustomerDashboard';
+import MyBookings from './pages/customer/MyBookings';
+import MyRefund from './pages/customer/MyRefund';
+import MyECash from './pages/customer/MyECash';
+import MyProfile from './pages/customer/MyProfile';
 import './App.css';
 
 function App() {
@@ -76,6 +80,22 @@ function App() {
               <CustomerDashboard />
             </RequireRole>
           }
+        />
+        <Route
+          path="/customer/my-bookings"
+          element={<MyBookings />}
+        />
+        <Route
+          path="/customer/my-refund"
+          element={<MyRefund />}
+        />
+        <Route
+          path="/customer/my-ecash"
+          element={<MyECash />}
+        />
+        <Route
+          path="/customer/my-profile"
+          element={<MyProfile />}
         />
         <Route path="/about" element={<About />} />
         <Route path="/service" element={<Services />} />
