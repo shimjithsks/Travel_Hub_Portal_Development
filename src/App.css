@@ -1,0 +1,91 @@
+@import 'bootstrap/dist/css/bootstrap.min.css';
+@import './styles/tourm.css';
+
+:root {
+  /* Travel Axis Brand Colors */
+  --primary-blue: #003D5C;
+  --primary-orange: #FF9933;
+  --accent-blue: #1A5F7A;
+  --accent-orange: #FFA500;
+  --light-blue: #E8F4F8;
+  --light-orange: #FFF5E6;
+  --dark-blue: #002B42;
+  --text-primary: #333333;
+  --text-secondary: #666666;
+  --white: #FFFFFF;
+  --gray-light: #F5F7FA;
+  --gray-medium: #E5E7EB;
+  --gray-dark: #6B7280;
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  max-width: 100%;
+  overflow-x: hidden;
+  overflow-y: auto;
+  height: auto;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+html::-webkit-scrollbar,
+body::-webkit-scrollbar,
+#root::-webkit-scrollbar {
+  display: none;
+  width: 0;
+  height: 0;
+}
+
+body {
+  font-family: 'Poppins', sans-serif;
+  color: #333;
+  background-color: #fff;
+  position: relative;
+}
+
+.container {
+  max-width: 1200px;
+  width: 100%;
+  margin: 0 auto;
+  padding: 0 15px;
+  overflow-x: hidden;
+}
+
+a {
+  text-decoration: none;
+  color: inherit;
+}
+
+img {
+  max-width: 100%;
+  height: auto;
+}
+
+/* Smooth scrolling */
+html {
+  scroll-behavior: smooth;
+}
+
+.hero {
+  height: 80vh;
+  background-size: cover;
+}
+
+.hero h3, .hero p {
+  text-shadow: 2px 2px 8px rgba(0,0,0,0.7);
+}
+
+section h2 {
+  font-weight: 700;
+}
+
+footer {
+  font-size: 0.9rem;
+}

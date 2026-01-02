@@ -1,0 +1,331 @@
+/* Login Modal New */
+.login-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.7);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10000;
+  padding: 20px;
+  animation: fadeIn 0.3s ease;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.login-modal-container {
+  position: relative;
+  background: white;
+  border-radius: 20px;
+  max-width: 1100px;
+  width: 100%;
+  max-height: 90vh;
+  overflow: hidden;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+  animation: slideUp 0.4s ease;
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.modal-close-btn {
+  position: absolute;
+  top: 20px;
+  right: 20px;
+  width: 40px;
+  height: 40px;
+  background: white;
+  border: none;
+  border-radius: 50%;
+  font-size: 20px;
+  color: #666;
+  cursor: pointer;
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  transition: all 0.3s;
+}
+
+.modal-close-btn:hover {
+  background: #f3f4f6;
+  color: #111;
+  transform: rotate(90deg);
+}
+
+.login-modal-content {
+  display: grid;
+  grid-template-columns: 45% 55%;
+  min-height: 600px;
+  max-height: 90vh;
+}
+
+/* Left Side */
+.login-modal-left {
+  background: linear-gradient(135deg, #FFF5E6 0%, #FFE4CC 100%);
+  padding: 50px 40px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 30px;
+}
+
+.modal-image-section {
+  width: 100%;
+  max-width: 350px;
+  margin: 0 auto;
+  border-radius: 50%;
+  overflow: hidden;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+}
+
+.modal-image-section img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.modal-benefits {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.benefit-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  color: #4B5563;
+  font-size: 15px;
+  font-weight: 600;
+  line-height: 1.5;
+}
+
+.benefit-item i {
+  color: #6366F1;
+  font-size: 22px;
+  margin-top: 2px;
+  flex-shrink: 0;
+}
+
+.and-more {
+  text-align: center;
+  font-style: italic;
+  color: #9CA3AF;
+  font-size: 14px;
+  margin-top: 10px;
+  margin-bottom: 0;
+}
+
+/* Right Side */
+.login-modal-right {
+  padding: 50px 60px;
+  background: white;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  overflow-y: auto;
+}
+
+.modal-title {
+  font-size: 28px;
+  font-weight: 800;
+  color: #111827;
+  margin: 0 0 30px 0;
+  text-align: left;
+}
+
+.modal-login-form {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.modal-form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.modal-form-group label {
+  font-size: 14px;
+  font-weight: 600;
+  color: #374151;
+}
+
+.modal-form-group input {
+  padding: 14px 16px;
+  border: 1.5px solid #D1D5DB;
+  border-radius: 10px;
+  font-size: 15px;
+  transition: all 0.3s;
+}
+
+.modal-form-group input:focus {
+  outline: none;
+  border-color: #EF4444;
+  box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.1);
+}
+
+.modal-form-group input::placeholder {
+  color: #9CA3AF;
+}
+
+.modal-login-btn {
+  width: 100%;
+  padding: 16px;
+  background: linear-gradient(135deg, #EF4444 0%, #DC2626 100%);
+  color: white;
+  border: none;
+  border-radius: 10px;
+  font-size: 16px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.3s;
+  margin-top: 10px;
+}
+
+.modal-login-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(239, 68, 68, 0.4);
+}
+
+.modal-terms {
+  font-size: 12px;
+  color: #6B7280;
+  text-align: center;
+  line-height: 1.5;
+  margin: 0;
+}
+
+.modal-terms a {
+  color: #3B82F6;
+  text-decoration: none;
+}
+
+.modal-terms a:hover {
+  text-decoration: underline;
+}
+
+.modal-divider {
+  position: relative;
+  text-align: center;
+  margin: 10px 0;
+}
+
+.modal-divider::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 50%;
+  width: 100%;
+  height: 1px;
+  background: #E5E7EB;
+}
+
+.modal-divider span {
+  position: relative;
+  background: white;
+  padding: 0 15px;
+  color: #9CA3AF;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.modal-google-btn {
+  width: 100%;
+  padding: 14px;
+  background: white;
+  border: 2px solid #E5E7EB;
+  border-radius: 10px;
+  font-size: 15px;
+  font-weight: 600;
+  color: #374151;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  transition: all 0.3s;
+}
+
+.modal-google-btn:hover {
+  background: #F9FAFB;
+  border-color: #D1D5DB;
+}
+
+.google-icon {
+  width: 20px;
+  height: 20px;
+}
+
+.modal-signup {
+  text-align: center;
+  font-size: 14px;
+  color: #6B7280;
+  margin: 10px 0 0 0;
+}
+
+.create-account-link {
+  background: none;
+  border: none;
+  color: #EF4444;
+  font-weight: 700;
+  cursor: pointer;
+  padding: 0;
+  text-decoration: none;
+  font-size: inherit;
+}
+
+.create-account-link:hover {
+  text-decoration: underline;
+}
+
+/* Responsive */
+@media (max-width: 968px) {
+  .login-modal-content {
+    grid-template-columns: 1fr;
+  }
+
+  .login-modal-left {
+    display: none;
+  }
+
+  .login-modal-right {
+    padding: 40px 30px;
+  }
+}
+
+@media (max-width: 480px) {
+  .login-modal-container {
+    border-radius: 12px;
+  }
+
+  .login-modal-right {
+    padding: 30px 20px;
+  }
+
+  .modal-title {
+    font-size: 22px;
+  }
+
+  .modal-close-btn {
+    top: 15px;
+    right: 15px;
+  }
+}

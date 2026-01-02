@@ -1,0 +1,376 @@
+/* Login Modal Overlay */
+.login-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+  padding: 20px;
+  animation: fadeIn 0.3s ease;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+/* Modal Content */
+.login-modal-content {
+  background: #fef8f4;
+  border-radius: 16px;
+  max-width: 1000px;
+  width: 100%;
+  position: relative;
+  animation: slideUp 0.3s ease;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+  overflow: hidden;
+}
+
+@keyframes slideUp {
+  from {
+    transform: translateY(50px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+/* Close Button */
+.modal-close {
+  position: absolute;
+  top: 20px;
+  right: 20px;
+  background: none;
+  border: none;
+  font-size: 24px;
+  color: #666;
+  cursor: pointer;
+  z-index: 10;
+  transition: all 0.2s;
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+}
+
+.modal-close:hover {
+  background: rgba(0, 0, 0, 0.1);
+  color: #333;
+}
+
+/* Modal Body */
+.modal-body {
+  display: grid;
+  grid-template-columns: 45% 55%;
+  height: 600px;
+}
+
+/* Left Side */
+.modal-left {
+  background: linear-gradient(135deg, #fff5ed 0%, #ffe8d6 100%);
+  padding: 60px 40px;
+  border-radius: 16px 0 0 16px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 40px;
+}
+
+.traveler-illustration {
+  width: 280px;
+  height: 280px;
+  background: linear-gradient(135deg, #ffd8b8 0%, #ffedd8 100%);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+
+.illustration-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 50%;
+}
+
+.benefits-list {
+  width: 100%;
+}
+
+.benefit-item {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  margin-bottom: 20px;
+  color: #5a4536;
+  font-size: 15px;
+  font-weight: 500;
+}
+
+.benefit-item i {
+  font-size: 20px;
+  color: #d97444;
+  width: 28px;
+  flex-shrink: 0;
+}
+
+.and-more {
+  text-align: center;
+  color: #8b7355;
+  font-size: 14px;
+  margin-top: 10px;
+  font-style: italic;
+}
+
+/* Right Side */
+.modal-right {
+  padding: 60px 50px 50px 50px;
+  background: white;
+  border-radius: 0 16px 16px 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+/* Title */
+.modal-title {
+  font-size: 28px;
+  font-weight: 700;
+  color: #2d2d2d;
+  margin-bottom: 35px;
+  text-align: left;
+}
+
+/* Form Elements */
+.form-group-modal {
+  margin-bottom: 20px;
+}
+
+.form-group-modal label {
+  display: block;
+  font-size: 14px;
+  font-weight: 600;
+  color: #4a4a4a;
+  margin-bottom: 8px;
+}
+
+.modal-input {
+  width: 100%;
+  padding: 14px 16px;
+  border: 1px solid #d0d0d0;
+  border-radius: 8px;
+  font-size: 15px;
+  transition: all 0.3s;
+  background: white;
+}
+
+.modal-input:focus {
+  outline: none;
+  border-color: #e74c3c;
+  box-shadow: 0 0 0 3px rgba(231, 76, 60, 0.1);
+}
+
+.password-input-wrapper {
+  position: relative;
+}
+
+.password-toggle {
+  position: absolute;
+  right: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  color: #999;
+  cursor: pointer;
+  padding: 5px;
+}
+
+.password-toggle:hover {
+  color: #666;
+}
+
+/* Login Button */
+.login-btn-modal {
+  width: 100%;
+  padding: 16px;
+  background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 17px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.3s;
+  margin-top: 10px;
+  box-shadow: 0 4px 12px rgba(231, 76, 60, 0.3);
+}
+
+.login-btn-modal:hover:not(:disabled) {
+  background: linear-gradient(135deg, #c0392b 0%, #a93226 100%);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(231, 76, 60, 0.4);
+}
+
+.login-btn-modal:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* Terms Text */
+.terms-text {
+  font-size: 12px;
+  color: #666;
+  text-align: center;
+  margin-top: 15px;
+  line-height: 1.6;
+}
+
+.terms-text a {
+  color: #3498db;
+  text-decoration: none;
+}
+
+.terms-text a:hover {
+  text-decoration: underline;
+}
+
+/* Divider */
+.divider-or {
+  display: flex;
+  align-items: center;
+  margin: 25px 0;
+  color: #999;
+  font-size: 14px;
+}
+
+.divider-or::before,
+.divider-or::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: #ddd;
+}
+
+.divider-or span {
+  padding: 0 15px;
+}
+
+/* Google Sign-In Button */
+.google-signin-btn {
+  width: 100%;
+  padding: 14px;
+  background: white;
+  border: 1px solid #d0d0d0;
+  border-radius: 8px;
+  font-size: 15px;
+  font-weight: 600;
+  color: #444;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  transition: all 0.3s;
+  margin-bottom: 30px;
+}
+
+.google-signin-btn:hover {
+  background: #f7f7f7;
+  border-color: #bbb;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.google-icon {
+  width: 20px;
+  height: 20px;
+}
+
+/* Create Account Link */
+.create-account-link {
+  text-align: center;
+  margin-top: 20px;
+  font-size: 14px;
+  color: #666;
+}
+
+.create-account-link a {
+  color: #e74c3c;
+  text-decoration: none;
+  font-weight: 600;
+}
+
+.create-account-link a:hover {
+  text-decoration: underline;
+}
+
+/* Alerts */
+.alert-warning-modal,
+.alert-danger-modal {
+  padding: 12px 16px;
+  border-radius: 6px;
+  margin-bottom: 20px;
+  font-size: 13px;
+}
+
+.alert-warning-modal {
+  background: #fff3cd;
+  border: 1px solid #ffc107;
+  color: #856404;
+}
+
+.alert-danger-modal {
+  background: #f8d7da;
+  border: 1px solid #f5c6cb;
+  color: #721c24;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .modal-body {
+    grid-template-columns: 1fr;
+  }
+
+  .modal-left {
+    display: none;
+  }
+
+  .modal-right {
+    padding: 40px 30px;
+    border-radius: 16px;
+  }
+
+  .login-modal-content {
+    margin: 0 10px;
+  }
+}
+
+@media (max-width: 480px) {
+  .modal-right {
+    padding: 30px 20px;
+  }
+
+  .modal-title {
+    font-size: 22px;
+  }
+
+  .account-tab {
+    font-size: 13px;
+    padding: 10px 15px;
+  }
+}
