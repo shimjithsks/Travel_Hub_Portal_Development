@@ -319,39 +319,53 @@ export default function Home() {
 
   const whyTravelAxisFeatures = [
     {
-      icon: '✈️',
-      title: 'Search Flights and Hotels with Exclusive Deals',
-      description: 'Search for exclusive deals on flights and hotels. Find cheap air tickets to any destination you like.'
+      icon: 'fas fa-search',
+      colorClass: 'icon-blue',
+      title: 'Best Deals & Offers',
+      description: 'Search for exclusive deals on flights and hotels. Find unbeatable prices to any destination you love.',
+      gradient: 'gradient-blue'
     },
     {
-      icon: '🛡️',
-      title: 'Enjoy Secure Flight Bookings with Protection',
-      description: 'Book with confidence knowing your transactions are secure and protected.'
+      icon: 'fas fa-shield-alt',
+      colorClass: 'icon-green',
+      title: 'Secure & Protected',
+      description: 'Book with complete confidence knowing your transactions are secure and protected by industry standards.',
+      gradient: 'gradient-green'
     },
     {
-      icon: '🏖️',
-      title: 'Holiday Options for Every Budget and Interest',
-      description: 'From budget to luxury, find holidays that match your style and budget.'
+      icon: 'fas fa-sun',
+      colorClass: 'icon-orange',
+      title: 'Perfect Holidays',
+      description: 'From budget-friendly to luxury experiences, find holidays that match your style and budget perfectly.',
+      gradient: 'gradient-orange'
     },
     {
-      icon: '🎯',
-      title: 'Customize Your Trip with Best Combinations',
-      description: 'Mix and match flights, hotels, and activities to create your perfect trip.'
+      icon: 'fas fa-puzzle-piece',
+      colorClass: 'icon-purple',
+      title: 'Custom Itineraries',
+      description: 'Mix and match flights, hotels, and activities to create your perfect personalized travel experience.',
+      gradient: 'gradient-purple'
     },
     {
-      icon: '🎫',
-      title: 'Skip the Ticket Queue for Monument Visits',
-      description: 'Book tickets online and skip the long queues at popular attractions.'
+      icon: 'fas fa-ticket-alt',
+      colorClass: 'icon-pink',
+      title: 'Skip the Queues',
+      description: 'Book attraction tickets online and enjoy skip-the-line access to popular monuments and attractions.',
+      gradient: 'gradient-pink'
     },
     {
-      icon: '🎁',
-      title: 'Get New Deals Every Season for Flights and Hotels',
-      description: 'Enjoy seasonal offers and discounts throughout the year.'
+      icon: 'fas fa-gift',
+      colorClass: 'icon-red',
+      title: 'Seasonal Deals',
+      description: 'Enjoy new deals every season with special discounts on flights, hotels, and holiday packages.',
+      gradient: 'gradient-red'
     },
     {
-      icon: '💬',
-      title: 'Customer Support Backed by Millions of Satisfied Travelers',
-      description: '24/7 customer support to help you with all your travel needs.'
+      icon: 'fas fa-headset',
+      colorClass: 'icon-teal',
+      title: '24/7 Support',
+      description: '24/7 customer support backed by millions of satisfied travelers ready to help you anytime.',
+      gradient: 'gradient-teal'
     }
   ];
 
@@ -662,16 +676,22 @@ export default function Home() {
                         {showDestinationSuggestions && (
                           <div className="location-suggestions">
                             {filteredDestinations.length > 0 ? (
-                              filteredDestinations.map((destination, index) => (
-                                <div
-                                  key={index}
-                                  className="suggestion-item"
-                                  onMouseDown={() => selectDestination(destination)}
-                                >
+                              <>
+                                <div className="suggestion-item" style={{ pointerEvents: 'none' }}>
                                   <i className="fas fa-map-marker-alt"></i>
-                                  <span>{destination}</span>
+                                  <span>Select Destination</span>
                                 </div>
-                              ))
+                                {filteredDestinations.map((destination, index) => (
+                                  <div
+                                    key={index}
+                                    className="suggestion-item"
+                                    onMouseDown={() => selectDestination(destination)}
+                                  >
+                                    <i className="fas fa-map-marker-alt"></i>
+                                    <span>{destination}</span>
+                                  </div>
+                                ))}
+                              </>
                             ) : (
                               <div className="no-suggestions">
                                 <i className="fas fa-info-circle"></i>
@@ -749,16 +769,22 @@ export default function Home() {
                         {showLocationSuggestions && (
                           <div className="location-suggestions">
                             {filteredLocations.length > 0 ? (
-                              filteredLocations.map((location, index) => (
-                                <div 
-                                  key={index}
-                                  className="suggestion-item"
-                                  onMouseDown={() => selectLocation(location)}
-                                >
+                              <>
+                                <div className="suggestion-item" style={{ pointerEvents: 'none' }}>
                                   <i className="fas fa-map-marker-alt"></i>
-                                  <span>{location}</span>
+                                  <span>Select Pickup Location</span>
                                 </div>
-                              ))
+                                {filteredLocations.map((location, index) => (
+                                  <div 
+                                    key={index}
+                                    className="suggestion-item"
+                                    onMouseDown={() => selectLocation(location)}
+                                  >
+                                    <i className="fas fa-map-marker-alt"></i>
+                                    <span>{location}</span>
+                                  </div>
+                                ))}
+                              </>
                             ) : (
                               <div className="no-suggestions">
                                 <i className="fas fa-info-circle"></i>
@@ -991,14 +1017,112 @@ export default function Home() {
       <section className="why-yatra-section" data-aos="fade-up">
         <div className="container">
           <h2 className="section-title">Why Travel Axis?</h2>
-          <div className="features-grid">
-            {whyTravelAxisFeatures.map((feature, index) => (
-              <div key={index} className="feature-card" data-aos="fade-up" data-aos-delay={index * 50}>
-                <div className="feature-icon">{feature.icon}</div>
-                <h3>{feature.title}</h3>
-                <p>{feature.description}</p>
+          
+          {/* Main Grid - Features + Mobile App */}
+          <div className="why-axis-main-grid">
+            {/* Left Side - Features */}
+            <div className="features-grid-left">
+              {whyTravelAxisFeatures.map((feature, index) => (
+                <div key={index} className={`feature-card ${feature.gradient}`} data-aos="fade-up" data-aos-delay={index * 50}>
+                  <div className={`feature-icon ${feature.colorClass}`}>
+                    <i className={feature.icon}></i>
+                  </div>
+                  <div className="feature-content">
+                    <h3>{feature.title}</h3>
+                    <p>{feature.description}</p>
+                  </div>
+                  <div className="feature-arrow">
+                    <i className="fas fa-arrow-right"></i>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {/* Right Side - Mobile App Mockup */}
+            <div className="mobile-app-mockup" data-aos="fade-left">
+              <div className="phone-frame">
+                <div className="phone-screen">
+                  <div className="app-header">
+                    <h3>Bus Booking</h3>
+                    <p>Quick & Easy</p>
+                  </div>
+
+                  {/* Bus Booking Form */}
+                  <div className="app-content">
+                    <div className="app-form-group">
+                      <label>From</label>
+                      <input type="text" placeholder="Departure City" value="Delhi" readOnly />
+                    </div>
+
+                    <div className="swap-btn-mobile">
+                      <i className="fas fa-exchange-alt"></i>
+                    </div>
+
+                    <div className="app-form-group">
+                      <label>To</label>
+                      <input type="text" placeholder="Arrival City" value="Mumbai" readOnly />
+                    </div>
+
+                    <div className="app-form-group">
+                      <label>Date</label>
+                      <input type="date" defaultValue="2026-01-15" />
+                    </div>
+
+                    <button className="app-search-btn">Search Buses</button>
+
+                    {/* Bus Fleet Options */}
+                    <div className="fleet-options">
+                      <h4>Popular Fleets</h4>
+                      <div className="fleet-list">
+                        <div className="fleet-item">
+                          <i className="fas fa-bus"></i>
+                          <span>Sleeper Bus</span>
+                        </div>
+                        <div className="fleet-item">
+                          <i className="fas fa-bus"></i>
+                          <span>AC Deluxe</span>
+                        </div>
+                        <div className="fleet-item">
+                          <i className="fas fa-bus"></i>
+                          <span>Non-AC</span>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Quick Stats */}
+                    <div className="app-stats">
+                      <div className="stat-item">
+                        <h5>500+</h5>
+                        <p>Bus Routes</p>
+                      </div>
+                      <div className="stat-item">
+                        <h5>50K+</h5>
+                        <p>Happy Users</p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Phone Notch */}
+                <div className="phone-notch"></div>
               </div>
-            ))}
+
+              {/* Download App CTA */}
+              <div className="app-cta-section">
+                <h3>Download Travel Axis App</h3>
+                <p>Get exclusive app-only deals on bus bookings</p>
+                <div className="app-download-buttons">
+                  <a href="#" className="download-btn playstore">
+                    <i className="fab fa-google-play"></i>
+                    <span>Play Store</span>
+                  </a>
+                  <a href="#" className="download-btn appstore">
+                    <i className="fab fa-app-store"></i>
+                    <span>App Store</span>
+                  </a>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       </section>
@@ -1098,69 +1222,6 @@ export default function Home() {
               </div>
               <i className="fas fa-arrow-right"></i>
             </div>
-          </div>
-        </div>
-      </section>
-
-      {/* Popular Flight Routes */}
-      <section className="flight-routes-section" data-aos="fade-up">
-        <div className="container">
-          <h2 className="section-title">Popular Flight Routes</h2>
-          <div className="routes-grid">
-            <Link to="/flights" className="route-link">Delhi to Mumbai</Link>
-            <Link to="/flights" className="route-link">Delhi to Chennai</Link>
-            <Link to="/flights" className="route-link">Delhi to Goa</Link>
-            <Link to="/flights" className="route-link">Delhi to Bangalore</Link>
-            <Link to="/flights" className="route-link">Delhi to Kolkata</Link>
-            <Link to="/flights" className="route-link">Mumbai to Chennai</Link>
-            <Link to="/flights" className="route-link">Delhi to Hyderabad</Link>
-            <Link to="/flights" className="route-link">Bangalore to Hyderabad</Link>
-            <Link to="/flights" className="route-link">Mumbai to Kolkata</Link>
-            <Link to="/flights" className="route-link">Chennai to Bangalore</Link>
-            <Link to="/flights" className="route-link">Pune to Bangalore</Link>
-            <Link to="/flights" className="route-link">Delhi to Pune</Link>
-          </div>
-        </div>
-      </section>
-
-      {/* Popular Domestic Flight Routes */}
-      <section className="flight-routes-section domestic" data-aos="fade-up">
-        <div className="container">
-          <h2 className="section-title">Popular Domestic Flight Routes</h2>
-          <div className="routes-grid">
-            <Link to="/flights" className="route-link">Delhi to Vadodara Flight</Link>
-            <Link to="/flights" className="route-link">Chennai to Bangalore Flight</Link>
-            <Link to="/flights" className="route-link">Visakhapatnam to Chennai Flight</Link>
-            <Link to="/flights" className="route-link">Lucknow to Kolkata Flight</Link>
-            <Link to="/flights" className="route-link">Jammu to Delhi Flight</Link>
-            <Link to="/flights" className="route-link">Kolkata to Varanasi Flight</Link>
-            <Link to="/flights" className="route-link">Chennai to Madurai Flight</Link>
-            <Link to="/flights" className="route-link">Kochi to Mangalore Flight</Link>
-            <Link to="/flights" className="route-link">Surat to Mumbai Flight</Link>
-            <Link to="/flights" className="route-link">Delhi to Chandigarh Flight</Link>
-            <Link to="/flights" className="route-link">Mumbai to Jaipur Flight</Link>
-            <Link to="/flights" className="route-link">Ahmedabad to Surat Flight</Link>
-          </div>
-        </div>
-      </section>
-
-      {/* Popular International Flight Routes */}
-      <section className="flight-routes-section international" data-aos="fade-up">
-        <div className="container">
-          <h2 className="section-title">Popular International Flight Routes</h2>
-          <div className="routes-grid">
-            <Link to="/flights" className="route-link">Surat to Dubai Flight</Link>
-            <Link to="/flights" className="route-link">Kolkata to Bangkok Flight</Link>
-            <Link to="/flights" className="route-link">Delhi to Mauritius Flight</Link>
-            <Link to="/flights" className="route-link">Ahmedabad to Toronto Flight</Link>
-            <Link to="/flights" className="route-link">Mumbai to Toronto Flight</Link>
-            <Link to="/flights" className="route-link">Chennai to Colombo Flight</Link>
-            <Link to="/flights" className="route-link">Chennai to Bangkok Flight</Link>
-            <Link to="/flights" className="route-link">Bangalore to London Flight</Link>
-            <Link to="/flights" className="route-link">Mumbai to Singapore Flight</Link>
-            <Link to="/flights" className="route-link">Dubai to Amritsar Flight</Link>
-            <Link to="/flights" className="route-link">Kathmandu to Delhi Flight</Link>
-            <Link to="/flights" className="route-link">Kuwait to Chennai Flight</Link>
           </div>
         </div>
       </section>
