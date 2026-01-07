@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../../context/AuthContext';
-import { doc, updateDoc } from 'firebase/firestore';
+import { doc, updateDoc, setDoc, getDoc } from 'firebase/firestore';
 import { db } from '../../firebase/firebase';
 import { updateProfile, updateEmail } from 'firebase/auth';
 import '../../styles/myProfile.css';
@@ -47,9 +47,12 @@ export default function MyProfile() {
   const handleSave = async () => {
     setLoading(true);
     try {
-      // Update Firestore profile
       const userRef = doc(db, 'users', user.uid);
-      await updateDoc(userRef, {
+      
+      // Check if document exists
+      const docSnap = await getDoc(userRef);
+      
+      const profileData = {
         name: formData.name,
         phone: formData.phone,
         dateOfBirth: formData.dateOfBirth,
@@ -59,7 +62,20 @@ export default function MyProfile() {
         state: formData.state,
         pincode: formData.pincode,
         updatedAt: new Date().toISOString()
-      });
+      };
+
+      if (docSnap.exists()) {
+        // Update existing document
+        await updateDoc(userRef, profileData);
+      } else {
+        // Create new document
+        await setDoc(userRef, {
+          ...profileData,
+          email: user.email,
+          role: 'customer',
+          createdAt: new Date().toISOString()
+        });
+      }
 
       // Update Firebase Auth display name
       if (formData.name !== user.displayName) {
@@ -68,16 +84,22 @@ export default function MyProfile() {
         });
       }
 
-      // Update email if changed
+      // Update email if changed (this requires re-authentication)
       if (formData.email !== user.email) {
-        await updateEmail(user, formData.email);
+        try {
+          await updateEmail(user, formData.email);
+        } catch (emailError) {
+          console.error('Email update error:', emailError);
+          alert('Profile updated but email change requires re-authentication. Please log out and log in again to change email.');
+        }
       }
 
       setEditing(false);
       alert('Profile updated successfully!');
+      window.location.reload(); // Reload to fetch updated profile
     } catch (error) {
       console.error('Error updating profile:', error);
-      alert('Failed to update profile. Please try again.');
+      alert(`Failed to update profile: ${error.message}`);
     } finally {
       setLoading(false);
     }

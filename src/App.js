@@ -39,6 +39,9 @@ import MyBookings from './pages/customer/MyBookings';
 import MyRefund from './pages/customer/MyRefund';
 import MyECash from './pages/customer/MyECash';
 import MyProfile from './pages/customer/MyProfile';
+import CompleteBooking from './pages/CompleteBooking';
+import MakePayment from './pages/MakePayment';
+import CompleteHoliday from './pages/CompleteHoliday';
 import './App.css';
 
 function App() {
@@ -97,6 +100,9 @@ function App() {
           path="/customer/my-profile"
           element={<MyProfile />}
         />
+        <Route path="/complete-booking" element={<CompleteBooking />} />
+        <Route path="/make-payment" element={<MakePayment />} />
+        <Route path="/complete-holiday" element={<CompleteHoliday />} />
         <Route path="/about" element={<About />} />
         <Route path="/service" element={<Services />} />
         <Route path="/tour" element={<Tours />} />

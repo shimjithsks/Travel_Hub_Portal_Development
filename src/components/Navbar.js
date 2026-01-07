@@ -90,7 +90,7 @@ export default function Navbar() {
 
               <nav className={`main-navigation ${isOpen ? 'active' : ''}`}>
                 {user ? (
-                  <Link to={dashboardPath} className="nav-link" onClick={() => setIsOpen(false)}>
+                  <Link to="/customer/my-bookings" className="nav-link" onClick={() => setIsOpen(false)}>
                     <i className="fas fa-suitcase"></i>
                     <span>My Trips</span>
                   </Link>
@@ -103,26 +103,31 @@ export default function Navbar() {
                   <span>For Travel Agents</span>
                 </Link>
 
-                <div 
-                  className="nav-dropdown"
-                  onMouseEnter={() => setShowDropdown('support')}
-                  onMouseLeave={() => setShowDropdown(null)}
-                >
-                  <button className="header-btn">
+                <div className="nav-dropdown" style={{position: 'relative'}}>
+                  <button 
+                    className="header-btn"
+                    onClick={() => setShowDropdown(showDropdown === 'support' ? null : 'support')}
+                  >
                     <i className="fas fa-phone-alt"></i>
                     <span>Support</span>
                     <i className="fas fa-chevron-down"></i>
                   </button>
                   {showDropdown === 'support' && (
-                    <div className="dropdown-menu">
-                      <Link to="/contact" onClick={() => setIsOpen(false)}>
-                        <i className="fas fa-headset"></i> Help Center
+                    <div className="dropdown-menu" style={{position: 'absolute', top: '100%', left: 0, zIndex: 9999, display: 'block', minWidth: '280px', whiteSpace: 'nowrap'}}>
+                      <Link to="/customer/my-refund" onClick={() => setShowDropdown(null)}>
+                        <i className="fas fa-undo"></i> Check Your Refund
                       </Link>
-                      <Link to="/faq" onClick={() => setIsOpen(false)}>
-                        <i className="fas fa-question-circle"></i> FAQs
-                      </Link>
-                      <Link to="/contact" onClick={() => setIsOpen(false)}>
+                      <Link to="/contact" onClick={() => setShowDropdown(null)}>
                         <i className="fas fa-envelope"></i> Contact Us
+                      </Link>
+                      <Link to="/complete-booking" onClick={() => setShowDropdown(null)}>
+                        <i className="fas fa-check-circle"></i> Complete Your Booking
+                      </Link>
+                      <Link to="/make-payment" onClick={() => setShowDropdown(null)}>
+                        <i className="fas fa-credit-card"></i> Make a Payment
+                      </Link>
+                      <Link to="/complete-holiday" onClick={() => setShowDropdown(null)}>
+                        <i className="fas fa-umbrella-beach"></i> Complete Holiday Bookings
                       </Link>
                     </div>
                   )}
