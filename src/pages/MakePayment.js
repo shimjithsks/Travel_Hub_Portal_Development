@@ -18,9 +18,34 @@ export default function MakePayment() {
   return (
     <div className="make-payment-container">
       <div className="payment-header">
-        <div className="header-content">
-          <h1>Make a Payment</h1>
-          <p>Complete your booking payment securely</p>
+        <div className="payment-header-background">
+          <div className="payment-card-bg payment-card-1"></div>
+          <div className="payment-card-bg payment-card-2"></div>
+          <div className="payment-security-icon">
+            <i className="fas fa-lock"></i>
+          </div>
+        </div>
+        <div className="header-content payment-header-content">
+          <div className="payment-header-left">
+            <div className="payment-icon-badge">
+              <i className="fas fa-credit-card"></i>
+            </div>
+            <div className="payment-header-text">
+              <h1>Make a Payment</h1>
+              <p>Complete your booking payment securely</p>
+            </div>
+          </div>
+          <div className="payment-security-badge">
+            <div className="security-item">
+              <i className="fas fa-shield-alt"></i>
+              <span>100% Secure</span>
+            </div>
+            <div className="security-divider"></div>
+            <div className="security-item">
+              <i className="fas fa-lock"></i>
+              <span>SSL Protected</span>
+            </div>
+          </div>
         </div>
       </div>
 

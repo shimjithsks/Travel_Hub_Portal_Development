@@ -2,20 +2,26 @@ import React, { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import AOS from 'aos';
 import LoginModal from '../components/LoginModal';
+import { useAuth } from '../context/AuthContext';
 import '../styles/yatraHome.css';
 
 export default function Home() {
   const navigate = useNavigate();
+  const { user, loading } = useAuth();
   const [showLoginModal, setShowLoginModal] = useState(false);
   
-  // Check if first visit - show login modal
+  // Check if first visit - show login modal only if user is not logged in
   useEffect(() => {
+    // Wait for auth loading to complete before deciding to show modal
+    if (loading) return;
+    
     const hasVisited = sessionStorage.getItem('hasVisitedBefore');
-    if (!hasVisited) {
+    if (!hasVisited && !user) {
+      // Only show modal if first visit AND user is not logged in
       sessionStorage.setItem('hasVisitedBefore', 'true');
       setShowLoginModal(true);
     }
-  }, []);
+  }, [loading, user]);
 
   const [activeTab, setActiveTab] = useState('fleet');
   const [tripType, setTripType] = useState('oneWay');

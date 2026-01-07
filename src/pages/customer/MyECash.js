@@ -109,9 +109,19 @@ export default function MyECash() {
   return (
     <div className="my-ecash-container">
       <div className="ecash-header">
-        <div className="header-content">
-          <h1 className="page-title">My eCash</h1>
-          <p className="page-subtitle">Your digital wallet for seamless payments</p>
+        <div className="ecash-header-background">
+          <div className="ecash-blob ecash-blob-1"></div>
+          <div className="ecash-blob ecash-blob-2"></div>
+          <div className="ecash-icon-deco"></div>
+        </div>
+        <div className="header-content ecash-header-content">
+          <div className="ecash-icon-badge">
+            <i className="fas fa-wallet"></i>
+          </div>
+          <div className="ecash-header-text">
+            <h1 className="page-title">My eCash</h1>
+            <p className="page-subtitle">Your digital wallet for seamless payments</p>
+          </div>
         </div>
       </div>
 

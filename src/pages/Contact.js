@@ -21,6 +21,41 @@ export default function Contact() {
 
   return (
     <div className="contact-page section">
+      <div className="contact-header-container">
+        <div className="contact-header">
+          <div className="contact-header-background">
+            <div className="contact-bubble contact-bubble-1"></div>
+            <div className="contact-bubble contact-bubble-2"></div>
+            <div className="contact-bubble contact-bubble-3"></div>
+            <div className="contact-message-icon">
+              <i className="fas fa-envelope"></i>
+            </div>
+          </div>
+          <div className="contact-header-content">
+            <div className="contact-header-left">
+              <div className="contact-icon-badge">
+                <i className="fas fa-comments"></i>
+              </div>
+              <div className="contact-header-text">
+                <h1>Contact Us</h1>
+                <p>We're here to help and answer any question you might have</p>
+              </div>
+            </div>
+            <div className="contact-response-info">
+              <div className="response-item">
+                <span className="response-time">24/7</span>
+                <span className="response-label">Support</span>
+              </div>
+              <div className="response-divider"></div>
+              <div className="response-item">
+                <span className="response-time">2H</span>
+                <span className="response-label">Response</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
       <div className="container">
         <div className="section-header">
           <h2>Explore beauty of the whole world</h2>

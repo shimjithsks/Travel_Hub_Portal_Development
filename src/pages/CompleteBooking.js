@@ -20,9 +20,39 @@ export default function CompleteBooking() {
   return (
     <div className="complete-booking-container">
       <div className="booking-header">
-        <div className="header-content">
-          <h1>Complete Your Booking</h1>
-          <p>Retrieve your pending booking and complete the payment</p>
+        <div className="booking-header-background">
+          <div className="booking-blob booking-blob-1"></div>
+          <div className="booking-blob booking-blob-2"></div>
+          <div className="booking-icon-bg">
+            <i className="fas fa-check-circle"></i>
+          </div>
+        </div>
+        <div className="header-content booking-header-content">
+          <div className="booking-header-left">
+            <div className="booking-icon-badge">
+              <i className="fas fa-ticket-alt"></i>
+            </div>
+            <div className="booking-header-text">
+              <h1>Complete Your Booking</h1>
+              <p>Retrieve your pending booking and complete the payment</p>
+            </div>
+          </div>
+          <div className="booking-progress-info">
+            <div className="progress-step active">
+              <span className="step-number">1</span>
+              <span className="step-label">Enter Ref</span>
+            </div>
+            <div className="progress-line"></div>
+            <div className="progress-step">
+              <span className="step-number">2</span>
+              <span className="step-label">Review</span>
+            </div>
+            <div className="progress-line"></div>
+            <div className="progress-step">
+              <span className="step-number">3</span>
+              <span className="step-label">Payment</span>
+            </div>
+          </div>
         </div>
       </div>
 

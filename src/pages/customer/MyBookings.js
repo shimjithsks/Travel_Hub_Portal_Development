@@ -70,9 +70,19 @@ export default function MyBookings() {
   return (
     <div className="my-bookings-container">
       <div className="bookings-header">
-        <div className="header-content">
-          <h1 className="page-title">My Bookings</h1>
-          <p className="page-subtitle">Manage all your travel bookings in one place</p>
+        <div className="bookings-header-background">
+          <div className="booking-blob booking-blob-1"></div>
+          <div className="booking-blob booking-blob-2"></div>
+          <div className="booking-icon-deco"></div>
+        </div>
+        <div className="header-content bookings-header-content">
+          <div className="bookings-icon-badge">
+            <i className="fas fa-ticket-alt"></i>
+          </div>
+          <div className="bookings-header-text">
+            <h1 className="page-title">My Bookings</h1>
+            <p className="page-subtitle">Manage all your travel bookings in one place</p>
+          </div>
         </div>
       </div>
 

@@ -18,9 +18,36 @@ export default function CompleteHoliday() {
   return (
     <div className="complete-holiday-container">
       <div className="holiday-header">
-        <div className="header-content">
-          <h1>Complete Your Holiday Package Booking</h1>
-          <p>Finalize your dream vacation package</p>
+        <div className="holiday-header-background">
+          <div className="holiday-palm-tree holiday-palm-1"></div>
+          <div className="holiday-palm-tree holiday-palm-2"></div>
+          <div className="holiday-sun"></div>
+          <div className="holiday-wave"></div>
+        </div>
+        <div className="header-content holiday-header-content">
+          <div className="holiday-header-left">
+            <div className="holiday-icon-badge">
+              <i className="fas fa-umbrella-beach"></i>
+            </div>
+            <div className="holiday-header-text">
+              <h1>Complete Your Holiday</h1>
+              <p>Finalize your dream vacation package</p>
+            </div>
+          </div>
+          <div className="holiday-features-box">
+            <div className="feature-item">
+              <i className="fas fa-map-marker-alt"></i>
+              <span>Best Destinations</span>
+            </div>
+            <div className="feature-item">
+              <i className="fas fa-star"></i>
+              <span>Luxury Packages</span>
+            </div>
+            <div className="feature-item">
+              <i className="fas fa-heart"></i>
+              <span>Unforgettable</span>
+            </div>
+          </div>
         </div>
       </div>
 

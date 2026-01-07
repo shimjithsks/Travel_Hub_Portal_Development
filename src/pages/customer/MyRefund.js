@@ -100,9 +100,32 @@ export default function MyRefund() {
   return (
     <div className="my-refund-container">
       <div className="refund-header">
-        <div className="header-content">
-          <h1 className="page-title">My Refunds</h1>
-          <p className="page-subtitle">Manage cancellations and refund requests</p>
+        <div className="refund-header-background">
+          <div className="refund-icon-circle refund-circle-1"></div>
+          <div className="refund-icon-circle refund-circle-2"></div>
+          <div className="refund-icon-circle refund-circle-3"></div>
+        </div>
+        <div className="header-content refund-header-content">
+          <div className="refund-header-left">
+            <div className="refund-icon-badge">
+              <i className="fas fa-undo-alt"></i>
+            </div>
+            <div>
+              <h1 className="page-title">My Refunds</h1>
+              <p className="page-subtitle">Manage cancellations and refund requests</p>
+            </div>
+          </div>
+          <div className="refund-status-box">
+            <div className="status-item">
+              <span className="status-label">Total Refunds</span>
+              <span className="status-value">0</span>
+            </div>
+            <div className="status-divider"></div>
+            <div className="status-item">
+              <span className="status-label">Pending</span>
+              <span className="status-value">0</span>
+            </div>
+          </div>
         </div>
       </div>
 

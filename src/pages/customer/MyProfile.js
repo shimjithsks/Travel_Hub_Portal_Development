@@ -115,9 +115,19 @@ export default function MyProfile() {
   return (
     <div className="my-profile-container">
       <div className="profile-header">
-        <div className="header-content">
-          <h1 className="page-title">My Profile</h1>
-          <p className="page-subtitle">Manage your account information</p>
+        <div className="profile-header-background">
+          <div className="profile-blob profile-blob-1"></div>
+          <div className="profile-blob profile-blob-2"></div>
+          <div className="profile-icon-deco"></div>
+        </div>
+        <div className="header-content profile-header-content">
+          <div className="profile-icon-badge">
+            <i className="fas fa-user"></i>
+          </div>
+          <div className="profile-header-text">
+            <h1 className="page-title">My Profile</h1>
+            <p className="page-subtitle">Manage your account information</p>
+          </div>
         </div>
       </div>
 
