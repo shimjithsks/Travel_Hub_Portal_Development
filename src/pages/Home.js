@@ -107,9 +107,25 @@ export default function Home() {
       );
       setFilteredLocations(filtered);
       setShowLocationSuggestions(true);
+      
+      // Scroll suggestions into view
+      setTimeout(() => {
+        const suggestionsElement = document.querySelector('.location-suggestions');
+        if (suggestionsElement) {
+          suggestionsElement.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        }
+      }, 0);
     } else {
       setFilteredLocations(popularLocations);
       setShowLocationSuggestions(true);
+      
+      // Scroll suggestions into view
+      setTimeout(() => {
+        const suggestionsElement = document.querySelector('.location-suggestions');
+        if (suggestionsElement) {
+          suggestionsElement.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        }
+      }, 0);
     }
   };
 

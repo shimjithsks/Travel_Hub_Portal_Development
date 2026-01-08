@@ -35,9 +35,25 @@ export default function FleetResults() {
       );
       setFilteredLocations(filtered);
       setShowLocationSuggestions(true);
+      
+      // Scroll suggestions into view
+      setTimeout(() => {
+        const suggestionsElement = document.querySelector('.location-suggestions');
+        if (suggestionsElement) {
+          suggestionsElement.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        }
+      }, 0);
     } else {
       setFilteredLocations(popularLocations);
       setShowLocationSuggestions(true);
+      
+      // Scroll suggestions into view
+      setTimeout(() => {
+        const suggestionsElement = document.querySelector('.location-suggestions');
+        if (suggestionsElement) {
+          suggestionsElement.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        }
+      }, 0);
     }
   };
 
@@ -746,16 +762,22 @@ export default function FleetResults() {
                     {showLocationSuggestions && (
                       <div className="location-suggestions">
                         {filteredLocations.length > 0 ? (
-                          filteredLocations.map((location, index) => (
-                            <div 
-                              key={index}
-                              className="suggestion-item"
-                              onMouseDown={() => selectLocation(location)}
-                            >
+                          <>
+                            <div className="suggestion-item" style={{ pointerEvents: 'none' }}>
                               <i className="fas fa-map-marker-alt"></i>
-                              <span>{location}</span>
+                              <span>Select Pickup Location</span>
                             </div>
-                          ))
+                            {filteredLocations.map((location, index) => (
+                              <div 
+                                key={index}
+                                className="suggestion-item"
+                                onMouseDown={() => selectLocation(location)}
+                              >
+                                <i className="fas fa-map-marker-alt"></i>
+                                <span>{location}</span>
+                              </div>
+                            ))}
+                          </>
                         ) : (
                           <div className="no-suggestions">
                             <i className="fas fa-info-circle"></i>
