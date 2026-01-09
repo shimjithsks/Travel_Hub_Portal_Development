@@ -534,7 +534,7 @@ export default function HotelDetail() {
                   </div>
                 </div>
 
-                <div className="booking-features">
+                <div className="booking-features dark-features">
                   <div className="feature-item">
                     <i className="fas fa-check-circle"></i>
                     <span>Best Price Guarantee</span>
