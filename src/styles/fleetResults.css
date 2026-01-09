@@ -2,7 +2,7 @@
 
 .fleet-results-page {
   font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-  background: #f7f9fc;
+  background: linear-gradient(180deg, #f0f4f8 0%, #e8eef5 50%, #f5f7fa 100%);
   min-height: 100vh;
   overflow-x: hidden;
 }
@@ -96,25 +96,41 @@
 
 /* Header Section */
 .fleet-header {
-  background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+  background: linear-gradient(135deg, #0f172a 0%, #1e3a5f 50%, #1e293b 100%);
   color: white;
-  padding: 40px 20px 30px;
+  padding: 50px 20px 40px;
   text-align: center;
   position: relative;
   z-index: 50;
   overflow: visible;
-  box-shadow: 0 4px 20px rgba(37, 99, 235, 0.15);
+  box-shadow: 0 8px 32px rgba(15, 23, 42, 0.25);
+}
+
+.fleet-header::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: 
+    radial-gradient(circle at 20% 50%, rgba(20, 184, 166, 0.15) 0%, transparent 50%),
+    radial-gradient(circle at 80% 50%, rgba(59, 130, 246, 0.1) 0%, transparent 50%);
+  pointer-events: none;
 }
 
 .fleet-header .container {
   overflow: visible;
+  position: relative;
+  z-index: 1;
 }
 
 .fleet-header h1 {
-  font-size: 2rem;
-  font-weight: 700;
+  font-size: 2.2rem;
+  font-weight: 800;
   margin-bottom: 25px;
   letter-spacing: -0.5px;
+  text-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
 }
 
 .search-summary {
@@ -131,10 +147,17 @@
   align-items: center;
   gap: 8px;
   font-size: 15px;
-  background: rgba(255, 255, 255, 0.15);
-  padding: 10px 20px;
-  border-radius: 25px;
+  background: rgba(255, 255, 255, 0.12);
+  padding: 12px 22px;
+  border-radius: 50px;
   backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  transition: all 0.3s ease;
+}
+
+.search-summary span:hover {
+  background: rgba(255, 255, 255, 0.18);
+  transform: translateY(-2px);
 }
 
 .search-summary span strong {
@@ -174,22 +197,54 @@
 
 /* Search Edit Form */
 .search-edit-form {
-  background: linear-gradient(135deg, #ffffff 0%, #f9fafb 40%, #f3f4f6 100%);
-  border-radius: 0 0 24px 24px;
-  padding: 50px 60px 80px 60px;
+  background: linear-gradient(145deg, #ffffff 0%, #f0fdfa 30%, #ccfbf1 70%, #99f6e4 100%);
+  border-radius: 0 0 32px 32px;
+  padding: 40px 50px 50px 50px;
   margin-top: 0;
   overflow: visible;
   position: relative;
   z-index: 100;
   box-shadow: 
-    0 25px 50px rgba(0, 0, 0, 0.1),
-    0 10px 30px rgba(0, 0, 0, 0.06),
-    inset 0 1px 1px rgba(255, 255, 255, 0.5);
-  border: 1px solid rgba(255, 255, 255, 0.95);
+    0 30px 60px rgba(20, 184, 166, 0.2),
+    0 15px 35px rgba(0, 0, 0, 0.08),
+    inset 0 2px 4px rgba(255, 255, 255, 0.9);
+  border: 3px solid transparent;
   border-top: none;
-  /* Prevent scrollbar when dropdown opens */
+  background-clip: padding-box;
+  backdrop-filter: blur(10px);
   -ms-overflow-style: none;
   scrollbar-width: none;
+}
+
+.search-edit-form::after {
+  content: '';
+  position: absolute;
+  top: -3px;
+  left: -3px;
+  right: -3px;
+  bottom: -3px;
+  background: linear-gradient(135deg, #14b8a6 0%, #0d9488 25%, #06b6d4 50%, #0d9488 75%, #14b8a6 100%);
+  border-radius: 0 0 35px 35px;
+  z-index: -1;
+  animation: border-glow 3s ease-in-out infinite;
+}
+
+@keyframes border-glow {
+  0%, 100% { opacity: 0.8; }
+  50% { opacity: 1; }
+}
+
+.search-edit-form::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 120px;
+  height: 4px;
+  background: linear-gradient(90deg, #14b8a6, #0d9488, #14b8a6);
+  border-radius: 0 0 4px 4px;
+  z-index: 1;
 }
 
 .search-edit-form::-webkit-scrollbar {
@@ -201,60 +256,88 @@
 .edit-form-fields {
   display: grid;
   grid-template-columns: 2.5fr 2.5fr 1.5fr 1.5fr 180px;
-  gap: 15px;
+  gap: 20px;
   align-items: flex-end;
   overflow: visible;
+  padding: 10px;
+  background: rgba(255, 255, 255, 0.6);
+  border-radius: 20px;
+  box-shadow: inset 0 2px 10px rgba(20, 184, 166, 0.05);
 }
 
 .edit-form-fields .field-group {
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 8px;
   position: relative;
   overflow: visible;
   flex: 1;
   min-width: 160px;
+  padding: 8px;
+  background: rgba(255, 255, 255, 0.8);
+  border-radius: 16px;
+  transition: all 0.3s ease;
+}
+
+.edit-form-fields .field-group:hover {
+  background: rgba(255, 255, 255, 1);
+  box-shadow: 0 8px 25px rgba(20, 184, 166, 0.12);
 }
 
 .edit-form-fields .field-group label {
   font-size: 11px;
-  font-weight: 800;
-  color: #4b5563;
+  font-weight: 700;
+  color: #0d9488;
   text-transform: uppercase;
-  letter-spacing: 0.8px;
-  text-shadow: 0 1px 2px rgba(255, 255, 255, 0.5);
+  letter-spacing: 1px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding-left: 4px;
+}
+
+.edit-form-fields .field-group label i {
+  font-size: 12px;
+  color: #14b8a6;
 }
 
 .edit-form-fields .field-group input,
 .edit-form-fields .field-group select {
-  padding: 16px 20px;
-  border: 2px solid #d1d5db;
-  border-radius: 12px;
-  font-size: 15px;
-  font-weight: 500;
-  background: white;
+  padding: 14px 18px;
+  border: 2px solid #e2e8f0;
+  border-radius: 14px;
+  font-size: 14px;
+  font-weight: 600;
+  background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  color: #1f2937;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+  color: #1e293b;
+  box-shadow: 
+    0 2px 6px rgba(0, 0, 0, 0.04),
+    inset 0 1px 2px rgba(255, 255, 255, 0.8);
 }
 
 .edit-form-fields .field-group input::placeholder {
-  color: #a3a3a3;
-  font-weight: 400;
+  color: #94a3b8;
+  font-weight: 500;
 }
 
 .edit-form-fields .field-group input:hover,
 .edit-form-fields .field-group select:hover {
   border-color: #14b8a6;
-  box-shadow: 0 4px 12px rgba(20, 184, 166, 0.1);
+  background: white;
+  box-shadow: 
+    0 6px 16px rgba(20, 184, 166, 0.12),
+    inset 0 1px 2px rgba(255, 255, 255, 0.9);
 }
 
 .edit-form-fields .field-group input:focus,
 .edit-form-fields .field-group select:focus {
   outline: none;
-  border-color: #14b8a6;
-  box-shadow: 0 0 0 5px rgba(20, 184, 166, 0.12), 0 4px 16px rgba(20, 184, 166, 0.15);
-  background: #f0fffe;
+  border-color: #0d9488;
+  background: white;
+  box-shadow: 
+    0 0 0 4px rgba(20, 184, 166, 0.15),
+    0 8px 20px rgba(20, 184, 166, 0.18);
 }
 
 /* Location Field with Autocomplete in Edit Form */
@@ -276,40 +359,51 @@
 
 .edit-form-fields .current-location-btn {
   position: absolute;
-  right: 12px;
+  right: 10px;
   top: 50%;
   transform: translateY(-50%);
-  background: linear-gradient(135deg, #ffa500 0%, #ffb84d 100%);
+  background: linear-gradient(135deg, #14b8a6 0%, #0d9488 100%);
   border: none;
   color: white;
-  width: 40px;
-  height: 40px;
-  border-radius: 8px;
+  width: 38px;
+  height: 38px;
+  border-radius: 12px;
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  box-shadow: 0 3px 10px rgba(255, 153, 51, 0.25);
+  box-shadow: 0 4px 12px rgba(20, 184, 166, 0.35);
 }
 
 .edit-form-fields .current-location-btn:hover:not(:disabled) {
-  background: linear-gradient(135deg, #ffb84d 0%, #ffc966 100%);
-  transform: translateY(-50%) scale(1.1);
-  box-shadow: 0 6px 16px rgba(255, 153, 51, 0.35);
+  background: linear-gradient(135deg, #0d9488 0%, #059669 100%);
+  transform: translateY(-50%) scale(1.1) rotate(15deg);
+  box-shadow: 0 8px 20px rgba(20, 184, 166, 0.45);
 }
 
 .edit-form-fields .current-location-btn:active:not(:disabled) {
-  transform: translateY(-50%) scale(0.98);
+  transform: translateY(-50%) scale(0.95);
 }
 
 .edit-form-fields .current-location-btn:disabled {
-  opacity: 0.5;
+  opacity: 0.4;
   cursor: not-allowed;
+  background: #94a3b8;
 }
 
 .edit-form-fields .current-location-btn i {
-  font-size: 18px;
+  font-size: 16px;
+  animation: none;
+}
+
+.edit-form-fields .current-location-btn:hover:not(:disabled) i {
+  animation: pulse-icon 0.6s ease-in-out;
+}
+
+@keyframes pulse-icon {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.2); }
 }
 
 .edit-form-fields .location-suggestions {
@@ -424,38 +518,42 @@
 .edit-form-actions {
   display: flex;
   align-items: center;
+  padding: 8px;
+  background: rgba(255, 255, 255, 0.8);
+  border-radius: 16px;
 }
 
 .search-update-btn {
   min-width: 200px;
-  min-height: 52px;
-  padding: 0;
+  min-height: 56px;
+  padding: 0 24px;
   border: none;
-  border-radius: 10px;
-  font-size: 0.65rem;
+  border-radius: 12px;
+  font-size: 15px;
   font-weight: 700;
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 6px;
+  gap: 10px;
   letter-spacing: 0.5px;
   white-space: nowrap;
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   background: linear-gradient(135deg, #14b8a6 0%, #0d9488 100%);
   color: white;
-  box-shadow: 0 6px 20px rgba(20, 184, 166, 0.35), 0 2px 8px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 8px 25px rgba(20, 184, 166, 0.4), 0 2px 8px rgba(0, 0, 0, 0.1);
+  text-transform: uppercase;
 }
 
 .search-update-btn:hover {
   background: linear-gradient(135deg, #0d9488 0%, #059669 100%);
-  box-shadow: 0 10px 28px rgba(20, 184, 166, 0.4), 0 4px 12px rgba(0, 0, 0, 0.15);
-  transform: translateY(-2px);
+  box-shadow: 0 12px 35px rgba(20, 184, 166, 0.5), 0 4px 12px rgba(0, 0, 0, 0.15);
+  transform: translateY(-3px);
 }
 
 .search-update-btn:active {
-  transform: translateY(0);
-  box-shadow: 0 4px 12px rgba(20, 184, 166, 0.3);
+  transform: translateY(-1px);
+  box-shadow: 0 6px 20px rgba(20, 184, 166, 0.4);
 }
 
 /* Vehicle Listings Section */
@@ -531,22 +629,32 @@
 /* Filters Sidebar */
 .filters-sidebar {
   background: white;
-  border-radius: 12px;
-  padding: 20px;
+  border-radius: 16px;
+  padding: 24px;
   height: fit-content;
   position: sticky;
   top: 20px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
-  border: 1px solid #e5e7eb;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+  border: 1px solid rgba(226, 232, 240, 0.8);
 }
 
 .filters-sidebar h3 {
-  font-size: 1.1rem;
-  font-weight: 700;
-  color: #111827;
-  margin-bottom: 20px;
-  padding-bottom: 12px;
-  border-bottom: 2px solid #e5e7eb;
+  font-size: 1.15rem;
+  font-weight: 800;
+  color: #0f172a;
+  margin-bottom: 24px;
+  padding-bottom: 14px;
+  border-bottom: 2px solid #14b8a6;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.filters-sidebar h3::before {
+  content: '\f0b0';
+  font-family: 'Font Awesome 6 Free';
+  font-weight: 900;
+  color: #14b8a6;
 }
 
 .filter-group {
@@ -766,19 +874,19 @@
 
 .vehicle-card {
   background: white;
-  border-radius: 12px;
+  border-radius: 16px;
   overflow: hidden;
   display: flex;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
-  border: 1px solid #e5e7eb;
-  transition: all 0.3s;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+  border: 1px solid rgba(226, 232, 240, 0.8);
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
   animation: fadeInUp 0.4s ease-out;
 }
 
 .vehicle-card:hover {
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
-  transform: translateY(-4px);
-  border-color: #2563eb;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
+  transform: translateY(-6px);
+  border-color: #14b8a6;
 }
 
 .vehicle-image {
@@ -803,35 +911,37 @@
   position: absolute;
   top: 12px;
   left: 12px;
-  background: #2563eb;
+  background: linear-gradient(135deg, #14b8a6 0%, #0d9488 100%);
   color: white;
-  padding: 6px 14px;
-  border-radius: 6px;
+  padding: 8px 16px;
+  border-radius: 50px;
   font-size: 12px;
-  font-weight: 600;
-  text-transform: capitalize;
-  letter-spacing: 0.3px;
-  box-shadow: 0 2px 8px rgba(37, 99, 235, 0.3);
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  box-shadow: 0 4px 12px rgba(20, 184, 166, 0.4);
 }
 
 .top-rated-badge {
   position: absolute;
   top: 12px;
   right: 12px;
-  background: #10b981;
+  background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
   color: white;
-  padding: 6px 12px;
-  border-radius: 6px;
+  padding: 8px 14px;
+  border-radius: 50px;
   font-size: 11px;
-  font-weight: 600;
+  font-weight: 700;
   display: flex;
   align-items: center;
-  gap: 4px;
-  box-shadow: 0 2px 8px rgba(16, 185, 129, 0.3);
+  gap: 5px;
+  box-shadow: 0 4px 12px rgba(245, 158, 11, 0.4);
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
 }
 
 .top-rated-badge i {
-  font-size: 12px;
+  font-size: 11px;
 }
 
 .vehicle-details {
@@ -872,15 +982,15 @@
 .rating {
   display: flex;
   align-items: center;
-  gap: 4px;
-  background: #10b981;
+  gap: 5px;
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
   color: white;
-  padding: 5px 10px;
-  border-radius: 6px;
-  font-weight: 600;
+  padding: 6px 12px;
+  border-radius: 50px;
+  font-weight: 700;
   white-space: nowrap;
   font-size: 13px;
-  box-shadow: 0 2px 4px rgba(16, 185, 129, 0.2);
+  box-shadow: 0 3px 10px rgba(16, 185, 129, 0.3);
 }
 
 .rating small {
@@ -890,7 +1000,7 @@
 }
 
 .rating i {
-  font-size: 12px;
+  font-size: 11px;
 }
 
 .vehicle-specs {
@@ -929,16 +1039,22 @@
 }
 
 .feature-tag {
-  background: #eff6ff;
-  color: #1e40af;
-  padding: 5px 12px;
-  border-radius: 6px;
+  background: linear-gradient(135deg, #f0fdfa 0%, #ccfbf1 100%);
+  color: #0d9488;
+  padding: 6px 14px;
+  border-radius: 50px;
   font-size: 12px;
-  font-weight: 500;
+  font-weight: 600;
   display: flex;
   align-items: center;
-  gap: 5px;
-  border: 1px solid #dbeafe;
+  gap: 6px;
+  border: 1px solid #99f6e4;
+  transition: all 0.2s ease;
+}
+
+.feature-tag:hover {
+  background: linear-gradient(135deg, #ccfbf1 0%, #99f6e4 100%);
+  transform: translateY(-1px);
 }
 
 .feature-tag i {
@@ -946,41 +1062,41 @@
 }
 
 .feature-tag.more-features {
-  background: #f3f4f6;
-  color: #6b7280;
-  border-color: #e5e7eb;
-  font-weight: 600;
+  background: linear-gradient(135deg, #f1f5f9 0%, #e2e8f0 100%);
+  color: #475569;
+  border-color: #cbd5e1;
+  font-weight: 700;
 }
 
 .vehicle-location {
   display: flex;
   align-items: center;
-  gap: 8px;
-  padding: 10px 12px;
-  background: #f9fafb;
-  border-radius: 6px;
-  color: #4b5563;
-  font-size: 12px;
-  font-weight: 500;
+  gap: 10px;
+  padding: 12px 16px;
+  background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+  border-radius: 12px;
+  color: #475569;
+  font-size: 13px;
+  font-weight: 600;
   margin-top: auto;
-  border: 1px solid #e5e7eb;
+  border: 1px solid #e2e8f0;
 }
 
 .vehicle-location i {
-  font-size: 13px;
-  color: #6b7280;
+  font-size: 14px;
+  color: #14b8a6;
 }
 
 .vehicle-pricing {
-  padding: 24px 20px;
-  background: #f9fafb;
+  padding: 28px 24px;
+  background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
   border-left: 1px solid #e5e7eb;
   display: flex;
   flex-direction: column;
   justify-content: center;
   align-items: center;
-  gap: 12px;
-  min-width: 200px;
+  gap: 14px;
+  min-width: 220px;
 }
 
 .price-info {
@@ -1007,17 +1123,17 @@
 }
 
 .price {
-  font-size: 1.75rem;
-  font-weight: 700;
-  color: #2563eb;
+  font-size: 1.9rem;
+  font-weight: 800;
+  color: #0d9488;
   margin: 4px 0;
   letter-spacing: -0.5px;
 }
 
 .price-small {
-  font-size: 1.1rem;
-  font-weight: 600;
-  color: #2563eb;
+  font-size: 1.2rem;
+  font-weight: 700;
+  color: #14b8a6;
 }
 
 .price-period {
@@ -1039,43 +1155,47 @@
 
 .book-btn {
   width: 100%;
-  background: #2563eb;
+  background: linear-gradient(135deg, #14b8a6 0%, #0d9488 100%);
   color: white;
   border: none;
-  padding: 12px 20px;
-  border-radius: 8px;
+  padding: 14px 24px;
+  border-radius: 50px;
   font-size: 15px;
-  font-weight: 600;
+  font-weight: 700;
   cursor: pointer;
-  transition: all 0.2s;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 6px;
-  box-shadow: 0 2px 8px rgba(37, 99, 235, 0.2);
+  gap: 8px;
+  box-shadow: 0 4px 15px rgba(20, 184, 166, 0.35);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
 }
 
 .book-btn:hover {
-  background: #1d4ed8;
-  transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3);
+  background: linear-gradient(135deg, #0d9488 0%, #059669 100%);
+  transform: translateY(-3px);
+  box-shadow: 0 8px 25px rgba(20, 184, 166, 0.45);
 }
 
 .details-btn {
   width: 100%;
   background: white;
-  color: #2563eb;
-  border: 1px solid #2563eb;
-  padding: 11px 20px;
-  border-radius: 8px;
+  color: #14b8a6;
+  border: 2px solid #14b8a6;
+  padding: 12px 20px;
+  border-radius: 50px;
   font-size: 14px;
   font-weight: 600;
   cursor: pointer;
-  transition: all 0.2s;
+  transition: all 0.3s ease;
 }
 
 .details-btn:hover {
-  background: #eff6ff;
+  background: #f0fdfa;
+  border-color: #0d9488;
+  color: #0d9488;
 }
 
 /* No Results */

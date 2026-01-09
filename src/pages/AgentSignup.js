@@ -244,7 +244,7 @@ export default function AgentSignup() {
       </div>
       <div className="signup-page-footer">
         <div className="container">
-          <p>© 2025 Travel Axis Online Limited, India. All rights reserved.</p>
+          <p>© 2026 Travel Axis Online Limited, India. All rights reserved.</p>
         </div>
       </div>
     </div>

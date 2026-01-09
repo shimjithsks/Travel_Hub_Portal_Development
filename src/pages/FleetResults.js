@@ -876,6 +876,7 @@ export default function FleetResults() {
                     title="Search Vehicles"
                   >
                     <i className="fas fa-search"></i>
+                    Search
                   </button>
                 </div>
               </div>

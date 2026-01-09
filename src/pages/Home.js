@@ -32,12 +32,43 @@ export default function Home() {
   const [travellers, setTravellers] = useState(1);
   const [travelClass, setTravelClass] = useState('Economy');
   
+  // Helper function to get today's date in YYYY-MM-DD format
+  const getTodayDate = () => {
+    const today = new Date();
+    return today.toISOString().split('T')[0];
+  };
+
+  // Helper function to get tomorrow's date or next day from a given date
+  const getNextDay = (dateString) => {
+    const date = dateString ? new Date(dateString) : new Date();
+    date.setDate(date.getDate() + 1);
+    return date.toISOString().split('T')[0];
+  };
+
+  // Handle pickup date change - auto-update return date if needed
+  const handlePickupDateChange = (newPickupDate) => {
+    // If return date is before the new pickup date, set it to same as pickup
+    if (!fleetSearch.dropoffDate || fleetSearch.dropoffDate < newPickupDate) {
+      setFleetSearch({ ...fleetSearch, date: newPickupDate, dropoffDate: newPickupDate });
+    } else {
+      setFleetSearch({ ...fleetSearch, date: newPickupDate });
+    }
+  };
+
+  // Handle return date change
+  const handleReturnDateChange = (newReturnDate) => {
+    // Ensure return date is same as or after pickup date
+    if (newReturnDate >= fleetSearch.date) {
+      setFleetSearch({ ...fleetSearch, dropoffDate: newReturnDate });
+    }
+  };
+  
   // Fleet search state
   const [fleetSearch, setFleetSearch] = useState({
     location: '',
     vehicleCategory: '',
-    date: '',
-    dropoffDate: ''
+    date: getTodayDate(),
+    dropoffDate: getNextDay()
   });
 
   // Popular pickup locations
@@ -111,7 +142,7 @@ export default function Home() {
   // Holiday search state
   const [holidaySearch, setHolidaySearch] = useState({
     destination: '',
-    date: '',
+    date: getTodayDate(),
     duration: '3-5 Days',
   });
   const [showDestinationSuggestions, setShowDestinationSuggestions] = useState(false);
@@ -920,41 +951,37 @@ export default function Home() {
             <div className="trust-card">
               <div className="trust-card-icon">
                 <i className="fas fa-shield-alt"></i>
-                <div className="icon-ring"></div>
               </div>
               <div className="trust-card-content">
-                <h4>100% Secure</h4>
-                <p>Protected payments</p>
+                <h4>100% Secure Payments</h4>
+                <p>All major credit & debit cards accepted</p>
               </div>
             </div>
             <div className="trust-card">
               <div className="trust-card-icon">
                 <i className="fas fa-headset"></i>
-                <div className="icon-ring"></div>
               </div>
               <div className="trust-card-content">
-                <h4>24/7 Support</h4>
-                <p>Always here for you</p>
+                <h4>24/7 Customer Support</h4>
+                <p>We're always here to help you</p>
               </div>
             </div>
             <div className="trust-card">
               <div className="trust-card-icon">
                 <i className="fas fa-medal"></i>
-                <div className="icon-ring"></div>
               </div>
               <div className="trust-card-content">
-                <h4>Best Prices</h4>
-                <p>Price match guarantee</p>
+                <h4>Best Price Guarantee</h4>
+                <p>Find a lower price? We'll match it!</p>
               </div>
             </div>
             <div className="trust-card">
               <div className="trust-card-icon">
-                <i className="fas fa-heart"></i>
-                <div className="icon-ring"></div>
+                <i className="fas fa-users"></i>
               </div>
               <div className="trust-card-content">
-                <h4>2M+ Happy</h4>
-                <p>Trusted customers</p>
+                <h4>2M+ Happy Customers</h4>
+                <p>Trusted by millions worldwide</p>
               </div>
             </div>
           </div>
@@ -1109,7 +1136,7 @@ export default function Home() {
                             value={fleetSearch.vehicleCategory}
                             onChange={(e) => setFleetSearch({...fleetSearch, vehicleCategory: e.target.value})}
                           >
-                            <option value="">Choose vehicle...</option>
+                            <option value="">All Categories</option>
                             <option value="car">🚗 Car</option>
                             <option value="cab">🚕 Cab</option>
                             <option value="tempo-traveller">🚐 Tempo Traveller</option>
@@ -1134,7 +1161,8 @@ export default function Home() {
                             id="pickup-date-new"
                             type="date" 
                             value={fleetSearch.date}
-                            onChange={(e) => setFleetSearch({...fleetSearch, date: e.target.value})}
+                            min={getTodayDate()}
+                            onChange={(e) => handlePickupDateChange(e.target.value)}
                           />
                         </div>
                       </div>
@@ -1152,8 +1180,8 @@ export default function Home() {
                             id="return-date-new"
                             type="date" 
                             value={fleetSearch.dropoffDate}
-                            onChange={(e) => setFleetSearch({...fleetSearch, dropoffDate: e.target.value})}
                             min={fleetSearch.date}
+                            onChange={(e) => handleReturnDateChange(e.target.value)}
                           />
                         </div>
                       </div>
@@ -1217,6 +1245,7 @@ export default function Home() {
                           <input
                             type="date"
                             value={holidaySearch.date}
+                            min={getTodayDate()}
                             onChange={e => setHolidaySearch({ ...holidaySearch, date: e.target.value })}
                           />
                         </div>
