@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import AOS from 'aos';
 import 'aos/dist/aos.css';
@@ -7,6 +7,7 @@ import ScrollToTop from './components/ScrollToTop';
 import Navbar from './components/Navbar';
 import Footer from './components/FooterNew';
 import LocationPermission from './components/LocationPermission';
+import LoadingPage from './components/LoadingPage';
 
 import Home from './pages/Home';
 import About from './pages/About';
@@ -46,6 +47,8 @@ import Offers from './pages/Offers';
 import './App.css';
 
 function App() {
+  const [loading, setLoading] = useState(true);
+
   useEffect(() => {
     AOS.init({ duration: 1000 });
     
@@ -54,7 +57,15 @@ function App() {
     link.rel = 'stylesheet';
     link.href = 'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css';
     document.head.appendChild(link);
+
+    // Show loading page for minimum 2 seconds before rendering app
+    const timer = setTimeout(() => setLoading(false), 2000);
+    return () => clearTimeout(timer);
   }, []);
+
+  if (loading) {
+    return <LoadingPage />;
+  }
 
   return (
     <BrowserRouter>
