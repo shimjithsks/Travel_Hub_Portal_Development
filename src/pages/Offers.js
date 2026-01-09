@@ -364,7 +364,9 @@ const Offers = () => {
       newPrice: '₹18,199',
       unit: 'person',
       code: 'KERALA30',
-      image: 'https://images.unsplash.com/photo-1602216056096-3b40cc0c9944?w=500&h=300&fit=crop'
+      image: 'https://images.unsplash.com/photo-1602216056096-3b40cc0c9944?w=500&h=300&fit=crop',
+      operatorName: 'Kerala Tours',
+      verified: true
     },
     {
       type: 'adventure',
@@ -376,7 +378,9 @@ const Offers = () => {
       newPrice: '₹28,799',
       unit: 'person',
       code: 'LADAKH20',
-      image: 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=500&h=300&fit=crop'
+      image: 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=500&h=300&fit=crop',
+      operatorName: 'Yatra',
+      verified: true
     },
     {
       type: 'beach',
@@ -388,7 +392,9 @@ const Offers = () => {
       newPrice: '₹14,249',
       unit: 'person',
       code: 'GOA25',
-      image: 'https://images.unsplash.com/photo-1512343879784-a960bf40e7f2?w=500&h=300&fit=crop'
+      image: 'https://images.unsplash.com/photo-1512343879784-a960bf40e7f2?w=500&h=300&fit=crop',
+      operatorName: 'Goa Travels',
+      verified: true
     },
     {
       type: 'spiritual',
@@ -400,7 +406,9 @@ const Offers = () => {
       newPrice: '₹11,049',
       unit: 'person',
       code: 'DIVINE15',
-      image: 'https://images.unsplash.com/photo-1561361513-2d000a50f0dc?w=500&h=300&fit=crop'
+      image: 'https://images.unsplash.com/photo-1561361513-2d000a50f0dc?w=500&h=300&fit=crop',
+      operatorName: 'Holy India Tours',
+      verified: true
     },
     {
       type: 'honeymoon',
@@ -412,7 +420,9 @@ const Offers = () => {
       newPrice: '₹29,899',
       unit: 'couple',
       code: 'LOVE35',
-      image: 'https://images.unsplash.com/photo-1540541338287-41700207dee6?w=500&h=300&fit=crop'
+      image: 'https://images.unsplash.com/photo-1540541338287-41700207dee6?w=500&h=300&fit=crop',
+      operatorName: 'Romantic Escapes',
+      verified: true
     },
     {
       type: 'international',
@@ -424,7 +434,9 @@ const Offers = () => {
       newPrice: '₹60,799',
       unit: 'person',
       code: 'DUBAI20',
-      image: 'https://images.unsplash.com/photo-1512453979798-5ea266f8880c?w=500&h=300&fit=crop'
+      image: 'https://images.unsplash.com/photo-1512453979798-5ea266f8880c?w=500&h=300&fit=crop',
+      operatorName: 'Dubai Experts',
+      verified: true
     },
     {
       type: 'kashmir',
@@ -436,7 +448,9 @@ const Offers = () => {
       newPrice: '₹24,749',
       unit: 'person',
       code: 'KASHMIR25',
-      image: 'https://images.unsplash.com/photo-1566837945700-30057527ade0?w=500&h=300&fit=crop'
+      image: 'https://images.unsplash.com/photo-1566837945700-30057527ade0?w=500&h=300&fit=crop',
+      operatorName: 'Kashmir Valley Tours',
+      verified: true
     },
     {
       type: 'thailand',
@@ -448,7 +462,9 @@ const Offers = () => {
       newPrice: '₹39,199',
       unit: 'person',
       code: 'THAI30',
-      image: 'https://images.unsplash.com/photo-1552465011-b4e21bf6e79a?w=500&h=300&fit=crop'
+      image: 'https://images.unsplash.com/photo-1552465011-b4e21bf6e79a?w=500&h=300&fit=crop',
+      operatorName: 'Thai Holidays',
+      verified: true
     },
     {
       type: 'rajasthan',
@@ -460,7 +476,9 @@ const Offers = () => {
       newPrice: '₹22,619',
       unit: 'person',
       code: 'ROYAL22',
-      image: 'https://images.unsplash.com/photo-1524492412937-b28074a5d7da?w=500&h=300&fit=crop'
+      image: 'https://images.unsplash.com/photo-1524492412937-b28074a5d7da?w=500&h=300&fit=crop',
+      operatorName: 'Rajasthan Royals',
+      verified: true
     }
   ];
 
@@ -735,18 +753,18 @@ const Offers = () => {
                 <span>Travel Fleet</span>
               </button>
               <button 
-                className={`offers-tab ${activeTab === 'hotels' ? 'active' : ''}`} 
-                onClick={() => setActiveTab('hotels')}
-              >
-                <div className="tab-icon"><i className="fas fa-hotel"></i></div>
-                <span>Hotels</span>
-              </button>
-              <button 
                 className={`offers-tab ${activeTab === 'holidays' ? 'active' : ''}`} 
                 onClick={() => setActiveTab('holidays')}
               >
                 <div className="tab-icon"><i className="fas fa-umbrella-beach"></i></div>
                 <span>Holidays</span>
+              </button>
+              <button 
+                className={`offers-tab ${activeTab === 'hotels' ? 'active' : ''}`} 
+                onClick={() => setActiveTab('hotels')}
+              >
+                <div className="tab-icon"><i className="fas fa-hotel"></i></div>
+                <span>Hotels</span>
               </button>
               <button 
                 className={`offers-tab ${activeTab === 'flights' ? 'active' : ''}`} 
@@ -823,8 +841,8 @@ const Offers = () => {
             )}
           </div>
 
-          {/* Promo Banner */}
-          <div className="offers-promo-banner">
+          {/* Promo Banner - Hidden for now */}
+          {/* <div className="offers-promo-banner">
             <div className="promo-icon"><i className="fas fa-gift"></i></div>
             <div className="promo-content">
               <h3>{getPromoInfo().title}</h3>
@@ -836,7 +854,7 @@ const Offers = () => {
                 <i className="fas fa-copy"></i>
               </button>
             </div>
-          </div>
+          </div> */}
 
           {/* Offers Grid */}
           <div className="offers-grid">
@@ -867,6 +885,21 @@ const Offers = () => {
                         <i className="fas fa-star"></i>
                         <span>{offer.operatorRating}</span>
                       </div>
+                    </div>
+                  )}
+                  {/* Operator info for holiday offers */}
+                  {activeTab === 'holidays' && offer.operatorName && (
+                    <div className="operator-info">
+                      <div className="operator-name-badge">
+                        <i className="fas fa-building"></i>
+                        <span>{offer.operatorName}</span>
+                      </div>
+                      {offer.verified && (
+                        <div className="verified-partner-badge">
+                          <i className="fas fa-check-circle"></i>
+                          <span>Verified Partner</span>
+                        </div>
+                      )}
                     </div>
                   )}
                   <h3>{offer.title}</h3>

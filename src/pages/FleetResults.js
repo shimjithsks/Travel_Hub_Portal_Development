@@ -1180,15 +1180,17 @@ export default function FleetResults() {
                           <h3>{vehicle.name}</h3>
                           <p className="operator-name">
                             <i className="fas fa-building"></i> {vehicle.operatorName}
-                            <span className="verified-partner" style={{marginLeft: '12px', color: '#22c55e', fontWeight: 600}}>
-                              <i className="fas fa-check-circle" style={{color: '#22c55e', marginRight: '4px'}}></i> Verified Partner
-                            </span>
                           </p>
                         </div>
-                        <div className="rating">
-                          <i className="fas fa-star"></i>
-                          <span>{vehicle.rating}</span>
-                          <small>({vehicle.reviews})</small>
+                        <div className="rating-verified-wrapper">
+                          <div className="rating">
+                            <i className="fas fa-star"></i>
+                            <span>{vehicle.rating}</span>
+                            <small>({vehicle.reviews})</small>
+                          </div>
+                          <span className="verified-partner-badge">
+                            <i className="fas fa-check-circle"></i> Verified Partner
+                          </span>
                         </div>
                       </div>
 

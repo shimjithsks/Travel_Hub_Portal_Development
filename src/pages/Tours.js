@@ -16,7 +16,8 @@ export default function Tours() {
     duration: '',
     category: '',
     location: '',
-    searchTerm: location.state && location.state.searchTerm ? location.state.searchTerm : ''
+    searchTerm: location.state && location.state.searchTerm ? location.state.searchTerm : '',
+    travelDate: new Date().toISOString().split('T')[0]
   });
 
   const [sortBy, setSortBy] = useState('recommended');
@@ -651,86 +652,139 @@ export default function Tours() {
 
           {/* Search Bar */}
           <div className="tours-search-bar" data-aos="fade-up" data-aos-delay="100">
-            <div className="search-wrapper" ref={dropdownRef}>
-              <i className="fas fa-map-marker-alt"></i>
-              <input
-                type="text"
-                placeholder="Search destination..."
-                value={destinationSearch}
-                onChange={handleDestinationInputChange}
-                onFocus={() => setShowDestinationDropdown(true)}
-                className="destination-input"
-              />
-              {destinationSearch && (
-                <button className="clear-search-btn" onClick={clearDestination}>
-                  <i className="fas fa-times"></i>
-                </button>
-              )}
-              <i className="fas fa-chevron-down dropdown-arrow"></i>
-              
-              {/* Destination Dropdown */}
-              {showDestinationDropdown && (
-                <div className="destination-dropdown">
-                  <div className="dropdown-header">
-                    <i className="fas fa-globe"></i>
-                    <span>Popular Destinations</span>
-                  </div>
-                  <div className="dropdown-list">
-                    {filteredLocations.length > 0 ? (
-                      filteredLocations.map(loc => (
-                        <div 
-                          key={loc.id} 
-                          className={`dropdown-item ${filters.location === loc.id ? 'active' : ''}`}
-                          onClick={() => handleDestinationSelect(loc)}
-                        >
-                          <span className="item-icon">{loc.icon}</span>
-                          <div className="item-content">
-                            <span className="item-name">{loc.name}</span>
-                            <span className="item-places">{loc.destinations.slice(0, 3).join(', ')}</span>
-                          </div>
-                          {filters.location === loc.id && <i className="fas fa-check"></i>}
-                        </div>
-                      ))
-                    ) : (
-                      <div className="dropdown-empty">
-                        <i className="fas fa-search"></i>
-                        <span>No destinations found. Searching for "{destinationSearch}"</span>
-                      </div>
-                    )}
-                  </div>
+            <div className="search-fields-row">
+              {/* Destination Field */}
+              <div className="search-field destination-field" ref={dropdownRef}>
+                <div className="field-icon">
+                  <i className="fas fa-map-marker-alt"></i>
                 </div>
-              )}
+                <div className="field-content">
+                  <label>Destination</label>
+                  <input
+                    type="text"
+                    placeholder="Where do you want to go?"
+                    value={destinationSearch}
+                    onChange={handleDestinationInputChange}
+                    onFocus={() => setShowDestinationDropdown(true)}
+                    className="destination-input"
+                  />
+                </div>
+                {destinationSearch && (
+                  <button className="clear-search-btn" onClick={clearDestination}>
+                    <i className="fas fa-times"></i>
+                  </button>
+                )}
+                
+                {/* Destination Dropdown */}
+                {showDestinationDropdown && (
+                  <div className="destination-dropdown">
+                    <div className="dropdown-header">
+                      <i className="fas fa-globe"></i>
+                      <span>Popular Destinations</span>
+                    </div>
+                    <div className="dropdown-list">
+                      {filteredLocations.length > 0 ? (
+                        filteredLocations.map(loc => (
+                          <div 
+                            key={loc.id} 
+                            className={`dropdown-item ${filters.location === loc.id ? 'active' : ''}`}
+                            onClick={() => handleDestinationSelect(loc)}
+                          >
+                            <span className="item-icon">{loc.icon}</span>
+                            <div className="item-content">
+                              <span className="item-name">{loc.name}</span>
+                              <span className="item-places">{loc.destinations.slice(0, 3).join(', ')}</span>
+                            </div>
+                            {filters.location === loc.id && <i className="fas fa-check"></i>}
+                          </div>
+                        ))
+                      ) : (
+                        <div className="dropdown-empty">
+                          <i className="fas fa-search"></i>
+                          <span>No destinations found</span>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              <div className="field-divider"></div>
+
+              {/* Travel Date Field */}
+              <div className="search-field date-field">
+                <div className="field-icon">
+                  <i className="fas fa-calendar-alt"></i>
+                </div>
+                <div className="field-content">
+                  <label>Travel Date</label>
+                  <input
+                    type="date"
+                    value={filters.travelDate}
+                    onChange={(e) => setFilters({...filters, travelDate: e.target.value})}
+                    className="date-input"
+                    min={new Date().toISOString().split('T')[0]}
+                  />
+                </div>
+              </div>
+
+              <div className="field-divider"></div>
+
+              {/* Duration Filter */}
+              <div className="search-field duration-field">
+                <div className="field-icon">
+                  <i className="fas fa-clock"></i>
+                </div>
+                <div className="field-content">
+                  <label>Duration</label>
+                  <select
+                    value={filters.duration}
+                    onChange={(e) => setFilters({...filters, duration: e.target.value})}
+                    className="filter-select-inline"
+                  >
+                    <option value="">Any Duration</option>
+                    <option value="short">4-6 Days</option>
+                    <option value="medium">7-8 Days</option>
+                    <option value="long">10+ Days</option>
+                  </select>
+                </div>
+              </div>
+
+              {/* Search Button */}
+              <button className="search-tours-btn">
+                <i className="fas fa-search"></i>
+                <span>Search</span>
+              </button>
             </div>
-            <div className="filter-chips">
-              <select
-                value={filters.priceRange}
-                onChange={(e) => setFilters({...filters, priceRange: e.target.value})}
-                className="filter-select"
-              >
-                <option value="">All Prices</option>
-                <option value="low">Under ₹40,000</option>
-                <option value="medium">₹40K - ₹1 Lakh</option>
-                <option value="high">₹1 Lakh+</option>
-              </select>
-              <select
-                value={filters.duration}
-                onChange={(e) => setFilters({...filters, duration: e.target.value})}
-                className="filter-select"
-              >
-                <option value="">All Durations</option>
-                <option value="short">4-6 Days</option>
-                <option value="medium">7-8 Days</option>
-                <option value="long">10+ Days</option>
-              </select>
-              {(filters.priceRange || filters.duration || filters.category || filters.location || filters.searchTerm) && (
+
+            {/* Active Filters */}
+            {(filters.duration || filters.category || filters.location) && (
+              <div className="active-filters-bar">
+                <span className="filters-label"><i className="fas fa-filter"></i> Active Filters:</span>
+                {filters.location && (
+                  <span className="filter-tag">
+                    <i className="fas fa-map-marker-alt"></i> {destinationSearch}
+                    <button onClick={() => { setFilters({...filters, location: ''}); setDestinationSearch(''); }}>
+                      <i className="fas fa-times"></i>
+                    </button>
+                  </span>
+                )}
+                {filters.duration && (
+                  <span className="filter-tag">
+                    <i className="fas fa-clock"></i> {filters.duration === 'short' ? '4-6 Days' : filters.duration === 'medium' ? '7-8 Days' : '10+ Days'}
+                    <button onClick={() => setFilters({...filters, duration: ''})}>
+                      <i className="fas fa-times"></i>
+                    </button>
+                  </span>
+                )}
                 <button 
-                  className="clear-btn"
-                  onClick={() => setFilters({ priceRange: '', duration: '', category: '', location: '', searchTerm: '' })}
+                  className="clear-all-btn"
+                  onClick={() => { setFilters({ priceRange: '', duration: '', category: '', location: '', searchTerm: '', travelDate: new Date().toISOString().split('T')[0] }); setDestinationSearch(''); }}
                 >
-                  <i className="fas fa-times"></i> Clear
+                  Clear All
                 </button>
-              )}
-            </div>
+              </div>
+            )}
           </div>
         </div>
       </section>
@@ -804,8 +858,6 @@ export default function Tours() {
               <div 
                 key={tour.id} 
                 className="tour-card-new"
-                data-aos="fade-up"
-                data-aos-delay={index * 50}
               >
                 <div className="tour-card-image">
                   <img src={tour.image} alt={tour.name} />

@@ -143,8 +143,28 @@ export default function Home() {
   const [holidaySearch, setHolidaySearch] = useState({
     destination: '',
     date: getTodayDate(),
-    duration: '3-5 Days',
+    duration: 'Any Duration',
   });
+
+  // Hotel search state
+  const [hotelSearch, setHotelSearch] = useState({
+    city: '',
+    checkIn: getTodayDate(),
+    checkOut: getNextDay(),
+    guests: '1 Room, 2 Adults',
+  });
+
+  // Handle hotel check-in date change - auto-update check-out if needed
+  const handleCheckInChange = (newCheckIn) => {
+    const nextDay = getNextDay(newCheckIn);
+    // If check-out is before or same as new check-in, set it to next day
+    if (!hotelSearch.checkOut || hotelSearch.checkOut <= newCheckIn) {
+      setHotelSearch({ ...hotelSearch, checkIn: newCheckIn, checkOut: nextDay });
+    } else {
+      setHotelSearch({ ...hotelSearch, checkIn: newCheckIn });
+    }
+  };
+
   const [showDestinationSuggestions, setShowDestinationSuggestions] = useState(false);
   const [filteredDestinations, setFilteredDestinations] = useState(popularLocations);
   // Handle destination input change for holidays
@@ -674,7 +694,9 @@ export default function Home() {
       oldPrice: '₹25,999',
       newPrice: '₹19,999',
       unit: '/person',
-      image: 'https://images.unsplash.com/photo-1602216056096-3b40cc0c9944?w=400&h=250&fit=crop'
+      image: 'https://images.unsplash.com/photo-1602216056096-3b40cc0c9944?w=400&h=250&fit=crop',
+      operatorName: 'Kerala Tours',
+      verified: true
     },
     {
       id: 2,
@@ -687,7 +709,9 @@ export default function Home() {
       oldPrice: '₹35,999',
       newPrice: '₹29,999',
       unit: '/person',
-      image: 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=400&h=250&fit=crop'
+      image: 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=400&h=250&fit=crop',
+      operatorName: 'Yatra',
+      verified: true
     },
     {
       id: 3,
@@ -700,7 +724,9 @@ export default function Home() {
       oldPrice: '₹18,999',
       newPrice: '₹13,999',
       unit: '/person',
-      image: 'https://images.unsplash.com/photo-1512343879784-a960bf40e7f2?w=400&h=250&fit=crop'
+      image: 'https://images.unsplash.com/photo-1512343879784-a960bf40e7f2?w=400&h=250&fit=crop',
+      operatorName: 'Goa Travels',
+      verified: true
     },
     {
       id: 4,
@@ -713,7 +739,9 @@ export default function Home() {
       oldPrice: '₹12,999',
       newPrice: '₹10,999',
       unit: '/person',
-      image: 'https://images.unsplash.com/photo-1561361513-2d000a50f0dc?w=400&h=250&fit=crop'
+      image: 'https://images.unsplash.com/photo-1561361513-2d000a50f0dc?w=400&h=250&fit=crop',
+      operatorName: 'Holy India Tours',
+      verified: true
     }
   ];
 
@@ -1247,6 +1275,7 @@ export default function Home() {
                             value={holidaySearch.date}
                             min={getTodayDate()}
                             onChange={e => setHolidaySearch({ ...holidaySearch, date: e.target.value })}
+                            onClick={(e) => e.target.showPicker()}
                           />
                         </div>
                       </div>
@@ -1261,6 +1290,7 @@ export default function Home() {
                             value={holidaySearch.duration}
                             onChange={e => setHolidaySearch({ ...holidaySearch, duration: e.target.value })}
                           >
+                            <option>Any Duration</option>
                             <option>3-5 Days</option>
                             <option>6-8 Days</option>
                             <option>9-12 Days</option>
@@ -1291,7 +1321,12 @@ export default function Home() {
                           <span>City or Hotel</span>
                         </div>
                         <div className="field-input-wrapper">
-                          <input type="text" placeholder="Search city, area or property..." />
+                          <input 
+                            type="text" 
+                            placeholder="Search city, area or property..." 
+                            value={hotelSearch.city}
+                            onChange={(e) => setHotelSearch({...hotelSearch, city: e.target.value})}
+                          />
                         </div>
                       </div>
 
@@ -1301,7 +1336,13 @@ export default function Home() {
                           <span>Check-in</span>
                         </div>
                         <div className="field-input-wrapper date-wrapper">
-                          <input type="date" />
+                          <input 
+                            type="date" 
+                            value={hotelSearch.checkIn}
+                            onChange={(e) => handleCheckInChange(e.target.value)}
+                            min={getTodayDate()}
+                            onClick={(e) => e.target.showPicker()}
+                          />
                         </div>
                       </div>
 
@@ -1311,7 +1352,13 @@ export default function Home() {
                           <span>Check-out</span>
                         </div>
                         <div className="field-input-wrapper date-wrapper">
-                          <input type="date" />
+                          <input 
+                            type="date" 
+                            value={hotelSearch.checkOut}
+                            onChange={(e) => setHotelSearch({...hotelSearch, checkOut: e.target.value})}
+                            min={getNextDay(hotelSearch.checkIn)}
+                            onClick={(e) => e.target.showPicker()}
+                          />
                         </div>
                       </div>
 
@@ -1321,7 +1368,10 @@ export default function Home() {
                           <span>Guests</span>
                         </div>
                         <div className="field-input-wrapper select-wrapper">
-                          <select>
+                          <select
+                            value={hotelSearch.guests}
+                            onChange={(e) => setHotelSearch({...hotelSearch, guests: e.target.value})}
+                          >
                             <option>1 Room, 2 Adults</option>
                             <option>2 Rooms, 4 Adults</option>
                             <option>3 Rooms, 6 Adults</option>
@@ -1410,6 +1460,8 @@ export default function Home() {
                             type="date" 
                             value={departDate}
                             onChange={(e) => setDepartDate(e.target.value)}
+                            min={getTodayDate()}
+                            onClick={(e) => e.target.showPicker()}
                           />
                         </div>
                       </div>
@@ -1425,6 +1477,8 @@ export default function Home() {
                               type="date" 
                               value={returnDate}
                               onChange={(e) => setReturnDate(e.target.value)}
+                              min={departDate || getTodayDate()}
+                              onClick={(e) => e.target.showPicker()}
                             />
                           </div>
                         </div>
@@ -1706,19 +1760,6 @@ export default function Home() {
                 <div className="tab-arrow"><i className="fas fa-chevron-right"></i></div>
               </button>
               <button 
-                className={`hub-tab ${activeDealsTab === 'hotels' ? 'active' : ''}`} 
-                onClick={() => setActiveDealsTab('hotels')}
-              >
-                <div className="tab-icon-circle">
-                  <i className="fas fa-hotel"></i>
-                </div>
-                <div className="tab-info">
-                  <span className="tab-name">Hotels</span>
-                  <span className="tab-desc">Premium Stays</span>
-                </div>
-                <div className="tab-arrow"><i className="fas fa-chevron-right"></i></div>
-              </button>
-              <button 
                 className={`hub-tab ${activeDealsTab === 'holidays' ? 'active' : ''}`} 
                 onClick={() => setActiveDealsTab('holidays')}
               >
@@ -1728,6 +1769,19 @@ export default function Home() {
                 <div className="tab-info">
                   <span className="tab-name">Holidays</span>
                   <span className="tab-desc">Tour Packages</span>
+                </div>
+                <div className="tab-arrow"><i className="fas fa-chevron-right"></i></div>
+              </button>
+              <button 
+                className={`hub-tab ${activeDealsTab === 'hotels' ? 'active' : ''}`} 
+                onClick={() => setActiveDealsTab('hotels')}
+              >
+                <div className="tab-icon-circle">
+                  <i className="fas fa-hotel"></i>
+                </div>
+                <div className="tab-info">
+                  <span className="tab-name">Hotels</span>
+                  <span className="tab-desc">Premium Stays</span>
                 </div>
                 <div className="tab-arrow"><i className="fas fa-chevron-right"></i></div>
               </button>
@@ -1766,8 +1820,8 @@ export default function Home() {
                     <div className="offer-discount-tag">{offer.discount}</div>
                   </div>
                   <div className="offer-content">
-                    {/* Show operator info for fleet offers */}
-                    {activeDealsTab === 'fleet' && offer.operator && (
+                    {/* Show operator info for fleet and holiday offers */}
+                    {(activeDealsTab === 'fleet' && offer.operator) && (
                       <div className="offer-operator-info">
                         <div className="operator-badge">
                           <i className="fas fa-building"></i>
@@ -1777,6 +1831,20 @@ export default function Home() {
                           <i className="fas fa-star"></i>
                           <span>{offer.operatorRating}</span>
                         </div>
+                      </div>
+                    )}
+                    {(activeDealsTab === 'holidays' && offer.operatorName) && (
+                      <div className="offer-operator-info">
+                        <div className="operator-badge">
+                          <i className="fas fa-building"></i>
+                          <span className="operator-name">{offer.operatorName}</span>
+                        </div>
+                        {offer.verified && (
+                          <div className="verified-badge">
+                            <i className="fas fa-check-circle"></i>
+                            <span>Verified</span>
+                          </div>
+                        )}
                       </div>
                     )}
                     <h3>{offer.title}</h3>
@@ -2187,19 +2255,11 @@ export default function Home() {
           <h2 className="products-title">Explore Travel Axis</h2>
           <div className="products-grid-new">
             <div className="product-column">
-              <h4><i className="fas fa-plane"></i> Flights</h4>
+              <h4><i className="fas fa-car"></i> Travel Fleet</h4>
               <ul>
-                <li><Link to="/flights">International Airlines</Link></li>
-                <li><Link to="/flights">Domestic Airlines</Link></li>
-                <li><Link to="/flights">Last Minute Deals</Link></li>
-              </ul>
-            </div>
-            <div className="product-column">
-              <h4><i className="fas fa-hotel"></i> Hotels & Stays</h4>
-              <ul>
-                <li><Link to="/hotels">Premium Hotels</Link></li>
-                <li><Link to="/hotels">Budget Stays</Link></li>
-                <li><Link to="/hotels">Villas & Resorts</Link></li>
+                <li><Link to="/fleet-results">Outstation Cabs</Link></li>
+                <li><Link to="/fleet-results">Local Rentals</Link></li>
+                <li><Link to="/fleet-results">Airport Transfer</Link></li>
               </ul>
             </div>
             <div className="product-column">
@@ -2211,11 +2271,19 @@ export default function Home() {
               </ul>
             </div>
             <div className="product-column">
-              <h4><i className="fas fa-car"></i> Transport</h4>
+              <h4><i className="fas fa-hotel"></i> Hotels & Stays</h4>
               <ul>
-                <li><Link to="/fleet-results">Outstation Cabs</Link></li>
-                <li><Link to="/tour">Bus Booking</Link></li>
-                <li><Link to="/tour">Train Tickets</Link></li>
+                <li><Link to="/hotels">Premium Hotels</Link></li>
+                <li><Link to="/hotels">Budget Stays</Link></li>
+                <li><Link to="/hotels">Villas & Resorts</Link></li>
+              </ul>
+            </div>
+            <div className="product-column">
+              <h4><i className="fas fa-plane"></i> Flights</h4>
+              <ul>
+                <li><Link to="/flights">International Airlines</Link></li>
+                <li><Link to="/flights">Domestic Airlines</Link></li>
+                <li><Link to="/flights">Last Minute Deals</Link></li>
               </ul>
             </div>
           </div>
