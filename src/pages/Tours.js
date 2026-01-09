@@ -1,19 +1,76 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
+import AOS from 'aos';
 import '../styles/tours.css';
 
 export default function Tours() {
   const location = useLocation();
-  console.log('Tours page loaded. location.state:', location.state);
+  const navigate = useNavigate();
+  
+  useEffect(() => {
+    AOS.init({ duration: 800 });
+  }, []);
   
   const [filters, setFilters] = useState({
     priceRange: '',
     duration: '',
     category: '',
+    location: '',
     searchTerm: location.state && location.state.searchTerm ? location.state.searchTerm : ''
   });
 
   const [sortBy, setSortBy] = useState('recommended');
+  const [viewMode, setViewMode] = useState('list');
+  const [showDestinationDropdown, setShowDestinationDropdown] = useState(false);
+  const [destinationSearch, setDestinationSearch] = useState('');
+  const dropdownRef = useRef(null);
+
+  // Default locations list
+  const popularLocations = [
+    { id: 'india', name: 'India', icon: '🇮🇳', destinations: ['Leh', 'Kerala', 'Rajasthan', 'Goa', 'Kashmir'] },
+    { id: 'dubai', name: 'Dubai', icon: '🇦🇪', destinations: ['Dubai', 'Abu Dhabi'] },
+    { id: 'thailand', name: 'Thailand', icon: '🇹🇭', destinations: ['Thailand', 'Phuket', 'Bangkok'] },
+    { id: 'bali', name: 'Bali', icon: '🇮🇩', destinations: ['Bali', 'Ubud'] },
+    { id: 'maldives', name: 'Maldives', icon: '🇲🇻', destinations: ['Maldives', 'Male'] },
+    { id: 'europe', name: 'Europe', icon: '🇪🇺', destinations: ['Greece', 'Italy', 'Switzerland', 'France'] },
+    { id: 'singapore', name: 'Singapore', icon: '🇸🇬', destinations: ['Singapore', 'Malaysia'] },
+    { id: 'japan', name: 'Japan', icon: '🇯🇵', destinations: ['Japan', 'Tokyo', 'Kyoto'] }
+  ];
+
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+        setShowDestinationDropdown(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  // Filter locations based on search
+  const filteredLocations = popularLocations.filter(loc => 
+    loc.name.toLowerCase().includes(destinationSearch.toLowerCase()) ||
+    loc.destinations.some(d => d.toLowerCase().includes(destinationSearch.toLowerCase()))
+  );
+
+  const handleDestinationSelect = (loc) => {
+    setFilters({...filters, location: loc.id, searchTerm: ''});
+    setDestinationSearch(loc.icon + ' ' + loc.name);
+    setShowDestinationDropdown(false);
+  };
+
+  const handleDestinationInputChange = (e) => {
+    const value = e.target.value;
+    setDestinationSearch(value);
+    setFilters({...filters, location: '', searchTerm: value});
+    setShowDestinationDropdown(true);
+  };
+
+  const clearDestination = () => {
+    setDestinationSearch('');
+    setFilters({...filters, location: '', searchTerm: ''});
+  };
 
   // If navigated with a searchTerm, update filter on mount
   useEffect(() => {
@@ -157,24 +214,6 @@ export default function Tours() {
       discount: 16
     },
     { 
-      id: 7, 
-      name: 'Thailand Beach Paradise', 
-      price: 32000, 
-      originalPrice: 38000,
-      duration: '6 Days 5 Nights', 
-      image: 'https://images.unsplash.com/photo-1552465011-b4e21bf6e79a?w=800', 
-      rating: 4.7,
-      reviews: 423,
-      location: 'Thailand',
-      category: 'Beach & Relaxation',
-      highlights: ['Phuket', 'Phi Phi Island', 'Krabi', 'James Bond Island'],
-      included: ['Resort Stay', 'Breakfast', 'Island Tours', 'Speed Boat'],
-      operatorName: 'Thai Paradise Holidays',
-      verified: true,
-      eCash: 960,
-      discount: 16
-    },
-    { 
       id: 8, 
       name: 'Bali Spiritual Retreat', 
       price: 42000, 
@@ -269,6 +308,234 @@ export default function Tours() {
       eCash: 1560,
       discount: 16
     },
+    { 
+      id: 13, 
+      name: 'Goa Beach Carnival', 
+      price: 15000, 
+      originalPrice: 18000,
+      duration: '4 Days 3 Nights', 
+      image: 'https://images.unsplash.com/photo-1512343879784-a960bf40e7f2?w=800', 
+      rating: 4.5,
+      reviews: 567,
+      location: 'Goa',
+      category: 'Beach & Party',
+      highlights: ['Baga Beach', 'Calangute', 'Old Goa Churches', 'Dudhsagar Falls'],
+      included: ['Beach Resort', 'Breakfast', 'Sightseeing', 'Water Sports'],
+      destinations: ['Goa', 'Baga Beach', 'Calangute', 'Anjuna', 'Panjim', 'Old Goa'],
+      operatorName: 'Goa Holiday Makers',
+      verified: true,
+      eCash: 450,
+      discount: 17
+    },
+    { 
+      id: 14, 
+      name: 'Kashmir Paradise Valley', 
+      price: 28000, 
+      originalPrice: 35000,
+      duration: '6 Days 5 Nights', 
+      image: 'https://images.unsplash.com/photo-1566837945700-30057527ade0?w=800', 
+      rating: 4.9,
+      reviews: 412,
+      location: 'Kashmir',
+      category: 'Nature & Romance',
+      highlights: ['Dal Lake', 'Gulmarg', 'Pahalgam', 'Shikara Ride'],
+      included: ['Houseboat Stay', 'Hotels', 'All Meals', 'Sightseeing'],
+      destinations: ['Kashmir', 'Srinagar', 'Dal Lake', 'Gulmarg', 'Pahalgam', 'Sonmarg'],
+      operatorName: 'Kashmir Valley Tours',
+      verified: true,
+      eCash: 840,
+      discount: 20
+    },
+    { 
+      id: 15, 
+      name: 'Paris Romantic Getaway', 
+      price: 125000, 
+      originalPrice: 145000,
+      duration: '7 Days 6 Nights', 
+      image: 'https://images.unsplash.com/photo-1502602898657-3e91760cbb34?w=800', 
+      rating: 4.9,
+      reviews: 234,
+      location: 'France',
+      category: 'Luxury & Romance',
+      highlights: ['Eiffel Tower', 'Louvre Museum', 'Seine River Cruise', 'Versailles'],
+      included: ['Luxury Hotels', 'Breakfast', 'City Tours', 'Museum Passes'],
+      destinations: ['France', 'Paris', 'Versailles', 'Loire Valley', 'Nice'],
+      operatorName: 'Euro Dreams Travel',
+      verified: true,
+      eCash: 3750,
+      discount: 14
+    },
+    { 
+      id: 16, 
+      name: 'Bangkok Pattaya Fun', 
+      price: 28000, 
+      originalPrice: 34000,
+      duration: '5 Days 4 Nights', 
+      image: 'https://images.unsplash.com/photo-1508009603885-50cf7c579365?w=800', 
+      rating: 4.4,
+      reviews: 678,
+      location: 'Thailand',
+      category: 'City & Entertainment',
+      highlights: ['Grand Palace', 'Pattaya Beach', 'Coral Island', 'Alcazar Show'],
+      included: ['Hotels', 'Breakfast', 'Transfers', 'City Tours'],
+      destinations: ['Thailand', 'Bangkok', 'Pattaya', 'Coral Island', 'Floating Market'],
+      operatorName: 'Thai Fun Holidays',
+      verified: true,
+      eCash: 840,
+      discount: 18
+    },
+    { 
+      id: 17, 
+      name: 'Dubai Abu Dhabi Combo', 
+      price: 55000, 
+      originalPrice: 65000,
+      duration: '6 Days 5 Nights', 
+      image: 'https://images.unsplash.com/photo-1518684079-3c830dcef090?w=800', 
+      rating: 4.8,
+      reviews: 445,
+      location: 'Dubai & Abu Dhabi',
+      category: 'Luxury & Adventure',
+      highlights: ['Dubai Marina', 'Ferrari World', 'Sheikh Zayed Mosque', 'Desert Camp'],
+      included: ['5-Star Hotels', 'Breakfast', 'Desert Safari', 'Theme Parks'],
+      destinations: ['Dubai', 'Abu Dhabi', 'Dubai Marina', 'Ferrari World', 'Yas Island'],
+      operatorName: 'UAE Premium Tours',
+      verified: true,
+      eCash: 1650,
+      discount: 15
+    },
+    { 
+      id: 18, 
+      name: 'Bali Adventure Explorer', 
+      price: 48000, 
+      originalPrice: 56000,
+      duration: '6 Days 5 Nights', 
+      image: 'https://images.unsplash.com/photo-1555400038-63f5ba517a47?w=800', 
+      rating: 4.7,
+      reviews: 321,
+      location: 'Bali',
+      category: 'Nature & Adventure',
+      highlights: ['Mount Batur Sunrise', 'White Water Rafting', 'Monkey Forest', 'Waterfalls'],
+      included: ['Resort Stay', 'Breakfast', 'Adventure Activities', 'Transfers'],
+      destinations: ['Bali', 'Ubud', 'Mount Batur', 'Tegallalang', 'Kintamani'],
+      operatorName: 'Bali Adventure Co',
+      verified: true,
+      eCash: 1440,
+      discount: 14
+    },
+    { 
+      id: 19, 
+      name: 'Maldives Family Paradise', 
+      price: 95000, 
+      originalPrice: 115000,
+      duration: '5 Days 4 Nights', 
+      image: 'https://images.unsplash.com/photo-1573843981267-be1999ff37cd?w=800', 
+      rating: 4.8,
+      reviews: 189,
+      location: 'Maldives',
+      category: 'Beach & Family',
+      highlights: ['Beach Villa', 'Snorkeling', 'Dolphin Watching', 'Kids Club'],
+      included: ['Beach Resort', 'All-Inclusive', 'Water Sports', 'Kids Activities'],
+      destinations: ['Maldives', 'Male', 'Hulhumale', 'Sun Island', 'Paradise Island'],
+      operatorName: 'Maldives Family Holidays',
+      verified: true,
+      eCash: 2850,
+      discount: 17
+    },
+    { 
+      id: 20, 
+      name: 'Tokyo Osaka Express', 
+      price: 145000, 
+      originalPrice: 165000,
+      duration: '8 Days 7 Nights', 
+      image: 'https://images.unsplash.com/photo-1540959733332-eab4deabeeaf?w=800', 
+      rating: 4.9,
+      reviews: 298,
+      location: 'Japan',
+      category: 'Culture & City',
+      highlights: ['Tokyo Skytree', 'Osaka Castle', 'Shibuya Crossing', 'Dotonbori'],
+      included: ['Hotels', 'JR Pass', 'Guided Tours', 'Airport Transfers'],
+      destinations: ['Japan', 'Tokyo', 'Osaka', 'Nara', 'Shibuya', 'Akihabara'],
+      operatorName: 'Japan Explorer Tours',
+      verified: true,
+      eCash: 4350,
+      discount: 12
+    },
+    { 
+      id: 21, 
+      name: 'Singapore City Break', 
+      price: 38000, 
+      originalPrice: 45000,
+      duration: '4 Days 3 Nights', 
+      image: 'https://images.unsplash.com/photo-1565967511849-76a60a516170?w=800', 
+      rating: 4.6,
+      reviews: 534,
+      location: 'Singapore',
+      category: 'City & Entertainment',
+      highlights: ['Marina Bay Sands', 'Gardens by the Bay', 'Universal Studios', 'Sentosa'],
+      included: ['Hotels', 'Breakfast', 'Theme Park Tickets', 'City Tour'],
+      destinations: ['Singapore', 'Marina Bay', 'Sentosa', 'Orchard Road', 'Chinatown'],
+      operatorName: 'Singapore City Tours',
+      verified: true,
+      eCash: 1140,
+      discount: 16
+    },
+    { 
+      id: 22, 
+      name: 'Kerala Munnar Thekkady', 
+      price: 22000, 
+      originalPrice: 26000,
+      duration: '5 Days 4 Nights', 
+      image: 'https://images.unsplash.com/photo-1609766857041-ed402ea8069a?w=800', 
+      rating: 4.7,
+      reviews: 387,
+      location: 'Kerala',
+      category: 'Nature & Wildlife',
+      highlights: ['Tea Plantations', 'Periyar Wildlife', 'Spice Garden', 'Elephant Safari'],
+      included: ['Resort Stay', 'All Meals', 'Safari', 'Transfers'],
+      destinations: ['Kerala', 'Munnar', 'Thekkady', 'Periyar', 'Alleppey'],
+      operatorName: 'Kerala Nature Tours',
+      verified: true,
+      eCash: 660,
+      discount: 15
+    },
+    { 
+      id: 23, 
+      name: 'Rajasthan Desert Safari', 
+      price: 32000, 
+      originalPrice: 38000,
+      duration: '6 Days 5 Nights', 
+      image: 'https://images.unsplash.com/photo-1477587458883-47145ed94245?w=800', 
+      rating: 4.6,
+      reviews: 276,
+      location: 'Rajasthan',
+      category: 'Culture & Adventure',
+      highlights: ['Jaisalmer Fort', 'Sam Sand Dunes', 'Camel Safari', 'Desert Camp'],
+      included: ['Heritage Hotels', 'All Meals', 'Camel Safari', 'Cultural Show'],
+      destinations: ['Rajasthan', 'Jaisalmer', 'Jodhpur', 'Sam Sand Dunes', 'Thar Desert'],
+      operatorName: 'Royal Rajasthan Tours',
+      verified: true,
+      eCash: 960,
+      discount: 16
+    },
+    { 
+      id: 24, 
+      name: 'Greece Santorini Special', 
+      price: 89000, 
+      originalPrice: 102000,
+      duration: '6 Days 5 Nights', 
+      image: 'https://images.unsplash.com/photo-1613395877344-13d4a8e0d49e?w=800', 
+      rating: 5.0,
+      reviews: 198,
+      location: 'Greece',
+      category: 'Luxury & Romance',
+      highlights: ['Santorini Sunset', 'Oia Village', 'Wine Tasting', 'Caldera Cruise'],
+      included: ['Cave Hotels', 'Breakfast', 'Wine Tour', 'Sunset Cruise'],
+      destinations: ['Greece', 'Santorini', 'Oia', 'Fira', 'Caldera'],
+      operatorName: 'Greek Island Dreams',
+      verified: true,
+      eCash: 2670,
+      discount: 13
+    },
   ];
 
   const filteredTours = tours.filter(tour => {
@@ -284,12 +551,24 @@ export default function Tours() {
     
     const matchesCategory = !filters.category || tour.category.toLowerCase().includes(filters.category.toLowerCase());
     
+    // Location filter - check if tour location matches selected location destinations
+    const matchesLocation = !filters.location || (() => {
+      const selectedLoc = popularLocations.find(loc => loc.id === filters.location);
+      if (!selectedLoc) return true;
+      return selectedLoc.destinations.some(dest => 
+        tour.location.toLowerCase().includes(dest.toLowerCase()) ||
+        tour.destinations?.some(d => d.toLowerCase().includes(dest.toLowerCase()))
+      );
+    })();
+    
+    // Search term filter - matches name, location, highlights, or destinations
     const matchesSearch = !filters.searchTerm || 
       tour.name.toLowerCase().includes(filters.searchTerm.toLowerCase()) ||
       tour.location.toLowerCase().includes(filters.searchTerm.toLowerCase()) ||
-      tour.highlights.some(h => h.toLowerCase().includes(filters.searchTerm.toLowerCase()));
+      tour.highlights.some(h => h.toLowerCase().includes(filters.searchTerm.toLowerCase())) ||
+      tour.destinations?.some(d => d.toLowerCase().includes(filters.searchTerm.toLowerCase()));
 
-    return matchesPrice && matchesDuration && matchesCategory && matchesSearch;
+    return matchesPrice && matchesDuration && matchesCategory && matchesLocation && matchesSearch;
   });
 
   // Sort filtered tours
@@ -358,282 +637,339 @@ export default function Tours() {
   };
 
   return (
-    <div className="tours-page">
-      {/* Hero Header Section */}
-      <section className="tours-header">
+    <div className="tours-page-new">
+      {/* Hero Section */}
+      <section className="tours-hero">
         <div className="container">
-          <h1>Explore Our Tour Packages</h1>
-          <p>Discover amazing destinations worldwide with our curated tours</p>
-
-          {/* Filter Bar */}
-          <div className="tours-filter-bar">
-            <div className="filter-bar-fields">
-              <div className="field-group">
-                <label>Search Tours or Destinations</label>
-                <div className="search-input-wrapper">
-                  <i className="fas fa-search search-icon"></i>
-                  <input
-                    type="text"
-                    placeholder="Search by tour name, location, or highlights..."
-                    value={filters.searchTerm}
-                    onChange={(e) => setFilters({...filters, searchTerm: e.target.value})}
-                  />
-                </div>
-              </div>
-              <div className="field-group">
-                <label>Price Range</label>
-                <select
-                  value={filters.priceRange}
-                  onChange={(e) => setFilters({...filters, priceRange: e.target.value})}
-                >
-                  <option value="">All Prices</option>
-                  <option value="low">Under ₹40,000</option>
-                  <option value="medium">₹40,000 - ₹1,00,000</option>
-                  <option value="high">₹1,00,000+</option>
-                </select>
-              </div>
-              <div className="field-group">
-                <label>Duration</label>
-                <select
-                  value={filters.duration}
-                  onChange={(e) => setFilters({...filters, duration: e.target.value})}
-                >
-                  <option value="">All Durations</option>
-                  <option value="short">4-6 Days</option>
-                  <option value="medium">7-8 Days</option>
-                  <option value="long">10+ Days</option>
-                </select>
-              </div>
-              <div className="field-group">
-                <label>Category</label>
-                <select
-                  value={filters.category}
-                  onChange={(e) => setFilters({...filters, category: e.target.value})}
-                >
-                  <option value="">All Categories</option>
-                  <option value="Beach">Beach & Adventure</option>
-                  <option value="Culture">Culture & Heritage</option>
-                  <option value="Luxury">Luxury</option>
-                  <option value="Nature">Nature & Adventure</option>
-                  <option value="Wellness">Wellness</option>
-                  <option value="City">City & Entertainment</option>
-                </select>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* Main Content */}
-      <section className="tours-content">
-        <div className="container">
-          {/* Promotional Banner */}
-          <div className="promo-banner">
-            <div className="promo-content">
-              <i className="fas fa-gift"></i>
-              <span><strong>Special Offer:</strong> Get up to 20% OFF on tour packages. Use code: <strong>TOUR20</strong></span>
-            </div>
-            <button className="promo-cta">View Offers</button>
+          <div className="tours-hero-content" data-aos="fade-up">
+            <span className="tours-hero-badge">Explore the World</span>
+            <h1>Discover Amazing Tour Packages</h1>
+            <p className="tours-hero-subtitle">
+              Handpicked destinations, verified operators, and unforgettable experiences
+            </p>
           </div>
 
-          <div className="listings-layout">
-            {/* Sidebar Filters */}
-            <aside className="filters-sidebar">
-              <h3>Filter Options</h3>
+          {/* Search Bar */}
+          <div className="tours-search-bar" data-aos="fade-up" data-aos-delay="100">
+            <div className="search-wrapper" ref={dropdownRef}>
+              <i className="fas fa-map-marker-alt"></i>
+              <input
+                type="text"
+                placeholder="Search destination..."
+                value={destinationSearch}
+                onChange={handleDestinationInputChange}
+                onFocus={() => setShowDestinationDropdown(true)}
+                className="destination-input"
+              />
+              {destinationSearch && (
+                <button className="clear-search-btn" onClick={clearDestination}>
+                  <i className="fas fa-times"></i>
+                </button>
+              )}
+              <i className="fas fa-chevron-down dropdown-arrow"></i>
               
-              <div className="filter-group">
-                <label>Search</label>
-                <input
-                  type="text"
-                  placeholder="Search tours..."
-                  value={filters.searchTerm}
-                  onChange={(e) => setFilters({...filters, searchTerm: e.target.value})}
-                />
-              </div>
-
-              <div className="filter-group">
-                <label>Price Range</label>
-                <select
-                  value={filters.priceRange}
-                  onChange={(e) => setFilters({...filters, priceRange: e.target.value})}
-                >
-                  <option value="">All Prices</option>
-                  <option value="low">Under ₹40,000</option>
-                  <option value="medium">₹40,000 - ₹1,00,000</option>
-                  <option value="high">₹1,00,000+</option>
-                </select>
-              </div>
-
-              <div className="filter-group">
-                <label>Duration</label>
-                <select
-                  value={filters.duration}
-                  onChange={(e) => setFilters({...filters, duration: e.target.value})}
-                >
-                  <option value="">All Durations</option>
-                  <option value="short">4-6 Days</option>
-                  <option value="medium">7-8 Days</option>
-                  <option value="long">10+ Days</option>
-                </select>
-              </div>
-
-              <div className="filter-group">
-                <label>Category</label>
-                <select
-                  value={filters.category}
-                  onChange={(e) => setFilters({...filters, category: e.target.value})}
-                >
-                  <option value="">All Categories</option>
-                  <option value="Beach">Beach & Adventure</option>
-                  <option value="Culture">Culture & Heritage</option>
-                  <option value="Luxury">Luxury</option>
-                  <option value="Nature">Nature & Adventure</option>
-                  <option value="Wellness">Wellness</option>
-                  <option value="City">City & Entertainment</option>
-                </select>
-              </div>
-
-              <button 
-                className="clear-filters-btn"
-                onClick={() => setFilters({
-                  priceRange: '',
-                  duration: '',
-                  category: '',
-                  searchTerm: ''
-                })}
-              >
-                <i className="fas fa-redo"></i> Clear Filters
-              </button>
-            </aside>
-
-            {/* Tours List */}
-            <div className="tours-main">
-              <div className="results-header">
-                <div className="results-title-section">
-                  <h2>{sortedTours.length} Package{sortedTours.length !== 1 ? 's' : ''} Available</h2>
-                  <p className="results-subtitle">Best prices • Verified operators • Instant booking</p>
-                </div>
-                <div className="sort-controls">
-                  <label>Sort by:</label>
-                  <select value={sortBy} onChange={(e) => setSortBy(e.target.value)}>
-                    <option value="recommended">Recommended</option>
-                    <option value="price-low">Price: Low to High</option>
-                    <option value="price-high">Price: High to Low</option>
-                    <option value="rating">Rating: High to Low</option>
-                    <option value="duration">Duration: High to Low</option>
-                  </select>
-                </div>
-              </div>
-
-              <div className="tours-list">
-                {sortedTours.map((tour) => (
-                  <div key={tour.id} className="tour-card">
-                    <div className="tour-image">
-                      <img src={tour.image} alt={tour.name} />
-                      {tour.verified && (
-                        <span className="verified-badge">
-                          <i className="fas fa-certificate"></i>
-                        </span>
-                      )}
-                    </div>
-                    
-                    <div className="tour-details">
-                      <div className="tour-header">
-                        <Link to={`/tour-details/${tour.id}`} className="tour-title">
-                          {tour.name}
-                        </Link>
-                      </div>
-
-                      <div className="tour-duration">
-                        <i className="far fa-moon"></i>
-                        <span>{tour.duration.split('/')[0]} /</span>
-                        <br />
-                        <i className="far fa-sun"></i>
-                        <span>{tour.duration.split('/')[1]}</span>
-                      </div>
-
-                      <div className="tour-seller">
-                        Seller : <Link to="#" className="seller-link">{tour.operatorName}</Link>
-                        {tour.verified && (
-                          <span className="verified-partner-badge">
-                            <i className="fas fa-check-circle"></i> Verified Partner
-                          </span>
-                        )}
-                      </div>
-
-                      <div className="tour-location">
-                        <i className="fas fa-map-marker-alt"></i>
-                        <span>{tour.location}</span>
-                      </div>
-
-                      <div className="tour-inclusions">
-                        {tour.included.slice(0, 4).map((item, index) => (
-                          <div key={index} className="inclusion-item">
-                            <i className={`fas fa-${getInclusionIcon(item)}`}></i>
-                            <span>{item}</span>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-
-                    <div className="tour-pricing">
-                      <div className="price-wrapper">
-                        <div className="price-amount">
-                          <span className="currency">rs</span>
-                          <span className="price">{tour.price.toLocaleString('en-IN')}</span>
-                        </div>
-                        <div className="price-info">Per Person on twin sharing</div>
-                      </div>
-                      <Link 
-                        to={`/tour-details/${tour.id}`}
-                        className="view-details-btn"
-                      >
-                        View Details
-                      </Link>
-                      <div className="ecash-earning">
-                        Earn eCash <span className="ecash-amount">rs {tour.eCash}</span>
-                      </div>
-                    </div>
+              {/* Destination Dropdown */}
+              {showDestinationDropdown && (
+                <div className="destination-dropdown">
+                  <div className="dropdown-header">
+                    <i className="fas fa-globe"></i>
+                    <span>Popular Destinations</span>
                   </div>
-                ))}
-              </div>
-
-              {sortedTours.length === 0 && (
-                <div className="no-results">
-                  <i className="fas fa-plane-slash"></i>
-                  <h3>No tour packages found</h3>
-                  <p>Try adjusting your search filters or browse all tours</p>
+                  <div className="dropdown-list">
+                    {filteredLocations.length > 0 ? (
+                      filteredLocations.map(loc => (
+                        <div 
+                          key={loc.id} 
+                          className={`dropdown-item ${filters.location === loc.id ? 'active' : ''}`}
+                          onClick={() => handleDestinationSelect(loc)}
+                        >
+                          <span className="item-icon">{loc.icon}</span>
+                          <div className="item-content">
+                            <span className="item-name">{loc.name}</span>
+                            <span className="item-places">{loc.destinations.slice(0, 3).join(', ')}</span>
+                          </div>
+                          {filters.location === loc.id && <i className="fas fa-check"></i>}
+                        </div>
+                      ))
+                    ) : (
+                      <div className="dropdown-empty">
+                        <i className="fas fa-search"></i>
+                        <span>No destinations found. Searching for "{destinationSearch}"</span>
+                      </div>
+                    )}
+                  </div>
                 </div>
+              )}
+            </div>
+            <div className="filter-chips">
+              <select
+                value={filters.priceRange}
+                onChange={(e) => setFilters({...filters, priceRange: e.target.value})}
+                className="filter-select"
+              >
+                <option value="">All Prices</option>
+                <option value="low">Under ₹40,000</option>
+                <option value="medium">₹40K - ₹1 Lakh</option>
+                <option value="high">₹1 Lakh+</option>
+              </select>
+              <select
+                value={filters.duration}
+                onChange={(e) => setFilters({...filters, duration: e.target.value})}
+                className="filter-select"
+              >
+                <option value="">All Durations</option>
+                <option value="short">4-6 Days</option>
+                <option value="medium">7-8 Days</option>
+                <option value="long">10+ Days</option>
+              </select>
+              {(filters.priceRange || filters.duration || filters.category || filters.location || filters.searchTerm) && (
+                <button 
+                  className="clear-btn"
+                  onClick={() => setFilters({ priceRange: '', duration: '', category: '', location: '', searchTerm: '' })}
+                >
+                  <i className="fas fa-times"></i> Clear
+                </button>
               )}
             </div>
           </div>
         </div>
       </section>
 
-      {/* Why Choose Us Section */}
-      <section className="why-choose-section">
+      {/* Quick Categories */}
+      <section className="quick-categories">
         <div className="container">
-          <h2>Why Book With Us?</h2>
-          <div className="benefits-grid">
-            <div className="benefit-card">
-              <i className="fas fa-shield-check"></i>
-              <h3>Verified Operators</h3>
-              <p>All tour operators are verified and trusted</p>
+          <div className="categories-scroll" data-aos="fade-up">
+            {[
+              { icon: 'fa-umbrella-beach', name: 'Beach', value: 'Beach' },
+              { icon: 'fa-mountain', name: 'Nature', value: 'Nature' },
+              { icon: 'fa-landmark', name: 'Culture', value: 'Culture' },
+              { icon: 'fa-gem', name: 'Luxury', value: 'Luxury' },
+              { icon: 'fa-spa', name: 'Wellness', value: 'Wellness' },
+              { icon: 'fa-city', name: 'City', value: 'City' }
+            ].map((cat, index) => (
+              <button
+                key={index}
+                className={`category-chip ${filters.category === cat.value ? 'active' : ''}`}
+                onClick={() => setFilters({...filters, category: filters.category === cat.value ? '' : cat.value})}
+              >
+                <i className={`fas ${cat.icon}`}></i>
+                <span>{cat.name}</span>
+              </button>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Results Section */}
+      <section className="tours-results">
+        <div className="container">
+          {/* Results Header */}
+          <div className="results-header" data-aos="fade-up">
+            <div className="results-info">
+              <h2>{sortedTours.length} Tour Package{sortedTours.length !== 1 ? 's' : ''} Found</h2>
+              <p>Best prices guaranteed • Verified operators • 24/7 support</p>
             </div>
-            <div className="benefit-card">
-              <i className="fas fa-tags"></i>
-              <h3>Best Price Guarantee</h3>
-              <p>Get the best deals on tour packages</p>
+            <div className="results-controls">
+              <div className="view-toggle">
+                <button 
+                  className={viewMode === 'grid' ? 'active' : ''} 
+                  onClick={() => setViewMode('grid')}
+                >
+                  <i className="fas fa-th-large"></i>
+                </button>
+                <button 
+                  className={viewMode === 'list' ? 'active' : ''} 
+                  onClick={() => setViewMode('list')}
+                >
+                  <i className="fas fa-list"></i>
+                </button>
+              </div>
+              <select 
+                value={sortBy} 
+                onChange={(e) => setSortBy(e.target.value)}
+                className="sort-select"
+              >
+                <option value="recommended">Recommended</option>
+                <option value="price-low">Price: Low to High</option>
+                <option value="price-high">Price: High to Low</option>
+                <option value="rating">Top Rated</option>
+                <option value="duration">Longest First</option>
+              </select>
             </div>
-            <div className="benefit-card">
-              <i className="fas fa-headset"></i>
-              <h3>24/7 Support</h3>
-              <p>Round-the-clock customer assistance</p>
+          </div>
+
+          {/* Tours Grid/List */}
+          <div className={`tours-grid ${viewMode}`}>
+            {sortedTours.map((tour, index) => (
+              <div 
+                key={tour.id} 
+                className="tour-card-new"
+                data-aos="fade-up"
+                data-aos-delay={index * 50}
+              >
+                <div className="tour-card-image">
+                  <img src={tour.image} alt={tour.name} />
+                  <div className="tour-card-badges">
+                    {tour.discount && (
+                      <span className="discount-badge">{tour.discount}% OFF</span>
+                    )}
+                    {tour.verified && (
+                      <span className="verified-badge">
+                        <i className="fas fa-check-circle"></i> Verified
+                      </span>
+                    )}
+                  </div>
+                  <button className="wishlist-btn">
+                    <i className="far fa-heart"></i>
+                  </button>
+                  <div className="tour-card-overlay">
+                    <Link to={`/tour-details/${tour.id}`} className="quick-view-btn">
+                      Quick View
+                    </Link>
+                  </div>
+                </div>
+                
+                <div className="tour-card-content">
+                  <div className="tour-card-meta">
+                    <span className="tour-location">
+                      <i className="fas fa-map-marker-alt"></i> {tour.location}
+                    </span>
+                    <span className="tour-rating">
+                      <i className="fas fa-star"></i> {tour.rating}
+                      <span className="reviews">({tour.reviews})</span>
+                    </span>
+                  </div>
+                  
+                  <div className="tour-operator-info">
+                    <span className="operator-name">
+                      <i className="fas fa-building"></i> {tour.operatorName}
+                    </span>
+                    {tour.verified && (
+                      <span className="verified-partner">
+                        <i className="fas fa-check-circle"></i> Verified Partner
+                      </span>
+                    )}
+                  </div>
+                  
+                  <Link to={`/tour-details/${tour.id}`} className="tour-card-title">
+                    {tour.name}
+                  </Link>
+                  
+                  <div className="tour-card-duration">
+                    <i className="far fa-clock"></i> {tour.duration}
+                  </div>
+                  
+                  <div className="tour-card-highlights">
+                    {tour.highlights.slice(0, 3).map((h, i) => (
+                      <span key={i} className="highlight-tag">{h}</span>
+                    ))}
+                    {tour.highlights.length > 3 && (
+                      <span className="highlight-more">+{tour.highlights.length - 3}</span>
+                    )}
+                  </div>
+                  
+                  <div className="tour-card-inclusions">
+                    {tour.included.slice(0, 4).map((item, i) => (
+                      <span key={i} className="inclusion-icon" title={item}>
+                        <i className={`fas fa-${getInclusionIcon(item)}`}></i>
+                      </span>
+                    ))}
+                  </div>
+                  
+                  <div className="tour-card-footer">
+                    <div className="tour-price">
+                      <span className="original-price">₹{tour.originalPrice.toLocaleString('en-IN')}</span>
+                      <span className="current-price">₹{tour.price.toLocaleString('en-IN')}</span>
+                      <span className="per-person">per person</span>
+                    </div>
+                    <Link to={`/tour-details/${tour.id}`} className="book-now-btn">
+                      View Details
+                    </Link>
+                  </div>
+                  
+                  {tour.eCash && (
+                    <div className="ecash-badge">
+                      <i className="fas fa-coins"></i> Earn ₹{tour.eCash} eCash
+                    </div>
+                  )}
+                </div>
+              </div>
+            ))}
+          </div>
+
+          {sortedTours.length === 0 && (
+            <div className="no-results-new" data-aos="fade-up">
+              <div className="no-results-icon">
+                <i className="fas fa-search"></i>
+              </div>
+              <h3>No Tours Found</h3>
+              <p>Try adjusting your filters or search for something else</p>
+              <button 
+                className="reset-btn"
+                onClick={() => setFilters({ priceRange: '', duration: '', category: '', searchTerm: '' })}
+              >
+                <i className="fas fa-redo"></i> Reset Filters
+              </button>
             </div>
-            <div className="benefit-card">
-              <i className="fas fa-undo"></i>
-              <h3>Easy Cancellation</h3>
-              <p>Flexible cancellation policies</p>
+          )}
+        </div>
+      </section>
+
+      {/* Why Choose Section */}
+      <section className="tours-why-choose">
+        <div className="container">
+          <div className="section-header" data-aos="fade-up">
+            <span className="section-badge">Why Travel Axis</span>
+            <h2>Book With Confidence</h2>
+          </div>
+          <div className="benefits-grid" data-aos="fade-up">
+            <div className="benefit-item">
+              <div className="benefit-icon">
+                <i className="fas fa-shield-alt"></i>
+              </div>
+              <h4>Verified Operators</h4>
+              <p>All partners are thoroughly vetted</p>
+            </div>
+            <div className="benefit-item">
+              <div className="benefit-icon">
+                <i className="fas fa-tags"></i>
+              </div>
+              <h4>Best Price Guarantee</h4>
+              <p>We match any lower price you find</p>
+            </div>
+            <div className="benefit-item">
+              <div className="benefit-icon">
+                <i className="fas fa-headset"></i>
+              </div>
+              <h4>24/7 Support</h4>
+              <p>Help available round the clock</p>
+            </div>
+            <div className="benefit-item">
+              <div className="benefit-icon">
+                <i className="fas fa-undo-alt"></i>
+              </div>
+              <h4>Easy Cancellation</h4>
+              <p>Flexible policies for peace of mind</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* CTA Section */}
+      <section className="tours-cta-section">
+        <div className="container">
+          <div className="tours-cta-box" data-aos="fade-up">
+            <div className="cta-content">
+              <h3>Can't Find What You're Looking For?</h3>
+              <p>Let our travel experts create a customized tour package just for you</p>
+              <div className="cta-buttons">
+                <Link to="/contact" className="cta-btn primary">
+                  <i className="fas fa-envelope"></i> Request Custom Tour
+                </Link>
+                <a href="tel:+919035461093" className="cta-btn secondary">
+                  <i className="fas fa-phone-alt"></i> Call Us
+                </a>
+              </div>
             </div>
           </div>
         </div>

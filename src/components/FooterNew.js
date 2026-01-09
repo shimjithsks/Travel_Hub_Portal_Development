@@ -68,24 +68,27 @@ export default function Footer() {
               </div>
             </div>
 
+            {/* Explore Links */}
+            <div className="footer-links-col">
+              <h4>Explore</h4>
+              <ul>
+                <li><Link to="/tour">Tours</Link></li>
+                <li><Link to="/destination">Destinations</Link></li>
+                <li><Link to="/hotels">Hotels</Link></li>
+                <li><Link to="/flights">Flights</Link></li>
+                <li><Link to="/offers">Offers</Link></li>
+              </ul>
+            </div>
+
             {/* Company Links */}
             <div className="footer-links-col">
               <h4>Company</h4>
               <ul>
                 <li><Link to="/about">About Us</Link></li>
                 <li><Link to="/contact">Contact Us</Link></li>
-                <li><Link to="/about">Careers</Link></li>
-              </ul>
-            </div>
-
-            {/* Partners Links */}
-            <div className="footer-links-col">
-              <h4>Partners</h4>
-              <ul>
+                <li><Link to="/blog">Blog</Link></li>
+                <li><Link to="/gallery">Gallery</Link></li>
                 <li><Link to="/travel-agents">Become a Partner</Link></li>
-                <li><Link to="/travel-agents">Affiliate Program</Link></li>
-                <li><Link to="/contact">Advertise</Link></li>
-                <li><Link to="/travel-agents">Corporate Travel</Link></li>
               </ul>
             </div>
 
@@ -93,10 +96,9 @@ export default function Footer() {
             <div className="footer-links-col">
               <h4>Support</h4>
               <ul>
-                <li><Link to="/contact">Help Center</Link></li>
                 <li><Link to="/faq">FAQ</Link></li>
-                <li><Link to="/contact">Cancellations</Link></li>
-                <li><Link to="/faq">Terms & Conditions</Link></li>
+                <li><Link to="/service">Services</Link></li>
+                <li><Link to="/contact">Help Center</Link></li>
               </ul>
             </div>
           </div>

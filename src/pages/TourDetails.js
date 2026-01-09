@@ -612,20 +612,20 @@ export default function TourDetails() {
 
                 <div className="booking-features">
                   <div className="feature-item">
-                    <i className="fas fa-check-circle"></i>
-                    <span>Instant Confirmation</span>
+                    <i className="fas fa-check-circle" style={{color: '#14b8a6'}}></i>
+                    <span style={{color: '#0f172a'}}>Instant Confirmation</span>
                   </div>
                   <div className="feature-item">
-                    <i className="fas fa-check-circle"></i>
-                    <span>Best Price Guaranteed</span>
+                    <i className="fas fa-check-circle" style={{color: '#14b8a6'}}></i>
+                    <span style={{color: '#0f172a'}}>Best Price Guaranteed</span>
                   </div>
                   <div className="feature-item">
-                    <i className="fas fa-check-circle"></i>
-                    <span>24/7 Customer Support</span>
+                    <i className="fas fa-check-circle" style={{color: '#14b8a6'}}></i>
+                    <span style={{color: '#0f172a'}}>24/7 Customer Support</span>
                   </div>
                   <div className="feature-item">
-                    <i className="fas fa-check-circle"></i>
-                    <span>Free Cancellation</span>
+                    <i className="fas fa-check-circle" style={{color: '#14b8a6'}}></i>
+                    <span style={{color: '#0f172a'}}>Free Cancellation</span>
                   </div>
                 </div>
 
