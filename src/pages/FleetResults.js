@@ -1,11 +1,39 @@
-import React, { useState } from 'react';
-import { useLocation, useNavigate } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import { useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 import '../styles/fleetResults.css';
 
 export default function FleetResults() {
   const location = useLocation();
   const navigate = useNavigate();
+  const [urlSearchParams] = useSearchParams();
   const initialSearchParams = location.state || {};
+
+  // Offer code from URL
+  const [appliedOffer, setAppliedOffer] = useState(null);
+  const [showOfferBanner, setShowOfferBanner] = useState(false);
+
+  // Offer details mapping
+  const offerDetails = {
+    'CAR20': { type: 'car', discount: '20%', title: 'Car Rentals - 20% OFF' },
+    'BUS15': { type: 'bus', discount: '15%', title: 'Bus Booking - 15% OFF' },
+    'TEMPO25': { type: 'tempo', discount: '25%', title: 'Tempo Traveller - 25% OFF' },
+    'AIRPORT100': { type: 'airport', discount: '₹100', title: 'Airport Transfer - ₹100 OFF' }
+  };
+
+  // Check for offer code in URL on mount
+  useEffect(() => {
+    const offerCode = urlSearchParams.get('code');
+    const offerType = urlSearchParams.get('offer');
+    
+    if (offerCode && offerDetails[offerCode]) {
+      setAppliedOffer({
+        code: offerCode,
+        type: offerType,
+        ...offerDetails[offerCode]
+      });
+      setShowOfferBanner(true);
+    }
+  }, [urlSearchParams]);
 
   // Editable search parameters
   const [searchParams, setSearchParams] = useState({
@@ -726,7 +754,23 @@ export default function FleetResults() {
   const filteredVehicles = getFilteredVehicles();
 
   return (
-    <div className="fleet-results-page">
+    <div className={`fleet-results-page ${showOfferBanner && appliedOffer ? 'has-offer-banner' : ''}`}>
+      {/* Offer Applied Banner */}
+      {showOfferBanner && appliedOffer && (
+        <div className="offer-applied-banner">
+          <div className="container">
+            <div className="offer-banner-content">
+              <i className="fas fa-tag"></i>
+              <span className="offer-text">
+                <strong>{appliedOffer.title}</strong> - Code <strong>{appliedOffer.code}</strong> applied! Discount will be reflected at checkout.
+              </span>
+              <button className="close-banner" onClick={() => setShowOfferBanner(false)}>
+                <i className="fas fa-times"></i>
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
       {/* Header Section */}
       <section className="fleet-header">
         <div className="container">
@@ -816,7 +860,7 @@ export default function FleetResults() {
                 </div>
 
                 <div className="field-group">
-                  <label>Drop-off Date</label>
+                  <label>Return Date</label>
                   <input 
                     type="date" 
                     value={searchParams.dropoffDate}
@@ -1204,7 +1248,16 @@ export default function FleetResults() {
                           <div className="price-small">₹{vehicle.pricePerKm}</div>
                         </div>
                       </div>
-                      <button className="book-btn">
+                      <button 
+                        className="book-btn"
+                        onClick={() => navigate('/complete-booking', { 
+                          state: { 
+                            vehicle,
+                            searchParams,
+                            appliedOffer 
+                          } 
+                        })}
+                      >
                         <i className="fas fa-check-circle"></i> Book Now
                       </button>
                       <button 
@@ -1212,7 +1265,8 @@ export default function FleetResults() {
                         onClick={() => navigate(`/vehicle-details/${vehicle.id}`, { 
                           state: { 
                             vehicle,
-                            searchParams 
+                            searchParams,
+                            appliedOffer
                           } 
                         })}
                       >

@@ -1,17 +1,260 @@
-import React, { useState } from 'react';
-import { useParams, useNavigate, useLocation } from 'react-router-dom';
+import React, { useState, useMemo } from 'react';
+import { useParams, useNavigate, useLocation, useSearchParams } from 'react-router-dom';
 import '../styles/vehicleDetails.css';
 
 export default function VehicleDetails() {
   const { id } = useParams();
   const navigate = useNavigate();
   const location = useLocation();
-  const vehicleData = location.state?.vehicle;
+  const [urlSearchParams] = useSearchParams();
+  const offerCode = urlSearchParams.get('code') || '';
+
+  // Vehicles database for direct navigation (when not coming from fleet results)
+  const vehiclesDatabase = useMemo(() => [
+    {
+      id: 1,
+      name: 'Swift Dzire',
+      category: 'Sedan',
+      type: 'car',
+      seatingCapacity: '4+1',
+      fuelType: 'Petrol/Diesel',
+      transmission: 'Manual',
+      pricePerDay: 999,
+      originalPrice: 1249,
+      rating: 4.8,
+      totalTrips: 1250,
+      operatorName: 'Royal Travels',
+      operatorRating: 4.8,
+      features: ['AC', 'Music System', 'GPS', 'First Aid Kit', 'USB Charging'],
+      image: 'https://images.unsplash.com/photo-1555215695-3004980ad54e?w=800&h=600&fit=crop',
+      description: 'Perfect for city travel and short trips. Fuel-efficient and comfortable sedan with professional driver.'
+    },
+    {
+      id: 2,
+      name: 'Volvo AC Sleeper',
+      category: 'Bus',
+      type: 'bus',
+      seatingCapacity: '40+2',
+      fuelType: 'Diesel',
+      transmission: 'Automatic',
+      pricePerDay: 499,
+      originalPrice: 599,
+      rating: 4.5,
+      totalTrips: 890,
+      operatorName: 'Kerala State RTC',
+      operatorRating: 4.5,
+      features: ['AC', 'Sleeper Berths', 'Blankets', 'USB Charging', 'Reading Light'],
+      image: 'https://images.unsplash.com/photo-1570125909232-eb263c188f7e?w=800&h=600&fit=crop',
+      description: 'Comfortable overnight travel with sleeper berths. Multi-axle Volvo bus with all amenities.'
+    },
+    {
+      id: 3,
+      name: 'Force Tempo Traveller',
+      category: 'Tempo Traveller',
+      type: 'tempo',
+      seatingCapacity: '12+1',
+      fuelType: 'Diesel',
+      transmission: 'Manual',
+      pricePerDay: 2499,
+      originalPrice: 3299,
+      rating: 4.7,
+      totalTrips: 650,
+      operatorName: 'Malabar Tours',
+      operatorRating: 4.7,
+      features: ['AC', 'Push-back Seats', 'Music System', 'LCD TV', 'Mic System'],
+      image: 'https://images.unsplash.com/photo-1544620347-c4fd4a3d5957?w=800&h=600&fit=crop',
+      description: 'Perfect for family trips and group outings. Spacious tempo traveller with entertainment system.'
+    },
+    {
+      id: 4,
+      name: 'Toyota Innova',
+      category: 'Airport Transfer',
+      type: 'airport',
+      seatingCapacity: '6+1',
+      fuelType: 'Diesel',
+      transmission: 'Automatic',
+      pricePerDay: 799,
+      originalPrice: 899,
+      rating: 4.9,
+      totalTrips: 2100,
+      operatorName: 'Airport Cabs Kerala',
+      operatorRating: 4.9,
+      features: ['AC', 'Flight Tracking', 'Meet & Greet', 'Luggage Assist', 'WiFi'],
+      image: 'https://images.unsplash.com/photo-1449965408869-eaa3f722e40d?w=800&h=600&fit=crop',
+      description: 'Hassle-free airport pickups and drops with flight tracking. Premium SUV service.'
+    },
+    {
+      id: 5,
+      name: 'Honda City',
+      category: 'Premium Sedan',
+      type: 'car',
+      seatingCapacity: '4+1',
+      fuelType: 'Petrol',
+      transmission: 'CVT',
+      pricePerDay: 1199,
+      originalPrice: 1599,
+      rating: 4.6,
+      totalTrips: 780,
+      operatorName: 'Bangalore City Cabs',
+      operatorRating: 4.6,
+      features: ['AC', 'Sunroof', 'Leather Seats', 'GPS', 'Premium Sound'],
+      image: 'https://images.unsplash.com/photo-1549317661-bd32c8ce0db2?w=800&h=600&fit=crop',
+      description: 'Luxury sedan for corporate travel. Professional drivers with excellent city knowledge.'
+    },
+    {
+      id: 6,
+      name: 'Luxury Tempo Traveller',
+      category: 'Tempo Traveller',
+      type: 'tempo',
+      seatingCapacity: '17+1',
+      fuelType: 'Diesel',
+      transmission: 'Manual',
+      pricePerDay: 3499,
+      originalPrice: 4999,
+      rating: 4.4,
+      totalTrips: 320,
+      operatorName: 'Mumbai Tours & Travels',
+      operatorRating: 4.4,
+      features: ['AC', 'Maharaja Seats', 'LED TV', 'Refrigerator', 'Premium Sound'],
+      image: 'https://images.unsplash.com/photo-1544620347-c4fd4a3d5957?w=800&h=600&fit=crop',
+      description: 'Premium tempo traveller with luxury interiors. Ideal for weddings and VIP tours.'
+    },
+    {
+      id: 7,
+      name: 'Multi-axle Volvo',
+      category: 'AC Sleeper Bus',
+      type: 'bus',
+      seatingCapacity: '36+2',
+      fuelType: 'Diesel',
+      transmission: 'Automatic',
+      pricePerDay: 1039,
+      originalPrice: 1299,
+      rating: 4.3,
+      totalTrips: 540,
+      operatorName: 'North India Travels',
+      operatorRating: 4.3,
+      features: ['AC', 'Sleeper Berths', 'Blankets', 'Snacks', 'USB Charging'],
+      image: 'https://images.unsplash.com/photo-1570125909232-eb263c188f7e?w=800&h=600&fit=crop',
+      description: 'Premium overnight bus travel across North India. Comfortable sleeper berths with amenities.'
+    },
+    {
+      id: 8,
+      name: 'Toyota Innova Crysta',
+      category: 'SUV',
+      type: 'car',
+      seatingCapacity: '6+1',
+      fuelType: 'Diesel',
+      transmission: 'Automatic',
+      pricePerDay: 1499,
+      originalPrice: 1899,
+      rating: 4.7,
+      totalTrips: 920,
+      operatorName: 'South Kerala Travels',
+      operatorRating: 4.7,
+      features: ['AC', 'Captain Seats', 'Ambient Lighting', 'Premium Sound', 'Rear AC'],
+      image: 'https://images.unsplash.com/photo-1519641471654-76ce0107ad1b?w=800&h=600&fit=crop',
+      description: 'Premium SUV for family trips. Spacious interiors with captain seats and entertainment.'
+    },
+    {
+      id: 9,
+      name: 'Mercedes E-Class',
+      category: 'Luxury',
+      type: 'luxury-car',
+      seatingCapacity: '4+1',
+      fuelType: 'Petrol',
+      transmission: 'Automatic',
+      pricePerDay: 7649,
+      originalPrice: 8999,
+      rating: 4.9,
+      totalTrips: 180,
+      operatorName: 'Elite Car Rentals',
+      operatorRating: 4.9,
+      features: ['AC', 'Leather Seats', 'Panoramic Roof', 'Premium Sound', 'Chauffeur'],
+      image: 'https://images.unsplash.com/photo-1617531653332-bd46c24f2068?w=800&h=600&fit=crop',
+      description: 'Ultimate luxury travel experience. Chauffeur-driven Mercedes with VIP treatment.'
+    }
+  ], []);
+
+  // Get vehicle data from state or lookup by ID
+  const stateVehicleData = location.state?.vehicle;
+  const vehicleData = stateVehicleData || vehiclesDatabase.find(v => v.id === parseInt(id));
+  
   const searchParams = location.state?.searchParams || {};
+  
+  // Get offer details from URL code parameter
+  const offerDetails = useMemo(() => {
+    const offers = {
+      'CAR20': { title: 'Car Rentals - 20% OFF', discount: '20%', code: 'CAR20' },
+      'BUS15': { title: 'Bus Booking - 15% OFF', discount: '15%', code: 'BUS15' },
+      'TEMPO25': { title: 'Tempo Traveller - 25% OFF', discount: '25%', code: 'TEMPO25' },
+      'AIRPORT100': { title: 'Airport Transfer - ₹100 OFF', discount: '₹100', code: 'AIRPORT100' },
+      'CARBLR25': { title: 'Premium Sedan - 25% OFF', discount: '25%', code: 'CARBLR25' },
+      'TEMPO30MUM': { title: 'Luxury Tempo - 30% OFF', discount: '30%', code: 'TEMPO30MUM' },
+      'VOLVODEL': { title: 'Volvo Sleeper - 20% OFF', discount: '20%', code: 'VOLVODEL' },
+      'INNOVA15': { title: 'Innova Crysta - 15% OFF', discount: '15%', code: 'INNOVA15' },
+      'SUV30': { title: 'SUV Premium - 30% OFF', discount: '30%', code: 'SUV30' },
+      'MINI20': { title: 'Mini Bus - 20% OFF', discount: '20%', code: 'MINI20' },
+      'SEDAN18': { title: 'Sedan Special - 18% OFF', discount: '18%', code: 'SEDAN18' },
+      'LUXCAR15': { title: 'Luxury Cars - 15% OFF', discount: '15%', code: 'LUXCAR15' },
+      'WEDDING2K': { title: 'Wedding Cars - ₹2000 OFF', discount: '₹2000', code: 'WEDDING2K' }
+    };
+    return offers[offerCode] || null;
+  }, [offerCode]);
+
+  const appliedOffer = location.state?.appliedOffer || offerDetails;
 
   const [activeTab, setActiveTab] = useState('overview');
   const [additionalRequirements, setAdditionalRequirements] = useState('');
   const [selectedImage, setSelectedImage] = useState(0);
+  const [showOfferBanner, setShowOfferBanner] = useState(!!appliedOffer);
+
+  // Get today's date in YYYY-MM-DD format
+  const today = new Date().toISOString().split('T')[0];
+
+  // Editable booking fields - default to today's date
+  const [pickupDate, setPickupDate] = useState(searchParams.date || today);
+  const [returnDate, setReturnDate] = useState(searchParams.dropoffDate || today);
+  const [pickupLocation, setPickupLocation] = useState(searchParams.location || '');
+  const [isDetectingLocation, setIsDetectingLocation] = useState(false);
+
+  // Auto-detect current location on mount
+  React.useEffect(() => {
+    if (!pickupLocation && navigator.geolocation) {
+      setIsDetectingLocation(true);
+      navigator.geolocation.getCurrentPosition(
+        async (position) => {
+          const { latitude, longitude } = position.coords;
+          try {
+            const response = await fetch(
+              `https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}&zoom=10&addressdetails=1`,
+              {
+                headers: {
+                  'Accept-Language': 'en',
+                  'User-Agent': 'TravelAxisApp/1.0'
+                }
+              }
+            );
+            if (response.ok) {
+              const data = await response.json();
+              let placeName = data.address.city || data.address.town || 
+                             data.address.state_district || data.address.state;
+              if (placeName) {
+                setPickupLocation(placeName);
+              }
+            }
+          } catch (error) {
+            console.error('Location detection error:', error);
+          }
+          setIsDetectingLocation(false);
+        },
+        (error) => {
+          console.error('Geolocation error:', error);
+          setIsDetectingLocation(false);
+        },
+        { enableHighAccuracy: false, timeout: 10000, maximumAge: 300000 }
+      );
+    }
+  }, []);
 
   // Sample reviews data
   const sampleReviews = [
@@ -21,14 +264,30 @@ export default function VehicleDetails() {
   ];
 
   const handleEnquiry = () => {
+    // Validate required fields
+    if (!pickupDate) {
+      alert('Please select a pickup date');
+      return;
+    }
+    if (!returnDate) {
+      alert('Please select a return date');
+      return;
+    }
+    if (!pickupLocation) {
+      alert('Please enter a pickup location');
+      return;
+    }
+
     // Handle enquiry logic here
     const enquiryData = {
       vehicle: vehicleData.name,
       operator: vehicleData.operatorName,
-      pickupDate: searchParams.date,
-      pickupLocation: searchParams.location,
-      vehicleCategory: searchParams.vehicleCategory,
-      additionalRequirements
+      pickupDate: pickupDate,
+      returnDate: returnDate,
+      pickupLocation: pickupLocation,
+      vehicleCategory: vehicleData.category,
+      additionalRequirements,
+      appliedOfferCode: appliedOffer?.code || null
     };
     console.log('Enquiry submitted:', enquiryData);
     alert('Enquiry submitted! Our team will contact you soon.');
@@ -61,7 +320,24 @@ export default function VehicleDetails() {
   ];
 
   return (
-    <div className="vehicle-details-page">
+    <div className={`vehicle-details-page ${showOfferBanner && appliedOffer ? 'has-offer-banner' : ''}`}>
+      {/* Offer Applied Banner */}
+      {showOfferBanner && appliedOffer && (
+        <div className="offer-applied-banner">
+          <div className="container">
+            <div className="offer-banner-content">
+              <i className="fas fa-tag"></i>
+              <span className="offer-text">
+                <strong>{appliedOffer.title}</strong> - Code <strong>{appliedOffer.code}</strong> applied! Discount will be reflected at checkout.
+              </span>
+              <button className="close-banner" onClick={() => setShowOfferBanner(false)}>
+                <i className="fas fa-times"></i>
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Breadcrumb */}
       <div className="breadcrumb-section">
         <div className="container">
@@ -420,27 +696,45 @@ export default function VehicleDetails() {
                 </div>
 
                 <div className="booking-info">
-                  <div className="info-item">
-                    <span className="info-label">Pickup Date</span>
-                    <div className="info-value">
+                  <div className="info-item editable">
+                    <label className="info-label" htmlFor="pickupDate">Pickup Date</label>
+                    <div className="info-input-wrapper clickable" onClick={() => document.getElementById('pickupDate').showPicker()}>
                       <i className="fas fa-calendar"></i>
-                      {searchParams.date || 'Not specified'}
+                      <input
+                        type="date"
+                        id="pickupDate"
+                        className="info-input"
+                        value={pickupDate}
+                        onChange={(e) => setPickupDate(e.target.value)}
+                        min={new Date().toISOString().split('T')[0]}
+                      />
                     </div>
                   </div>
 
-                  <div className="info-item">
-                    <span className="info-label">Drop-off Date</span>
-                    <div className="info-value">
+                  <div className="info-item editable">
+                    <label className="info-label" htmlFor="returnDate">Return Date</label>
+                    <div className="info-input-wrapper clickable" onClick={() => document.getElementById('returnDate').showPicker()}>
                       <i className="fas fa-calendar-check"></i>
-                      {searchParams.dropoffDate || 'Not specified'}
+                      <input
+                        type="date"
+                        id="returnDate"
+                        className="info-input"
+                        value={returnDate}
+                        onChange={(e) => setReturnDate(e.target.value)}
+                        min={pickupDate || new Date().toISOString().split('T')[0]}
+                      />
                     </div>
                   </div>
 
                   <div className="info-item">
                     <span className="info-label">Pickup Location</span>
                     <div className="info-value">
-                      <i className="fas fa-map-marker-alt"></i>
-                      {searchParams.location || 'Not specified'}
+                      {isDetectingLocation ? (
+                        <i className="fas fa-spinner fa-spin"></i>
+                      ) : (
+                        <i className="fas fa-map-marker-alt"></i>
+                      )}
+                      {isDetectingLocation ? 'Detecting...' : (pickupLocation || 'Not specified')}
                     </div>
                   </div>
 

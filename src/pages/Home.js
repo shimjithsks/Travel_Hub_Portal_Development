@@ -220,13 +220,528 @@ export default function Home() {
   };
 
   useEffect(() => {
-    AOS.init({ duration: 1000 });
+    // Initialize AOS with enhanced settings
+    AOS.init({ 
+      duration: 800,
+      easing: 'ease-out-cubic',
+      once: true,
+      offset: 100,
+      delay: 0,
+    });
+
+    // Custom scroll reveal using Intersection Observer
+    const scrollRevealElements = document.querySelectorAll('.scroll-reveal, .scroll-reveal-left, .scroll-reveal-right, .scroll-reveal-scale');
+    
+    const observerOptions = {
+      root: null,
+      rootMargin: '0px 0px -100px 0px',
+      threshold: 0.1
+    };
+
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          entry.target.classList.add('revealed');
+          observer.unobserve(entry.target);
+        }
+      });
+    }, observerOptions);
+
+    scrollRevealElements.forEach(el => observer.observe(el));
+
+    // Smooth scroll to top on page load
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+
+    return () => {
+      scrollRevealElements.forEach(el => observer.unobserve(el));
+    };
   }, []);
 
   const swapCities = () => {
     const temp = fromCity;
     setFromCity(toCity);
     setToCity(temp);
+  };
+
+  // Active deals tab state
+  const [activeDealsTab, setActiveDealsTab] = useState('fleet');
+
+  // Deals location picker state
+  const [dealsLocation, setDealsLocation] = useState('');
+  const [showDealsLocationPicker, setShowDealsLocationPicker] = useState(false);
+  const [filteredDealsLocations, setFilteredDealsLocations] = useState(popularLocations);
+  const [isDetectingDealsLocation, setIsDetectingDealsLocation] = useState(false);
+
+  // Auto-detect location on page load for deals
+  useEffect(() => {
+    if (!dealsLocation && navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        async (position) => {
+          const { latitude, longitude } = position.coords;
+          try {
+            const response = await fetch(
+              `https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}&zoom=10&addressdetails=1`,
+              {
+                headers: {
+                  'Accept-Language': 'en',
+                  'User-Agent': 'TravelAxisApp/1.0'
+                }
+              }
+            );
+            if (response.ok) {
+              const data = await response.json();
+              let placeName = data.address.city || data.address.town || 
+                             data.address.state_district || data.address.state;
+              if (placeName) {
+                setDealsLocation(placeName);
+              }
+            }
+          } catch (error) {
+            console.error('Auto location detection error:', error);
+          }
+        },
+        (error) => {
+          console.error('Geolocation permission denied or error:', error);
+        },
+        { enableHighAccuracy: false, timeout: 10000, maximumAge: 300000 }
+      );
+    }
+  }, []); // Run once on mount
+
+  // Detect current location for deals
+  const detectDealsLocation = () => {
+    if (!navigator.geolocation) {
+      alert('Geolocation is not supported by your browser');
+      return;
+    }
+
+    setIsDetectingDealsLocation(true);
+    navigator.geolocation.getCurrentPosition(
+      async (position) => {
+        const { latitude, longitude } = position.coords;
+        
+        try {
+          const response = await fetch(
+            `https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}&zoom=10&addressdetails=1`,
+            {
+              headers: {
+                'Accept-Language': 'en',
+                'User-Agent': 'TravelAxisApp/1.0'
+              }
+            }
+          );
+          
+          if (response.ok) {
+            const data = await response.json();
+            let placeName = data.address.city || data.address.town || 
+                           data.address.state_district || data.address.state;
+            
+            if (placeName) {
+              setDealsLocation(placeName);
+            }
+          }
+        } catch (error) {
+          console.error('Geocoding Error:', error);
+          alert('Could not determine location. Please select manually.');
+        }
+        
+        setIsDetectingDealsLocation(false);
+        setShowDealsLocationPicker(false);
+      },
+      (error) => {
+        console.error('Geolocation Error:', error);
+        alert('Unable to retrieve your location. Please select manually.');
+        setIsDetectingDealsLocation(false);
+      },
+      {
+        enableHighAccuracy: true,
+        timeout: 15000,
+        maximumAge: 0
+      }
+    );
+  };
+
+  // Handle deals location input change
+  const handleDealsLocationChange = (value) => {
+    setDealsLocation(value);
+    if (value.trim()) {
+      const filtered = popularLocations.filter(loc =>
+        loc.toLowerCase().includes(value.toLowerCase())
+      );
+      setFilteredDealsLocations(filtered);
+    } else {
+      setFilteredDealsLocations(popularLocations);
+    }
+  };
+
+  // Select deals location
+  const selectDealsLocation = (location) => {
+    setDealsLocation(location);
+    setShowDealsLocationPicker(false);
+  };
+
+  // Fleet Offers Data (with operator and location info)
+  const fleetOffers = [
+    {
+      id: 1,
+      type: 'car',
+      code: 'CAR20',
+      title: 'Car Rentals',
+      description: 'Self-drive & chauffeur driven vehicles',
+      discount: '20% OFF',
+      highlights: ['Sedan, SUV, Luxury', 'Fuel Options', '24/7 Support'],
+      oldPrice: '₹1,249',
+      newPrice: '₹999',
+      unit: '/day',
+      image: 'https://images.unsplash.com/photo-1555215695-3004980ad54e?w=400&h=250&fit=crop',
+      operator: 'Royal Travels',
+      operatorRating: 4.8,
+      locations: ['Kozhikode', 'Kochi', 'Thiruvananthapuram', 'Kannur']
+    },
+    {
+      id: 2,
+      type: 'bus',
+      code: 'BUS15',
+      title: 'Bus Booking',
+      description: 'Comfortable group travel across cities',
+      discount: '15% OFF',
+      highlights: ['AC & Non-AC', 'Sleeper & Seater', '100+ Routes'],
+      oldPrice: '₹599',
+      newPrice: '₹499',
+      unit: '/seat',
+      image: 'https://images.unsplash.com/photo-1570125909232-eb263c188f7e?w=400&h=250&fit=crop',
+      operator: 'Kerala State RTC',
+      operatorRating: 4.5,
+      locations: ['Kozhikode', 'Kochi', 'Thiruvananthapuram', 'Bengaluru', 'Chennai']
+    },
+    {
+      id: 3,
+      type: 'tempo',
+      code: 'TEMPO25',
+      title: 'Tempo Traveller',
+      description: 'Perfect for family & group outings',
+      discount: '25% OFF',
+      highlights: ['9 to 26 Seaters', 'Push-back Seats', 'Entertainment'],
+      oldPrice: '₹3,299',
+      newPrice: '₹2,499',
+      unit: '/day',
+      image: 'https://images.unsplash.com/photo-1544620347-c4fd4a3d5957?w=400&h=250&fit=crop',
+      operator: 'Malabar Tours',
+      operatorRating: 4.7,
+      locations: ['Kozhikode', 'Wayanad', 'Munnar', 'Ooty']
+    },
+    {
+      id: 4,
+      type: 'airport',
+      code: 'AIRPORT100',
+      title: 'Airport Transfer',
+      description: 'Hassle-free pickups & drops',
+      discount: 'FLAT ₹100 OFF',
+      highlights: ['Meet & Greet', 'Flight Tracking', '24/7 Available'],
+      oldPrice: '₹899',
+      newPrice: '₹799',
+      unit: '/trip',
+      image: 'https://images.unsplash.com/photo-1449965408869-eaa3f722e40d?w=400&h=250&fit=crop',
+      operator: 'Airport Cabs Kerala',
+      operatorRating: 4.9,
+      locations: ['Kozhikode', 'Kochi', 'Kannur', 'Thiruvananthapuram']
+    },
+    {
+      id: 5,
+      type: 'car',
+      code: 'CARBLR25',
+      title: 'Premium Sedan',
+      description: 'Luxury sedans for corporate travel',
+      discount: '25% OFF',
+      highlights: ['Swift Dzire, Honda City', 'Professional Drivers', 'Corporate Billing'],
+      oldPrice: '₹1,599',
+      newPrice: '₹1,199',
+      unit: '/day',
+      image: 'https://images.unsplash.com/photo-1549317661-bd32c8ce0db2?w=400&h=250&fit=crop',
+      operator: 'Bangalore City Cabs',
+      operatorRating: 4.6,
+      locations: ['Bengaluru', 'Mysuru', 'Chennai', 'Hyderabad']
+    },
+    {
+      id: 6,
+      type: 'tempo',
+      code: 'TEMPO30MUM',
+      title: 'Luxury Tempo Traveller',
+      description: 'AC tempo with premium interiors',
+      discount: '30% OFF',
+      highlights: ['12 to 20 Seaters', 'Maharaja Seats', 'Entertainment System'],
+      oldPrice: '₹4,999',
+      newPrice: '₹3,499',
+      unit: '/day',
+      image: 'https://images.unsplash.com/photo-1544620347-c4fd4a3d5957?w=400&h=250&fit=crop',
+      operator: 'Mumbai Tours & Travels',
+      operatorRating: 4.4,
+      locations: ['Mumbai', 'Pune', 'Goa', 'Nashik']
+    },
+    {
+      id: 7,
+      type: 'bus',
+      code: 'VOLVODEL',
+      title: 'Volvo AC Sleeper',
+      description: 'Premium overnight bus travel',
+      discount: '20% OFF',
+      highlights: ['Multi-axle Volvo', 'USB Charging', 'Blankets & Snacks'],
+      oldPrice: '₹1,299',
+      newPrice: '₹1,039',
+      unit: '/seat',
+      image: 'https://images.unsplash.com/photo-1570125909232-eb263c188f7e?w=400&h=250&fit=crop',
+      operator: 'North India Travels',
+      operatorRating: 4.3,
+      locations: ['Delhi', 'Jaipur', 'Agra', 'Manali', 'Chandigarh']
+    },
+    {
+      id: 8,
+      type: 'car',
+      code: 'INNOVA15',
+      title: 'Innova Crysta',
+      description: 'Spacious family vehicle',
+      discount: '15% OFF',
+      highlights: ['7+1 Seater', 'Captain Seats', 'Airport Pickup'],
+      oldPrice: '₹2,499',
+      newPrice: '₹2,124',
+      unit: '/day',
+      image: 'https://images.unsplash.com/photo-1552519507-da3b142c6e3d?w=400&h=250&fit=crop',
+      operator: 'South Kerala Travels',
+      operatorRating: 4.7,
+      locations: ['Thiruvananthapuram', 'Kochi', 'Alleppey', 'Munnar']
+    }
+  ];
+
+  // Hotels Offers Data
+  const hotelOffers = [
+    {
+      id: 1,
+      type: 'luxury',
+      code: 'LUXURY30',
+      title: 'Luxury Hotels',
+      description: '5-star premium accommodations',
+      discount: '30% OFF',
+      highlights: ['5-Star Properties', 'Spa & Wellness', 'Fine Dining'],
+      oldPrice: '₹12,999',
+      newPrice: '₹8,999',
+      unit: '/night',
+      image: 'https://images.unsplash.com/photo-1566073771259-6a8506099945?w=400&h=250&fit=crop'
+    },
+    {
+      id: 2,
+      type: 'business',
+      code: 'BIZSTAY25',
+      title: 'Business Hotels',
+      description: 'Perfect for corporate travelers',
+      discount: '25% OFF',
+      highlights: ['WiFi & Workspace', 'Meeting Rooms', 'Airport Shuttle'],
+      oldPrice: '₹6,499',
+      newPrice: '₹4,999',
+      unit: '/night',
+      image: 'https://images.unsplash.com/photo-1542314831-068cd1dbfeeb?w=400&h=250&fit=crop'
+    },
+    {
+      id: 3,
+      type: 'resort',
+      code: 'BEACH35',
+      title: 'Beach Resorts',
+      description: 'Stunning beachfront getaways',
+      discount: '35% OFF',
+      highlights: ['Ocean View', 'Water Sports', 'All Inclusive'],
+      oldPrice: '₹15,999',
+      newPrice: '₹9,999',
+      unit: '/night',
+      image: 'https://images.unsplash.com/photo-1520250497591-112f2f40a3f4?w=400&h=250&fit=crop'
+    },
+    {
+      id: 4,
+      type: 'budget',
+      code: 'BUDGET500',
+      title: 'Budget Stays',
+      description: 'Affordable quality accommodations',
+      discount: 'FLAT ₹500 OFF',
+      highlights: ['Clean Rooms', 'Free Breakfast', 'Great Location'],
+      oldPrice: '₹1,999',
+      newPrice: '₹1,499',
+      unit: '/night',
+      image: 'https://images.unsplash.com/photo-1618773928121-c32242e63f39?w=400&h=250&fit=crop'
+    }
+  ];
+
+  // Holidays Offers Data
+  const holidayOffers = [
+    {
+      id: 1,
+      type: 'domestic',
+      code: 'KERALA20',
+      title: 'Kerala Backwaters',
+      description: 'Explore God\'s Own Country',
+      discount: '20% OFF',
+      highlights: ['Houseboat Stay', 'Ayurveda Spa', 'Local Cuisine'],
+      oldPrice: '₹25,999',
+      newPrice: '₹19,999',
+      unit: '/person',
+      image: 'https://images.unsplash.com/photo-1602216056096-3b40cc0c9944?w=400&h=250&fit=crop'
+    },
+    {
+      id: 2,
+      type: 'adventure',
+      code: 'LADAKH15',
+      title: 'Ladakh Adventure',
+      description: 'Thrilling mountain expedition',
+      discount: '15% OFF',
+      highlights: ['Bike Tours', 'Camping', 'Monastery Visit'],
+      oldPrice: '₹35,999',
+      newPrice: '₹29,999',
+      unit: '/person',
+      image: 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=400&h=250&fit=crop'
+    },
+    {
+      id: 3,
+      type: 'beach',
+      code: 'GOA25',
+      title: 'Goa Beach Holiday',
+      description: 'Sun, sand and endless fun',
+      discount: '25% OFF',
+      highlights: ['Beach Resort', 'Water Sports', 'Nightlife'],
+      oldPrice: '₹18,999',
+      newPrice: '₹13,999',
+      unit: '/person',
+      image: 'https://images.unsplash.com/photo-1512343879784-a960bf40e7f2?w=400&h=250&fit=crop'
+    },
+    {
+      id: 4,
+      type: 'spiritual',
+      code: 'VARANASI2K',
+      title: 'Varanasi Spiritual Tour',
+      description: 'Experience spiritual India',
+      discount: 'FLAT ₹2,000 OFF',
+      highlights: ['Ganga Aarti', 'Temple Tours', 'Boat Ride'],
+      oldPrice: '₹12,999',
+      newPrice: '₹10,999',
+      unit: '/person',
+      image: 'https://images.unsplash.com/photo-1561361513-2d000a50f0dc?w=400&h=250&fit=crop'
+    }
+  ];
+
+  // Flights Offers Data
+  const flightOffers = [
+    {
+      id: 1,
+      type: 'domestic',
+      code: 'FLYDOM2K',
+      title: 'Domestic Flights',
+      description: 'Fly across India at best prices',
+      discount: 'Up to ₹2,000 OFF',
+      highlights: ['All Airlines', 'Flexible Dates', 'Free Meals'],
+      oldPrice: '₹5,999',
+      newPrice: '₹3,999',
+      unit: '/person',
+      image: 'https://images.unsplash.com/photo-1436491865332-7a61a109cc05?w=400&h=250&fit=crop'
+    },
+    {
+      id: 2,
+      type: 'international',
+      code: 'FLYINTL5K',
+      title: 'International Flights',
+      description: 'Explore the world affordably',
+      discount: 'Up to ₹5,000 OFF',
+      highlights: ['50+ Countries', 'Premium Airlines', 'Lounge Access'],
+      oldPrice: '₹45,999',
+      newPrice: '₹39,999',
+      unit: '/person',
+      image: 'https://images.unsplash.com/photo-1464037866556-6812c9d1c72e?w=400&h=250&fit=crop'
+    },
+    {
+      id: 3,
+      type: 'business',
+      code: 'FLYBIZ20',
+      title: 'Business Class',
+      description: 'Fly in ultimate comfort',
+      discount: '20% OFF',
+      highlights: ['Lie-flat Seats', 'Priority Boarding', 'Premium Dining'],
+      oldPrice: '₹85,999',
+      newPrice: '₹68,999',
+      unit: '/person',
+      image: 'https://images.unsplash.com/photo-1540339832862-474599807836?w=400&h=250&fit=crop'
+    },
+    {
+      id: 4,
+      type: 'student',
+      code: 'STUDENT10',
+      title: 'Student Fares',
+      description: 'Special discounts for students',
+      discount: 'EXTRA 10% OFF',
+      highlights: ['Extra Baggage', 'Flexible Booking', 'Easy Cancellation'],
+      oldPrice: '₹8,999',
+      newPrice: '₹6,999',
+      unit: '/person',
+      image: 'https://images.unsplash.com/photo-1488085061387-422e29b40080?w=400&h=250&fit=crop'
+    }
+  ];
+
+  // Get current offers based on active tab and location filter
+  const getCurrentOffers = () => {
+    switch(activeDealsTab) {
+      case 'fleet': 
+        // Filter fleet offers by location if selected
+        if (dealsLocation) {
+          const filtered = fleetOffers.filter(offer => 
+            offer.locations && offer.locations.some(loc => 
+              loc.toLowerCase().includes(dealsLocation.toLowerCase())
+            )
+          );
+          return filtered.length > 0 ? filtered : fleetOffers; // Fallback to all if none match
+        }
+        return fleetOffers;
+      case 'hotels': return hotelOffers;
+      case 'holidays': return holidayOffers;
+      case 'flights': return flightOffers;
+      default: return fleetOffers;
+    }
+  };
+
+  // Get icon for offer type
+  const getOfferIcon = (type) => {
+    const icons = {
+      car: 'fas fa-car',
+      bus: 'fas fa-bus',
+      tempo: 'fas fa-shuttle-van',
+      airport: 'fas fa-plane-departure',
+      luxury: 'fas fa-crown',
+      business: 'fas fa-briefcase',
+      resort: 'fas fa-umbrella-beach',
+      budget: 'fas fa-bed',
+      domestic: 'fas fa-mountain',
+      adventure: 'fas fa-hiking',
+      beach: 'fas fa-water',
+      spiritual: 'fas fa-praying-hands',
+      international: 'fas fa-globe',
+      student: 'fas fa-graduation-cap'
+    };
+    return icons[type] || 'fas fa-tag';
+  };
+
+  // Get link for offer type with offer code
+  const getOfferLink = (offer = null) => {
+    // For fleet offers, navigate to vehicle details page
+    if (activeDealsTab === 'fleet' && offer && offer.id) {
+      return `/vehicle-details/${offer.id}?code=${offer.code || ''}`;
+    }
+    
+    const baseLinks = {
+      fleet: '/fleet-results',
+      hotels: '/hotels',
+      holidays: '/tour',
+      flights: '/flights'
+    };
+    const baseLink = baseLinks[activeDealsTab] || '/offers';
+    
+    // If offer is provided, add query params
+    if (offer && offer.type) {
+      return `${baseLink}?offer=${offer.type}&code=${offer.code || ''}`;
+    }
+    return baseLink;
   };
 
   const specialOffers = [
@@ -315,83 +830,13 @@ export default function Home() {
     }
   ];
 
-  const domesticDestinations = [
-    { name: 'Mumbai', price: 9401, image: 'https://images.unsplash.com/photo-1566552881560-0be862a7c445?w=300' },
-    { name: 'Bangalore', price: 11198, image: 'https://images.unsplash.com/photo-1596176530529-78163a4f7af2?w=300' },
-    { name: 'Pune', price: 9998, image: 'https://images.unsplash.com/photo-1585409677983-0f6c41ca9c3b?w=300' },
-    { name: 'Kolkata', price: 7997, image: 'https://images.unsplash.com/photo-1558431382-27e303142255?w=300' },
-    { name: 'Hyderabad', price: 8199, image: 'https://images.unsplash.com/photo-1590736969955-71cc94901144?w=300' },
-    { name: 'Chennai', price: 10500, image: 'https://images.unsplash.com/photo-1582510003544-4d00b7f74220?w=300' }
-  ];
-
-  const internationalDestinations = [
-    { name: 'Dubai', region: 'Middle East', price: 20831, image: 'https://images.unsplash.com/photo-1512453979798-5ea266f8880c?w=300' },
-    { name: 'Singapore', region: 'Asia', price: 11782, image: 'https://images.unsplash.com/photo-1525625293386-3f8f99389edd?w=300' },
-    { name: 'London', region: 'Europe', price: 23630, image: 'https://images.unsplash.com/photo-1513635269975-59663e0ac1ad?w=300' },
-    { name: 'Paris', region: 'Europe', price: 25000, image: 'https://images.unsplash.com/photo-1502602898657-3e91760cbb34?w=300' },
-    { name: 'New York', region: 'North America', price: 35000, image: 'https://images.unsplash.com/photo-1496442226666-8d4d0e62e6e9?w=300' },
-    { name: 'Bali', region: 'Asia', price: 15000, image: 'https://images.unsplash.com/photo-1537996194471-e657df975ab4?w=300' }
-  ];
-
-  const whyTravelAxisFeatures = [
-    {
-      icon: 'fas fa-search',
-      colorClass: 'icon-blue',
-      title: 'Best Deals & Offers',
-      description: 'Search for exclusive deals on flights and hotels. Find unbeatable prices to any destination you love.',
-      gradient: 'gradient-blue'
-    },
-    {
-      icon: 'fas fa-shield-alt',
-      colorClass: 'icon-green',
-      title: 'Secure & Protected',
-      description: 'Book with complete confidence knowing your transactions are secure and protected by industry standards.',
-      gradient: 'gradient-green'
-    },
-    {
-      icon: 'fas fa-sun',
-      colorClass: 'icon-orange',
-      title: 'Perfect Holidays',
-      description: 'From budget-friendly to luxury experiences, find holidays that match your style and budget perfectly.',
-      gradient: 'gradient-orange'
-    },
-    {
-      icon: 'fas fa-puzzle-piece',
-      colorClass: 'icon-purple',
-      title: 'Custom Itineraries',
-      description: 'Mix and match flights, hotels, and activities to create your perfect personalized travel experience.',
-      gradient: 'gradient-purple'
-    },
-    {
-      icon: 'fas fa-ticket-alt',
-      colorClass: 'icon-pink',
-      title: 'Skip the Queues',
-      description: 'Book attraction tickets online and enjoy skip-the-line access to popular monuments and attractions.',
-      gradient: 'gradient-pink'
-    },
-    {
-      icon: 'fas fa-gift',
-      colorClass: 'icon-red',
-      title: 'Seasonal Deals',
-      description: 'Enjoy new deals every season with special discounts on flights, hotels, and holiday packages.',
-      gradient: 'gradient-red'
-    },
-    {
-      icon: 'fas fa-headset',
-      colorClass: 'icon-teal',
-      title: '24/7 Support',
-      description: '24/7 customer support backed by millions of satisfied travelers ready to help you anytime.',
-      gradient: 'gradient-teal'
-    }
-  ];
-
   return (
     <div className="yatra-home">
       {/* Login Modal */}
       <LoginModal isOpen={showLoginModal} onClose={() => setShowLoginModal(false)} />
 
       {/* Promotional Top Banner */}
-      <section className="promo-top-banner">
+      <section className="promo-top-banner" data-aos="fade-down" data-aos-duration="600">
         <div className="container">
           <div className="promo-content">
             <i className="fas fa-fire promo-icon"></i>
@@ -407,9 +852,9 @@ export default function Home() {
       </section>
 
       {/* Trust Indicators */}
-      <section className="trust-indicators">
+      <section className="trust-indicators" data-aos="fade-up" data-aos-duration="700">
         <div className="container">
-          <div className="trust-grid">
+          <div className="trust-grid stagger-children">
             <div className="trust-item">
               <div className="trust-icon">
                 <i className="fas fa-shield-alt"></i>
@@ -451,7 +896,7 @@ export default function Home() {
       </section>
 
       {/* Hero Section with Search */}
-      <section className="hero-search-section">
+      <section className="hero-search-section" data-aos="fade" data-aos-duration="800">
         <div className="hero-overlay">
           <div className="container">
             <div className="search-widget-wrapper">
@@ -845,7 +1290,7 @@ export default function Home() {
                     </div>
 
                     <div className="field-group">
-                      <label>Drop-off Date *</label>
+                      <label>Return Date *</label>
                       <div 
                         className="date-input-wrapper"
                         onClick={() => document.getElementById('dropoff-date-input').showPicker()}
@@ -874,268 +1319,473 @@ export default function Home() {
         </div>
       </section>
 
-      {/* Special Offers Section */}
-      <section className="special-offers-section" data-aos="fade-up">
-        <div className="container">
-          <div className="section-header">
-            <h2>Special Offers</h2>
-            <div className="offer-filters">
-              <button className="active">All</button>
-              <button>Flights</button>
-              <button>Hotels</button>
-              <button>Holidays</button>
-              <button>Buses</button>
-            </div>
-          </div>
-
-          <div className="offers-grid">
-            {specialOffers.map(offer => (
-              <div key={offer.id} className="offer-card" data-aos="zoom-in" data-aos-delay={offer.id * 50}>
-                <img src={offer.image} alt={offer.title} />
-                <div className="offer-content">
-                  <h3>{offer.title}</h3>
-                  <p className="offer-subtitle">{offer.subtitle}</p>
-                  <p className="offer-description">{offer.description}</p>
-                  <div className="offer-footer">
-                    <span className="offer-code">{offer.code}</span>
-                    <Link to="/flights" className="view-details">View Details</Link>
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
-
-          <div className="view-all-offers">
-            <Link to="/flights">View all offers <i className="fas fa-arrow-right"></i></Link>
+      {/* Unified Deals Section with Travel Fleet Priority */}
+      <section className="deals-hub-section" data-aos="fade-up" data-aos-duration="800" data-aos-offset="150">
+        <div className="deals-hub-bg">
+          <div className="deals-gradient-orb orb-1"></div>
+          <div className="deals-gradient-orb orb-2"></div>
+          <div className="deals-gradient-orb orb-3"></div>
+          <div className="deals-floating-icons">
+            <i className="fas fa-car floating-icon icon-1"></i>
+            <i className="fas fa-plane floating-icon icon-2"></i>
+            <i className="fas fa-hotel floating-icon icon-3"></i>
+            <i className="fas fa-umbrella-beach floating-icon icon-4"></i>
           </div>
         </div>
-      </section>
-
-      {/* Recommended Hotels Section */}
-      <section className="recommended-hotels-section" data-aos="fade-up">
         <div className="container">
-          <h2 className="section-title">Recommended Hotels</h2>
-          <div className="hotels-grid">
-            {recommendedHotels.map(hotel => (
-              <div key={hotel.id} className="hotel-card" data-aos="fade-up" data-aos-delay={hotel.id * 100}>
-                <img src={hotel.image} alt={hotel.name} />
-                <div className="hotel-info">
-                  <h3>{hotel.name}</h3>
-                  <p className="hotel-city"><i className="fas fa-map-marker-alt"></i> {hotel.city}</p>
-                  <div className="hotel-footer">
-                    <div className="rating">
-                      <i className="fas fa-star"></i> {hotel.rating}
+          <div className="deals-hub-header">
+            <div className="deals-hub-title">
+              <div className="deals-hub-badge-wrapper">
+                <span className="deals-hub-badge">
+                  <span className="badge-glow"></span>
+                  <i className="fas fa-fire-flame-curved"></i>
+                  Exclusive Offers
+                </span>
+                <span className="deals-live-indicator">
+                  <span className="live-dot"></span>
+                  LIVE
+                </span>
+              </div>
+              <h2>Book Smarter, <span>Travel Better</span></h2>
+              <p className="deals-subtitle">
+                <i className="fas fa-route"></i>
+                From vehicles to vacations - find the perfect deal for your journey
+              </p>
+              <div className="deals-stats-mini">
+                <div className="stat-pill">
+                  <i className="fas fa-tags"></i>
+                  <span>50+ Deals</span>
+                </div>
+                <div className="stat-pill">
+                  <i className="fas fa-percent"></i>
+                  <span>Up to 30% Off</span>
+                </div>
+                <div className="stat-pill">
+                  <i className="fas fa-clock"></i>
+                  <span>Limited Time</span>
+                </div>
+              </div>
+            </div>
+            
+            {/* Location Picker for Travel Fleet */}
+            {activeDealsTab === 'fleet' && (
+              <div className="deals-location-picker">
+                <div className="location-picker-card">
+                  <div className="location-picker-header">
+                    <div className="location-icon-wrapper">
+                      <i className="fas fa-location-dot"></i>
+                      <span className="location-pulse"></span>
                     </div>
-                    <div className="price">₹{hotel.price.toLocaleString()}</div>
+                    <div className="location-label-text">
+                      <span className="label-small">Showing offers in</span>
+                      <span className="label-city">{dealsLocation || 'All Cities'}</span>
+                    </div>
                   </div>
-                  <Link to="/hotels" className="book-now-btn">Book Now</Link>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* Popular Domestic Destinations */}
-      <section className="destinations-section" data-aos="fade-up">
-        <div className="container">
-          <h2 className="section-title">Flights to Popular Domestic Destinations from Delhi</h2>
-          <div className="destinations-grid">
-            {domesticDestinations.map((dest, index) => (
-              <div key={index} className="destination-card" data-aos="flip-left" data-aos-delay={index * 50}>
-                <img src={dest.image} alt={dest.name} />
-                <div className="destination-overlay">
-                  <h3>{dest.name}</h3>
-                  <p className="starting-price">Starting from ₹{dest.price.toLocaleString()}</p>
-                  <Link to="/flights" className="explore-btn">Explore <i className="fas fa-arrow-right"></i></Link>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* Popular International Destinations */}
-      <section className="destinations-section international" data-aos="fade-up">
-        <div className="container">
-          <h2 className="section-title">Flights to Popular International Destinations from Delhi</h2>
-          <div className="destinations-grid">
-            {internationalDestinations.map((dest, index) => (
-              <div key={index} className="destination-card" data-aos="flip-left" data-aos-delay={index * 50}>
-                <img src={dest.image} alt={dest.name} />
-                <div className="destination-overlay">
-                  <h3>{dest.name}</h3>
-                  <p className="region-name">{dest.region}</p>
-                  <p className="starting-price">Starting from ₹{dest.price.toLocaleString()}</p>
-                  <Link to="/flights" className="explore-btn">Explore <i className="fas fa-arrow-right"></i></Link>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* Try on Mobile Section */}
-      <section className="mobile-app-section" data-aos="fade-up">
-        <div className="container">
-          <div className="mobile-app-content">
-            <div className="app-info">
-              <h2>TRY ON MOBILE</h2>
-              <p className="app-tagline">Download our app for unbeatable perks!</p>
-              <div className="app-features">
-                <div className="feature-item">
-                  <i className="fas fa-check-circle"></i>
-                  <span>Exclusive mobile-only deals</span>
-                </div>
-                <div className="feature-item">
-                  <i className="fas fa-check-circle"></i>
-                  <span>Easy booking on the go</span>
-                </div>
-                <div className="feature-item">
-                  <i className="fas fa-check-circle"></i>
-                  <span>Get instant notifications</span>
-                </div>
-                <div className="feature-item">
-                  <i className="fas fa-check-circle"></i>
-                  <span>24/7 customer support</span>
-                </div>
-              </div>
-              <div className="download-buttons">
-                <a href="#" className="download-btn">
-                  <i className="fab fa-google-play"></i>
-                  <div>
-                    <small>GET IT ON</small>
-                    <strong>Google Play</strong>
+                  <div className="location-picker-controls">
+                    <div className="location-picker-input-wrapper">
+                      <i className="fas fa-search input-icon"></i>
+                      <input
+                        type="text"
+                        placeholder="Search city..."
+                        value={dealsLocation}
+                        onChange={(e) => handleDealsLocationChange(e.target.value)}
+                        onFocus={() => setShowDealsLocationPicker(true)}
+                        className="location-picker-input"
+                      />
+                      <button 
+                        className="detect-location-btn"
+                        onClick={detectDealsLocation}
+                        disabled={isDetectingDealsLocation}
+                        title="Use current location"
+                      >
+                        {isDetectingDealsLocation ? (
+                          <i className="fas fa-spinner fa-spin"></i>
+                        ) : (
+                          <i className="fas fa-location-crosshairs"></i>
+                        )}
+                      </button>
+                      
+                      {showDealsLocationPicker && (
+                        <div className="location-picker-dropdown">
+                          <div className="dropdown-header">
+                            <i className="fas fa-map-pin"></i>
+                            <span>Popular Cities</span>
+                          </div>
+                          <div className="dropdown-locations">
+                            {filteredDealsLocations.map((loc, index) => (
+                              <button
+                                key={index}
+                                className="location-option"
+                                onClick={() => selectDealsLocation(loc)}
+                              >
+                                <i className="fas fa-city"></i>
+                                {loc}
+                              </button>
+                            ))}
+                            {filteredDealsLocations.length === 0 && (
+                              <div className="no-locations">No matching cities found</div>
+                            )}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                    {dealsLocation && (
+                      <button 
+                        className="clear-location-btn"
+                        onClick={() => setDealsLocation('')}
+                        title="Show all locations"
+                      >
+                        <i className="fas fa-times"></i>
+                      </button>
+                    )}
                   </div>
-                </a>
-                <a href="#" className="download-btn">
-                  <i className="fab fa-apple"></i>
-                  <div>
-                    <small>Download on the</small>
-                    <strong>App Store</strong>
-                  </div>
-                </a>
+                </div>
               </div>
+            )}
+          </div>
+
+          <div className="deals-hub-tabs-wrapper">
+            <div className="deals-hub-tabs">
+              <button 
+                className={`hub-tab ${activeDealsTab === 'fleet' ? 'active' : ''}`} 
+                onClick={() => setActiveDealsTab('fleet')}
+              >
+                <div className="tab-icon-circle">
+                  <i className="fas fa-car-side"></i>
+                </div>
+                <div className="tab-info">
+                  <span className="tab-name">Travel Fleet</span>
+                  <span className="tab-desc">Cars, Buses & More</span>
+                </div>
+                <div className="tab-arrow"><i className="fas fa-chevron-right"></i></div>
+              </button>
+              <button 
+                className={`hub-tab ${activeDealsTab === 'hotels' ? 'active' : ''}`} 
+                onClick={() => setActiveDealsTab('hotels')}
+              >
+                <div className="tab-icon-circle">
+                  <i className="fas fa-hotel"></i>
+                </div>
+                <div className="tab-info">
+                  <span className="tab-name">Hotels</span>
+                  <span className="tab-desc">Premium Stays</span>
+                </div>
+                <div className="tab-arrow"><i className="fas fa-chevron-right"></i></div>
+              </button>
+              <button 
+                className={`hub-tab ${activeDealsTab === 'holidays' ? 'active' : ''}`} 
+                onClick={() => setActiveDealsTab('holidays')}
+              >
+                <div className="tab-icon-circle">
+                  <i className="fas fa-umbrella-beach"></i>
+                </div>
+                <div className="tab-info">
+                  <span className="tab-name">Holidays</span>
+                  <span className="tab-desc">Tour Packages</span>
+                </div>
+                <div className="tab-arrow"><i className="fas fa-chevron-right"></i></div>
+              </button>
+              <button 
+                className={`hub-tab ${activeDealsTab === 'flights' ? 'active' : ''}`} 
+                onClick={() => setActiveDealsTab('flights')}
+              >
+                <div className="tab-icon-circle">
+                  <i className="fas fa-plane"></i>
+                </div>
+                <div className="tab-info">
+                  <span className="tab-name">Flights</span>
+                  <span className="tab-desc">Domestic & International</span>
+                </div>
+                <div className="tab-arrow"><i className="fas fa-chevron-right"></i></div>
+              </button>
             </div>
-            <div className="app-qr">
-              <div className="qr-code">
-                <div className="qr-placeholder">
-                  <i className="fas fa-qrcode"></i>
-                </div>
-                <p>Scan to Download</p>
-              </div>
-            </div>
           </div>
-        </div>
-      </section>
 
-      {/* Why Choose Us Section */}
-      <section className="why-yatra-section" data-aos="fade-up">
-        <div className="container">
-          <h2 className="section-title">Why Travel Axis?</h2>
-          
-          {/* Main Grid - Features + Mobile App */}
-          <div className="why-axis-main-grid">
-            {/* Left Side - Features */}
-            <div className="features-grid-left">
-              {whyTravelAxisFeatures.map((feature, index) => (
-                <div key={index} className={`feature-card ${feature.gradient}`} data-aos="fade-up" data-aos-delay={index * 50}>
-                  <div className={`feature-icon ${feature.colorClass}`}>
-                    <i className={feature.icon}></i>
+          {/* Dynamic Tab Content */}
+          <div className="hub-tab-content active">
+            <div className="fleet-offers-grid">
+              {getCurrentOffers().slice(0, 4).map((offer, index) => (
+                <div 
+                  key={`${offer.type}-${offer.id}`} 
+                  className={`fleet-offer-card ${offer.type}-offer`} 
+                  data-aos="fade-up" 
+                  data-aos-delay={index * 100}
+                >
+                  <div className="offer-image-wrapper">
+                    <img src={offer.image} alt={offer.title} className="offer-image" />
+                    <div className="offer-image-overlay"></div>
+                    <div className="offer-icon-badge">
+                      <i className={getOfferIcon(offer.type)}></i>
+                    </div>
+                    <div className="offer-discount-tag">{offer.discount}</div>
                   </div>
-                  <div className="feature-content">
-                    <h3>{feature.title}</h3>
-                    <p>{feature.description}</p>
-                  </div>
-                  <div className="feature-arrow">
-                    <i className="fas fa-arrow-right"></i>
+                  <div className="offer-content">
+                    {/* Show operator info for fleet offers */}
+                    {activeDealsTab === 'fleet' && offer.operator && (
+                      <div className="offer-operator-info">
+                        <div className="operator-badge">
+                          <i className="fas fa-building"></i>
+                          <span className="operator-name">{offer.operator}</span>
+                        </div>
+                        <div className="operator-rating">
+                          <i className="fas fa-star"></i>
+                          <span>{offer.operatorRating}</span>
+                        </div>
+                      </div>
+                    )}
+                    <h3>{offer.title}</h3>
+                    <p>{offer.description}</p>
+                    <div className="offer-highlights">
+                      {offer.highlights.map((highlight, idx) => (
+                        <span key={idx}><i className="fas fa-check-circle"></i> {highlight}</span>
+                      ))}
+                    </div>
+                    {/* Show service locations for fleet offers */}
+                    {activeDealsTab === 'fleet' && offer.locations && (
+                      <div className="offer-service-locations">
+                        <i className="fas fa-map-marker-alt"></i>
+                        <span>{offer.locations.slice(0, 3).join(', ')}{offer.locations.length > 3 ? ` +${offer.locations.length - 3} more` : ''}</span>
+                      </div>
+                    )}
+                    <div className="offer-pricing">
+                      <div className="price-info">
+                        <span className="old-price">{offer.oldPrice}</span>
+                        <span className="new-price">{offer.newPrice}<small>{offer.unit}</small></span>
+                      </div>
+                      <Link to={getOfferLink(offer)} className="book-offer-btn">Book Now</Link>
+                    </div>
                   </div>
                 </div>
               ))}
             </div>
 
-            {/* Right Side - Mobile App Mockup */}
-            <div className="mobile-app-mockup" data-aos="fade-left">
-              <div className="phone-frame">
+            {/* View More Button */}
+            {getCurrentOffers().length > 4 && (
+              <div className="view-more-offers">
+                <Link 
+                  to={`/offers?tab=${activeDealsTab}${dealsLocation ? `&location=${encodeURIComponent(dealsLocation)}` : ''}`} 
+                  className="view-more-btn"
+                >
+                  <span>View All {getCurrentOffers().length} Offers</span>
+                  <i className="fas fa-arrow-right"></i>
+                </Link>
+                <p className="view-more-hint">
+                  {activeDealsTab === 'fleet' && dealsLocation 
+                    ? `Showing 4 of ${getCurrentOffers().length} offers in ${dealsLocation}`
+                    : `Showing 4 of ${getCurrentOffers().length} ${activeDealsTab} offers`
+                  }
+                </p>
+              </div>
+            )}
+
+            <div className="fleet-promo-banner">
+              <div className="promo-content">
+                <div className="promo-icon"><i className="fas fa-gift"></i></div>
+                <div className="promo-text">
+                  {activeDealsTab === 'fleet' && (
+                    <>
+                      <h4>First Ride Bonus!</h4>
+                      <p>Use code <strong>FIRSTRIDE</strong> to get extra ₹200 off on your first vehicle booking</p>
+                    </>
+                  )}
+                  {activeDealsTab === 'hotels' && (
+                    <>
+                      <h4>Stay More, Save More!</h4>
+                      <p>Use code <strong>STAYBIG</strong> to get extra 15% off on 3+ night stays</p>
+                    </>
+                  )}
+                  {activeDealsTab === 'holidays' && (
+                    <>
+                      <h4>Group Travel Bonus!</h4>
+                      <p>Use code <strong>GROUPFUN</strong> to get ₹2000 off on bookings for 4+ travelers</p>
+                    </>
+                  )}
+                  {activeDealsTab === 'flights' && (
+                    <>
+                      <h4>Fly Smart, Save Big!</h4>
+                      <p>Use code <strong>FLYNOW</strong> to get flat ₹500 off on domestic flights</p>
+                    </>
+                  )}
+                </div>
+              </div>
+              <Link to="/offers" className="promo-cta">Claim Offer <i className="fas fa-arrow-right"></i></Link>
+            </div>
+          </div>
+
+          <div className="deals-hub-footer">
+            <div className="hub-stats">
+              <div className="hub-stat">
+                <span className="stat-value">{activeDealsTab === 'fleet' ? '500+' : activeDealsTab === 'hotels' ? '200+' : activeDealsTab === 'holidays' ? '100+' : '50+'}</span>
+                <span className="stat-name">{activeDealsTab === 'fleet' ? 'Vehicles' : activeDealsTab === 'hotels' ? 'Hotels' : activeDealsTab === 'holidays' ? 'Packages' : 'Routes'}</span>
+              </div>
+              <div className="hub-stat">
+                <span className="stat-value">50+</span>
+                <span className="stat-name">Cities</span>
+              </div>
+              <div className="hub-stat">
+                <span className="stat-value">10K+</span>
+                <span className="stat-name">Happy Customers</span>
+              </div>
+              <div className="hub-stat">
+                <span className="stat-value">4.8★</span>
+                <span className="stat-name">Rating</span>
+              </div>
+            </div>
+            <Link to="/offers" className="view-all-deals">
+              View All Offers <i className="fas fa-arrow-right"></i>
+            </Link>
+          </div>
+        </div>
+      </section>
+
+      {/* Recommended Hotels Section - Premium Design */}
+      <section className="hotels-premium" data-aos="fade-up" data-aos-duration="800" data-aos-offset="150">
+        <div className="hotels-premium-bg">
+          <div className="floating-shape shape-1"></div>
+          <div className="floating-shape shape-2"></div>
+          <div className="floating-shape shape-3"></div>
+        </div>
+        <div className="container">
+          <div className="hotels-premium-header">
+            <div className="header-left">
+              <div className="section-label">
+                <span className="label-line"></span>
+                <span className="label-text">Curated Collection</span>
+              </div>
+              <h2>Where Comfort<br/><span>Meets Elegance</span></h2>
+            </div>
+            <div className="header-right">
+              <p>Discover handpicked accommodations that redefine luxury travel experiences across India</p>
+              <Link to="/hotels" className="explore-hotels-btn">
+                Explore All <i className="fas fa-arrow-right"></i>
+              </Link>
+            </div>
+          </div>
+
+          <div className="hotels-premium-grid">
+            {recommendedHotels.map((hotel, index) => (
+              <div key={hotel.id} className={`hotel-premium-card ${index === 0 ? 'featured' : ''}`} data-aos="fade-up" data-aos-delay={index * 80}>
+                <div className="card-image-container">
+                  <img src={hotel.image} alt={hotel.name} />
+                  <div className="card-gradient"></div>
+                  <div className="card-top-actions">
+                    <div className="star-badge">
+                      <i className="fas fa-star"></i>
+                      <span>{hotel.rating}.0</span>
+                    </div>
+                    <button className="save-btn"><i className="far fa-bookmark"></i></button>
+                  </div>
+                  <div className="card-location-pill">
+                    <i className="fas fa-location-dot"></i>
+                    <span>{hotel.city}</span>
+                  </div>
+                </div>
+                <div className="card-details">
+                  <h3>{hotel.name}</h3>
+                  <div className="card-amenities">
+                    <span><i className="fas fa-wifi"></i></span>
+                    <span><i className="fas fa-utensils"></i></span>
+                    <span><i className="fas fa-spa"></i></span>
+                    <span><i className="fas fa-swimmer"></i></span>
+                  </div>
+                  <div className="card-footer">
+                    <div className="price-block">
+                      <span className="price-from">Starting from</span>
+                      <div className="price-main">
+                        <span className="currency">₹</span>
+                        <span className="amount">{hotel.price.toLocaleString()}</span>
+                        <span className="duration">/night</span>
+                      </div>
+                    </div>
+                    <Link to="/hotels" className="reserve-btn">
+                      Reserve
+                    </Link>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Mobile App Section - Redesigned */}
+      <section className="app-section-new" data-aos="fade-up" data-aos-duration="800" data-aos-offset="150">
+        <div className="container">
+          <div className="app-content-wrap">
+            <div className="app-info-side">
+              <span className="app-badge"><i className="fas fa-mobile-alt"></i> Mobile App</span>
+              <h2>Travel Smarter with Our App</h2>
+              <p>Get exclusive deals, instant bookings, and 24/7 support right at your fingertips.</p>
+              
+              <div className="app-features-list">
+                <div className="app-feature">
+                  <div className="feature-icon"><i className="fas fa-tag"></i></div>
+                  <div>
+                    <h4>Exclusive App Deals</h4>
+                    <p>Save up to 20% more on app bookings</p>
+                  </div>
+                </div>
+                <div className="app-feature">
+                  <div className="feature-icon"><i className="fas fa-bolt"></i></div>
+                  <div>
+                    <h4>Instant Booking</h4>
+                    <p>Book flights, hotels & more in seconds</p>
+                  </div>
+                </div>
+                <div className="app-feature">
+                  <div className="feature-icon"><i className="fas fa-bell"></i></div>
+                  <div>
+                    <h4>Real-time Updates</h4>
+                    <p>Price alerts & trip notifications</p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="app-download-wrap">
+                <a href="#" className="store-btn google">
+                  <i className="fab fa-google-play"></i>
+                  <div>
+                    <span>GET IT ON</span>
+                    <strong>Google Play</strong>
+                  </div>
+                </a>
+                <a href="#" className="store-btn apple">
+                  <i className="fab fa-apple"></i>
+                  <div>
+                    <span>Download on the</span>
+                    <strong>App Store</strong>
+                  </div>
+                </a>
+              </div>
+            </div>
+
+            <div className="app-visual-side">
+              <div className="phone-mockup">
                 <div className="phone-screen">
-                  <div className="app-header">
-                    <h3>Bus Booking</h3>
-                    <p>Quick & Easy</p>
+                  <div className="mockup-header">
+                    <i className="fas fa-plane"></i>
+                    <span>Travel Axis</span>
                   </div>
-
-                  {/* Bus Booking Form */}
-                  <div className="app-content">
-                    <div className="app-form-group">
-                      <label>From</label>
-                      <input type="text" placeholder="Departure City" value="Delhi" readOnly />
+                  <div className="mockup-content">
+                    <div className="mockup-search">
+                      <span>Where to?</span>
+                      <i className="fas fa-search"></i>
                     </div>
-
-                    <div className="swap-btn-mobile">
-                      <i className="fas fa-exchange-alt"></i>
-                    </div>
-
-                    <div className="app-form-group">
-                      <label>To</label>
-                      <input type="text" placeholder="Arrival City" value="Mumbai" readOnly />
-                    </div>
-
-                    <div className="app-form-group">
-                      <label>Date</label>
-                      <input type="date" defaultValue="2026-01-15" />
-                    </div>
-
-                    <button className="app-search-btn">Search Buses</button>
-
-                    {/* Bus Fleet Options */}
-                    <div className="fleet-options">
-                      <h4>Popular Fleets</h4>
-                      <div className="fleet-list">
-                        <div className="fleet-item">
-                          <i className="fas fa-bus"></i>
-                          <span>Sleeper Bus</span>
-                        </div>
-                        <div className="fleet-item">
-                          <i className="fas fa-bus"></i>
-                          <span>AC Deluxe</span>
-                        </div>
-                        <div className="fleet-item">
-                          <i className="fas fa-bus"></i>
-                          <span>Non-AC</span>
-                        </div>
+                    <div className="mockup-deals">
+                      <div className="deal-mini">
+                        <span className="deal-tag">-40%</span>
+                        <span>Dubai</span>
                       </div>
-                    </div>
-
-                    {/* Quick Stats */}
-                    <div className="app-stats">
-                      <div className="stat-item">
-                        <h5>500+</h5>
-                        <p>Bus Routes</p>
-                      </div>
-                      <div className="stat-item">
-                        <h5>50K+</h5>
-                        <p>Happy Users</p>
+                      <div className="deal-mini">
+                        <span className="deal-tag">-30%</span>
+                        <span>Bali</span>
                       </div>
                     </div>
                   </div>
                 </div>
-
-                {/* Phone Notch */}
-                <div className="phone-notch"></div>
-              </div>
-
-              {/* Download App CTA */}
-              <div className="app-cta-section">
-                <h3>Download Travel Axis App</h3>
-                <p>Get exclusive app-only deals on bus bookings</p>
-                <div className="app-download-buttons">
-                  <a href="#" className="download-btn playstore">
-                    <i className="fab fa-google-play"></i>
-                    <span>Play Store</span>
-                  </a>
-                  <a href="#" className="download-btn appstore">
-                    <i className="fab fa-app-store"></i>
-                    <span>App Store</span>
-                  </a>
+                <div className="qr-float">
+                  <i className="fas fa-qrcode"></i>
+                  <span>Scan to Download</span>
                 </div>
               </div>
             </div>
@@ -1143,193 +1793,253 @@ export default function Home() {
         </div>
       </section>
 
-      {/* Other Services */}
-      <section className="other-services-section" data-aos="fade-up">
+      {/* Why Choose Us Section - Redesigned */}
+      <section className="why-axis-section" data-aos="fade-up" data-aos-duration="800" data-aos-offset="150">
         <div className="container">
-          <h2 className="section-title">Travel Axis's Other Services</h2>
-          <div className="services-grid">
-            <div className="service-card" data-aos="zoom-in">
-              <i className="fas fa-hiking"></i>
-              <h3>Adventure</h3>
-              <p>Explore thrilling adventure activities</p>
-              <Link to="/tour">Plan my Trip</Link>
+          <div className="why-axis-header">
+            <span className="section-badge">Why Choose Us</span>
+            <h2 className="section-title">Experience Travel Like Never Before</h2>
+            <p className="section-subtitle">Trusted by thousands of travelers worldwide for seamless booking experiences</p>
+          </div>
+          
+          {/* Bento Grid Layout */}
+          <div className="bento-grid">
+            {/* Large Featured Card */}
+            <div className="bento-card bento-large" data-aos="fade-up">
+              <div className="bento-icon-wrap gradient-blue">
+                <i className="fas fa-search"></i>
+              </div>
+              <div className="bento-content">
+                <h3>Best Deals & Offers</h3>
+                <p>Search for exclusive deals on flights and hotels. Find unbeatable prices to any destination you love.</p>
+              </div>
+              <div className="bento-visual">
+                <div className="floating-tag tag-1">-40% OFF</div>
+                <div className="floating-tag tag-2">Flash Sale</div>
+                <div className="floating-tag tag-3">Best Price</div>
+              </div>
             </div>
-            <div className="service-card" data-aos="zoom-in">
-              <i className="fas fa-users"></i>
-              <h3>MICE</h3>
-              <p>Meetings, Incentives, Conferences & Events</p>
-              <Link to="/contact">Plan my Trip</Link>
+
+            {/* Stats Card */}
+            <div className="bento-card bento-stats" data-aos="fade-up" data-aos-delay="100">
+              <div className="stats-grid">
+                <div className="stat-box">
+                  <span className="stat-number">50K+</span>
+                  <span className="stat-label">Happy Travelers</span>
+                </div>
+                <div className="stat-box">
+                  <span className="stat-number">500+</span>
+                  <span className="stat-label">Destinations</span>
+                </div>
+                <div className="stat-box">
+                  <span className="stat-number">99%</span>
+                  <span className="stat-label">Satisfaction</span>
+                </div>
+                <div className="stat-box">
+                  <span className="stat-number">24/7</span>
+                  <span className="stat-label">Support</span>
+                </div>
+              </div>
             </div>
-            <div className="service-card" data-aos="zoom-in">
-              <i className="fas fa-ship"></i>
-              <h3>Cruise</h3>
-              <p>Book a cruise holiday</p>
-              <Link to="/tour">Plan my Trip</Link>
+
+            {/* Security Card */}
+            <div className="bento-card bento-medium" data-aos="fade-up" data-aos-delay="150">
+              <div className="bento-icon-wrap gradient-green">
+                <i className="fas fa-shield-alt"></i>
+              </div>
+              <h3>Secure & Protected</h3>
+              <p>Book with complete confidence knowing your transactions are secure and protected.</p>
+              <div className="security-badges">
+                <span><i className="fas fa-lock"></i> SSL</span>
+                <span><i className="fas fa-check-circle"></i> Verified</span>
+              </div>
             </div>
-            <div className="service-card" data-aos="zoom-in">
-              <i className="fas fa-home"></i>
-              <h3>Villas & Stays</h3>
-              <p>Premium villas and homestays</p>
-              <Link to="/hotels">Plan my Trip</Link>
+
+            {/* Holiday Card */}
+            <div className="bento-card bento-medium" data-aos="fade-up" data-aos-delay="200">
+              <div className="bento-icon-wrap gradient-orange">
+                <i className="fas fa-sun"></i>
+              </div>
+              <h3>Perfect Holidays</h3>
+              <p>From budget-friendly to luxury experiences that match your style perfectly.</p>
+              <div className="holiday-tags">
+                <span>Beach</span>
+                <span>Adventure</span>
+                <span>Luxury</span>
+              </div>
             </div>
-            <div className="service-card" data-aos="zoom-in">
-              <i className="fas fa-train"></i>
-              <h3>Luxury Trains</h3>
-              <p>Experience luxury train journeys</p>
-              <Link to="/tour">Plan my Trip</Link>
-            </div>
-            <div className="service-card" data-aos="zoom-in">
-              <i className="fas fa-landmark"></i>
-              <h3>Monuments</h3>
-              <p>Explore historical monuments</p>
-              <Link to="/destination">Plan my Trip</Link>
-            </div>
-            <div className="service-card" data-aos="zoom-in">
-              <i className="fas fa-ticket-alt"></i>
-              <h3>Activities</h3>
-              <p>Shopping, heritage walks & more</p>
-              <Link to="/tour">Plan my Trip</Link>
-            </div>
-            <div className="service-card" data-aos="zoom-in">
-              <i className="fas fa-gift"></i>
-              <h3>Gift Voucher</h3>
-              <p>Perfect gift for travelers</p>
-              <Link to="/contact">Plan my Trip</Link>
+
+            {/* Deals Card */}
+            <div className="bento-card bento-wide" data-aos="fade-up" data-aos-delay="250">
+              <div className="deals-content">
+                <div className="bento-icon-wrap gradient-red">
+                  <i className="fas fa-gift"></i>
+                </div>
+                <div className="deals-text">
+                  <h3>Seasonal Deals</h3>
+                  <p>Enjoy new deals every season with special discounts on flights, hotels, and packages.</p>
+                </div>
+              </div>
+              <div className="deals-cta">
+                <span className="deal-badge">New Year Special</span>
+                <button className="explore-btn">Explore Deals <i className="fas fa-arrow-right"></i></button>
+              </div>
             </div>
           </div>
         </div>
       </section>
 
-      {/* Winter Travel Fest Banner */}
-      <section className="promo-banner-section" data-aos="fade-up">
+      {/* Winter Travel Fest Banner - Redesigned */}
+      <section className="promo-banner-new" data-aos="zoom-in" data-aos-duration="600">
         <div className="container">
-          <div className="winter-fest-banner">
-            <div className="banner-content">
-              <i className="fas fa-snowflake"></i>
-              <h3>Winter Travel Fest</h3>
-              <span className="live-badge">NOW LIVE</span>
+          <div className="promo-card">
+            <div className="promo-glow"></div>
+            <div className="promo-content">
+              <div className="promo-icon"><i className="fas fa-snowflake"></i></div>
+              <div className="promo-text">
+                <h3>Winter Travel Fest</h3>
+                <p>Unbeatable deals on snow destinations</p>
+              </div>
+              <span className="live-indicator"><span className="pulse"></span> LIVE NOW</span>
             </div>
-            <i className="fas fa-arrow-right banner-arrow"></i>
+            <Link to="/tour" className="promo-arrow"><i className="fas fa-arrow-right"></i></Link>
           </div>
         </div>
       </section>
 
-      {/* Indigo Flights Cancellation Notice */}
-      <section className="flight-notice-section" data-aos="fade-up">
+      {/* Flight Notice Section - Redesigned */}
+      <section className="notices-section-new" data-aos="fade-up" data-aos-duration="700">
         <div className="container">
-          <div className="notice-cards">
-            <div className="notice-card">
-              <div className="notice-icon">
+          <div className="notices-grid">
+            <div className="notice-card-new">
+              <div className="notice-icon-wrap warning">
                 <i className="fas fa-plane-slash"></i>
               </div>
-              <div className="notice-content">
+              <div className="notice-info">
                 <h4>Check Indigo Flights Cancellations</h4>
                 <p>Stay updated with the latest flight status</p>
               </div>
-              <i className="fas fa-arrow-right"></i>
+              <Link to="/flights" className="notice-link"><i className="fas fa-chevron-right"></i></Link>
             </div>
-            <div className="notice-card">
-              <div className="notice-icon">
+            <div className="notice-card-new">
+              <div className="notice-icon-wrap success">
                 <i className="fas fa-hand-holding-usd"></i>
               </div>
-              <div className="notice-content">
-                <h4>Claim Refund for Cancelled Indigo Flights</h4>
-                <p>Quick and easy refund process</p>
+              <div className="notice-info">
+                <h4>Claim Refund for Cancelled Flights</h4>
+                <p>Quick and hassle-free refund process</p>
               </div>
-              <i className="fas fa-arrow-right"></i>
+              <Link to="/contact" className="notice-link"><i className="fas fa-chevron-right"></i></Link>
             </div>
           </div>
         </div>
       </section>
 
-      {/* Travel Axis Products */}
-      <section className="products-section" data-aos="fade-up">
+      {/* Products Section - Redesigned */}
+      <section className="products-section-new" data-aos="fade-up" data-aos-duration="700" data-aos-offset="100">
         <div className="container">
-          <h2 className="section-title">Travel Axis Products</h2>
-          <div className="products-grid">
-            <div className="product-category">
-              <Link to="/flights">Flights</Link>
-              <Link to="/flights">International Airlines</Link>
-              <Link to="/flights">Domestic Airlines</Link>
+          <h2 className="products-title">Explore Travel Axis</h2>
+          <div className="products-grid-new">
+            <div className="product-column">
+              <h4><i className="fas fa-plane"></i> Flights</h4>
+              <ul>
+                <li><Link to="/flights">International Airlines</Link></li>
+                <li><Link to="/flights">Domestic Airlines</Link></li>
+                <li><Link to="/flights">Last Minute Deals</Link></li>
+              </ul>
             </div>
-            <div className="product-category">
-              <Link to="/hotels">Hotels</Link>
-              <Link to="/tour">Trains</Link>
-              <Link to="/tour">Bus Booking</Link>
+            <div className="product-column">
+              <h4><i className="fas fa-hotel"></i> Hotels & Stays</h4>
+              <ul>
+                <li><Link to="/hotels">Premium Hotels</Link></li>
+                <li><Link to="/hotels">Budget Stays</Link></li>
+                <li><Link to="/hotels">Villas & Resorts</Link></li>
+              </ul>
             </div>
-            <div className="product-category">
-              <Link to="/tour">Holidays</Link>
-              <Link to="/tour">International Holiday Packages</Link>
-              <Link to="/tour">India Holiday Packages</Link>
+            <div className="product-column">
+              <h4><i className="fas fa-umbrella-beach"></i> Holidays</h4>
+              <ul>
+                <li><Link to="/tour">International Packages</Link></li>
+                <li><Link to="/tour">India Packages</Link></li>
+                <li><Link to="/tour">Weekend Getaways</Link></li>
+              </ul>
             </div>
-            <div className="product-category">
-              <Link to="/tour">Outstation Cabs</Link>
-              <Link to="/destination">Indian Monuments</Link>
-              <Link to="/contact">MICE</Link>
+            <div className="product-column">
+              <h4><i className="fas fa-car"></i> Transport</h4>
+              <ul>
+                <li><Link to="/fleet-results">Outstation Cabs</Link></li>
+                <li><Link to="/tour">Bus Booking</Link></li>
+                <li><Link to="/tour">Train Tickets</Link></li>
+              </ul>
             </div>
           </div>
         </div>
       </section>
 
-      {/* Footer Links */}
-      <footer className="home-footer" data-aos="fade-up">
-        <div className="container">
-          <div className="footer-sections">
-            <div className="footer-column">
-              <h3>Company Information</h3>
-              <Link to="/about">About Us</Link>
-              <Link to="/contact">Contact Us</Link>
-              <Link to="/blog">Careers</Link>
-              <Link to="/faq">Press Room</Link>
-            </div>
-            <div className="footer-column">
-              <h3>Partner With Travel Axis</h3>
-              <Link to="/contact">Become a Partner</Link>
-              <Link to="/service">Affiliate Program</Link>
-              <Link to="/contact">Advertise with Us</Link>
-            </div>
-            <div className="footer-column">
-              <h3>Travel Axis for Business</h3>
-              <Link to="/service">Corporate Travel</Link>
-              <Link to="/contact">Group Bookings</Link>
-              <Link to="/service">Business Solutions</Link>
-            </div>
-            <div className="footer-column">
-              <h3>Customer Care</h3>
-              <Link to="/contact">Help & Support</Link>
-              <Link to="/faq">FAQ</Link>
-              <Link to="/contact">Cancellation Policy</Link>
-              <Link to="/contact">Terms & Conditions</Link>
-            </div>
-          </div>
-
-          <div className="social-payment-section">
-            <div className="social-media">
-              <h4>Our Social Media Handles:</h4>
-              <div className="social-icons">
-                <a href="#" aria-label="Facebook"><i className="fab fa-facebook"></i></a>
-                <a href="#" aria-label="LinkedIn"><i className="fab fa-linkedin"></i></a>
-                <a href="#" aria-label="YouTube"><i className="fab fa-youtube"></i></a>
-                <a href="#" aria-label="Instagram"><i className="fab fa-instagram"></i></a>
-                <a href="#" aria-label="Twitter"><i className="fab fa-twitter"></i></a>
+      {/* Main Footer - Redesigned */}
+      <footer className="footer-new" data-aos="fade-up">
+        <div className="footer-top">
+          <div className="container">
+            <div className="footer-grid">
+              {/* Brand Column */}
+              <div className="footer-brand">
+                <div className="brand-logo">
+                  <i className="fas fa-globe-americas"></i>
+                  <div>
+                    <h3>Travel Axis</h3>
+                    <span>Plan • Book • Explore</span>
+                  </div>
+                </div>
+                <p className="brand-desc">Your trusted partner for seamless travel experiences across the globe.</p>
+                <div className="social-links-new">
+                  <a href="#"><i className="fab fa-facebook-f"></i></a>
+                  <a href="#"><i className="fab fa-instagram"></i></a>
+                  <a href="#"><i className="fab fa-twitter"></i></a>
+                  <a href="#"><i className="fab fa-linkedin-in"></i></a>
+                  <a href="#"><i className="fab fa-youtube"></i></a>
+                </div>
               </div>
-            </div>
 
-            <div className="payment-methods">
-              <h4>Security & Payments</h4>
-              <div className="payment-icons">
-                <i className="fas fa-lock"></i>
-                <i className="fab fa-cc-visa"></i>
-                <i className="fab fa-cc-mastercard"></i>
-                <i className="fab fa-cc-amex"></i>
-                <i className="fas fa-university"></i>
-                <i className="fas fa-mobile-alt"></i>
+              {/* Links Columns */}
+              <div className="footer-links-column">
+                <h4>Company</h4>
+                <Link to="/about">About Us</Link>
+                <Link to="/contact">Contact Us</Link>
+                <Link to="/blog">Careers</Link>
+                <Link to="/blog">Press Room</Link>
+              </div>
+
+              <div className="footer-links-column">
+                <h4>Partners</h4>
+                <Link to="/contact">Become a Partner</Link>
+                <Link to="/service">Affiliate Program</Link>
+                <Link to="/contact">Advertise</Link>
+                <Link to="/service">Corporate Travel</Link>
+              </div>
+
+              <div className="footer-links-column">
+                <h4>Support</h4>
+                <Link to="/contact">Help Center</Link>
+                <Link to="/faq">FAQ</Link>
+                <Link to="/contact">Cancellations</Link>
+                <Link to="/contact">Terms & Conditions</Link>
               </div>
             </div>
           </div>
+        </div>
 
-          <div className="copyright">
-            <p>Copyright © 2025 Travel Axis Online Limited, India. All rights reserved</p>
+        <div className="footer-bottom-new">
+          <div className="container">
+            <div className="footer-bottom-content">
+              <p>&copy; 2026 Travel Axis Online Limited, India. All rights reserved.</p>
+              <div className="footer-legal">
+                <Link to="/contact">Privacy Policy</Link>
+                <span>|</span>
+                <Link to="/contact">Terms of Use</Link>
+                <span>|</span>
+                <Link to="/contact">Disclaimer</Link>
+              </div>
+            </div>
           </div>
         </div>
       </footer>

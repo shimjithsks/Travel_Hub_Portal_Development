@@ -42,6 +42,7 @@ import MyProfile from './pages/customer/MyProfile';
 import CompleteBooking from './pages/CompleteBooking';
 import MakePayment from './pages/MakePayment';
 import CompleteHoliday from './pages/CompleteHoliday';
+import Offers from './pages/Offers';
 import './App.css';
 
 function App() {
@@ -103,6 +104,7 @@ function App() {
         <Route path="/complete-booking" element={<CompleteBooking />} />
         <Route path="/make-payment" element={<MakePayment />} />
         <Route path="/complete-holiday" element={<CompleteHoliday />} />
+        <Route path="/offers" element={<Offers />} />
         <Route path="/about" element={<About />} />
         <Route path="/service" element={<Services />} />
         <Route path="/tour" element={<Tours />} />

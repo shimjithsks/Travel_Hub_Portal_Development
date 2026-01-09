@@ -7,6 +7,81 @@
   overflow-x: hidden;
 }
 
+/* Offer Applied Banner */
+.offer-applied-banner {
+  background: linear-gradient(135deg, #14b8a6 0%, #0d9488 100%);
+  color: white;
+  padding: 12px 20px;
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 9999;
+  animation: slideDown 0.3s ease-out;
+  box-shadow: 0 4px 15px rgba(20, 184, 166, 0.3);
+}
+
+.fleet-results-page.has-offer-banner {
+  padding-top: 52px;
+}
+
+@keyframes slideDown {
+  from {
+    transform: translateY(-100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+.offer-banner-content {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.offer-banner-content > i {
+  font-size: 1.25rem;
+  animation: bounce 1s ease infinite;
+}
+
+@keyframes bounce {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-3px); }
+}
+
+.offer-banner-content .offer-text {
+  font-size: 0.95rem;
+  text-align: center;
+}
+
+.offer-banner-content .offer-text strong {
+  font-weight: 600;
+}
+
+.close-banner {
+  background: rgba(255, 255, 255, 0.2);
+  border: none;
+  color: white;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.2s;
+  margin-left: 10px;
+}
+
+.close-banner:hover {
+  background: rgba(255, 255, 255, 0.3);
+}
+
 /* Smooth animations */
 @keyframes fadeInUp {
   from {
