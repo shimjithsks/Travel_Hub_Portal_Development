@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import AOS from 'aos';
 import LoginModal from '../components/LoginModal';
@@ -67,6 +67,46 @@ export default function Home() {
   const [showLocationSuggestions, setShowLocationSuggestions] = useState(false);
   const [filteredLocations, setFilteredLocations] = useState(popularLocations);
   const [isGettingLocation, setIsGettingLocation] = useState(false);
+
+  // Auto-detect location on page load for hero search box
+  useEffect(() => {
+    if (!fleetSearch.location && navigator.geolocation) {
+      setIsGettingLocation(true); // Show loading spinner
+      navigator.geolocation.getCurrentPosition(
+        async (position) => {
+          const { latitude, longitude } = position.coords;
+          try {
+            const response = await fetch(
+              `https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}&zoom=10&addressdetails=1`,
+              {
+                headers: {
+                  'Accept-Language': 'en',
+                  'User-Agent': 'TravelAxisApp/1.0'
+                }
+              }
+            );
+            if (response.ok) {
+              const data = await response.json();
+              let placeName = data.address.city || data.address.town || 
+                             data.address.state_district || data.address.state;
+              if (placeName) {
+                setFleetSearch(prev => ({ ...prev, location: placeName }));
+              }
+            }
+          } catch (error) {
+            console.error('Auto location detection error for search box:', error);
+          } finally {
+            setIsGettingLocation(false); // Hide loading spinner
+          }
+        },
+        (error) => {
+          console.error('Geolocation permission denied or error:', error);
+          setIsGettingLocation(false); // Hide loading spinner on error
+        },
+        { enableHighAccuracy: false, timeout: 10000, maximumAge: 300000 }
+      );
+    }
+  }, []); // Run once on mount
 
   // Holiday search state
   const [holidaySearch, setHolidaySearch] = useState({
@@ -271,10 +311,12 @@ export default function Home() {
   const [showDealsLocationPicker, setShowDealsLocationPicker] = useState(false);
   const [filteredDealsLocations, setFilteredDealsLocations] = useState(popularLocations);
   const [isDetectingDealsLocation, setIsDetectingDealsLocation] = useState(false);
+  const dealsLocationPickerRef = useRef(null);
 
   // Auto-detect location on page load for deals
   useEffect(() => {
     if (!dealsLocation && navigator.geolocation) {
+      setIsDetectingDealsLocation(true); // Show loading spinner
       navigator.geolocation.getCurrentPosition(
         async (position) => {
           const { latitude, longitude } = position.coords;
@@ -298,10 +340,13 @@ export default function Home() {
             }
           } catch (error) {
             console.error('Auto location detection error:', error);
+          } finally {
+            setIsDetectingDealsLocation(false); // Hide loading spinner
           }
         },
         (error) => {
           console.error('Geolocation permission denied or error:', error);
+          setIsDetectingDealsLocation(false); // Hide loading spinner on error
         },
         { enableHighAccuracy: false, timeout: 10000, maximumAge: 300000 }
       );
@@ -379,6 +424,23 @@ export default function Home() {
     setDealsLocation(location);
     setShowDealsLocationPicker(false);
   };
+
+  // Click outside handler for deals location picker
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (dealsLocationPickerRef.current && !dealsLocationPickerRef.current.contains(event.target)) {
+        setShowDealsLocationPicker(false);
+      }
+    };
+
+    if (showDealsLocationPicker) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [showDealsLocationPicker]);
 
   // Fleet Offers Data (with operator and location info)
   const fleetOffers = [
@@ -851,469 +913,624 @@ export default function Home() {
         </div>
       </section>
 
-      {/* Trust Indicators */}
-      <section className="trust-indicators" data-aos="fade-up" data-aos-duration="700">
+      {/* Trust Indicators - Premium Glass Cards */}
+      <section className="trust-indicators-new" data-aos="fade-up" data-aos-duration="700">
         <div className="container">
-          <div className="trust-grid stagger-children">
-            <div className="trust-item">
-              <div className="trust-icon">
+          <div className="trust-grid-new">
+            <div className="trust-card">
+              <div className="trust-card-icon">
                 <i className="fas fa-shield-alt"></i>
+                <div className="icon-ring"></div>
               </div>
-              <div className="trust-content">
-                <h4>100% Secure Payments</h4>
-                <p>All major credit & debit cards accepted</p>
+              <div className="trust-card-content">
+                <h4>100% Secure</h4>
+                <p>Protected payments</p>
               </div>
             </div>
-            <div className="trust-item">
-              <div className="trust-icon">
+            <div className="trust-card">
+              <div className="trust-card-icon">
                 <i className="fas fa-headset"></i>
+                <div className="icon-ring"></div>
               </div>
-              <div className="trust-content">
-                <h4>24/7 Customer Support</h4>
-                <p>We're always here to help you</p>
-              </div>
-            </div>
-            <div className="trust-item">
-              <div className="trust-icon">
-                <i className="fas fa-award"></i>
-              </div>
-              <div className="trust-content">
-                <h4>Best Price Guarantee</h4>
-                <p>Find a lower price? We'll match it!</p>
+              <div className="trust-card-content">
+                <h4>24/7 Support</h4>
+                <p>Always here for you</p>
               </div>
             </div>
-            <div className="trust-item">
-              <div className="trust-icon">
-                <i className="fas fa-users"></i>
+            <div className="trust-card">
+              <div className="trust-card-icon">
+                <i className="fas fa-medal"></i>
+                <div className="icon-ring"></div>
               </div>
-              <div className="trust-content">
-                <h4>2M+ Happy Customers</h4>
-                <p>Trusted by millions worldwide</p>
+              <div className="trust-card-content">
+                <h4>Best Prices</h4>
+                <p>Price match guarantee</p>
+              </div>
+            </div>
+            <div className="trust-card">
+              <div className="trust-card-icon">
+                <i className="fas fa-heart"></i>
+                <div className="icon-ring"></div>
+              </div>
+              <div className="trust-card-content">
+                <h4>2M+ Happy</h4>
+                <p>Trusted customers</p>
               </div>
             </div>
           </div>
         </div>
       </section>
 
-      {/* Hero Section with Search */}
-      <section className="hero-search-section" data-aos="fade" data-aos-duration="800">
-        <div className="hero-overlay">
-          <div className="container">
-            <div className="search-widget-wrapper">
-              {/* Tab Navigation */}
-              <div className="search-tabs">
+      {/* Hero Section with Search - Complete Redesign */}
+      <section className="hero-section-new" data-aos="fade" data-aos-duration="800">
+        <div className="hero-bg-elements">
+          <div className="hero-gradient-orb orb-1"></div>
+          <div className="hero-gradient-orb orb-2"></div>
+          <div className="hero-gradient-orb orb-3"></div>
+          <div className="hero-pattern"></div>
+          {/* Floating Travel Icons */}
+          <div className="hero-floating-icons">
+            <i className="fas fa-plane floating-icon f-icon-1"></i>
+            <i className="fas fa-globe-americas floating-icon f-icon-2"></i>
+            <i className="fas fa-map-marked-alt floating-icon f-icon-3"></i>
+            <i className="fas fa-passport floating-icon f-icon-4"></i>
+            <i className="fas fa-suitcase-rolling floating-icon f-icon-5"></i>
+            <i className="fas fa-laptop floating-icon f-icon-6"></i>
+          </div>
+        </div>
+        
+        <div className="container">
+          <div className="hero-content-wrapper">
+            {/* Hero Text */}
+            <div className="hero-headline">
+              <span className="hero-tagline">
+                <i className="fas fa-compass"></i>
+                Your Journey Begins Here
+              </span>
+              <h1>Discover <span className="gradient-text">Amazing</span> Places</h1>
+              <p>Book vehicles, holidays, hotels & flights at the best prices</p>
+            </div>
+
+            {/* Search Widget - Glass Morphism Design */}
+            <div className="search-widget-new">
+              {/* Tab Navigation - Pill Style */}
+              <div className="search-tabs-new">
                 <button 
-                  className={`search-tab ${activeTab === 'fleet' ? 'active' : ''}`}
+                  className={`tab-pill ${activeTab === 'fleet' ? 'active' : ''}`}
                   onClick={() => setActiveTab('fleet')}
                 >
-                  <i className="fas fa-shuttle-van"></i> Travel Fleet
+                  <div className="tab-icon-wrapper">
+                    <i className="fas fa-car-side"></i>
+                  </div>
+                  <span>Travel Fleet</span>
                 </button>
                 <button 
-                  className={`search-tab ${activeTab === 'holidays' ? 'active' : ''}`}
+                  className={`tab-pill ${activeTab === 'holidays' ? 'active' : ''}`}
                   onClick={() => setActiveTab('holidays')}
                 >
-                  <i className="fas fa-umbrella-beach"></i> Holidays
+                  <div className="tab-icon-wrapper">
+                    <i className="fas fa-umbrella-beach"></i>
+                  </div>
+                  <span>Holidays</span>
                 </button>
                 <button 
-                  className={`search-tab ${activeTab === 'hotels' ? 'active' : ''}`}
+                  className={`tab-pill ${activeTab === 'hotels' ? 'active' : ''}`}
                   onClick={() => setActiveTab('hotels')}
                 >
-                  <i className="fas fa-hotel"></i> Hotels
-                  <span className="offer-badge">Upto 50% Off</span>
+                  <div className="tab-icon-wrapper">
+                    <i className="fas fa-hotel"></i>
+                  </div>
+                  <span>Hotels</span>
+                  <span className="tab-badge">50% Off</span>
                 </button>
                 <button 
-                  className={`search-tab ${activeTab === 'flights' ? 'active' : ''}`}
+                  className={`tab-pill ${activeTab === 'flights' ? 'active' : ''}`}
                   onClick={() => setActiveTab('flights')}
                 >
-                  <i className="fas fa-plane"></i> Flights
-                  <span className="offer-badge">Upto 19% Off</span>
-                </button>
-                <button 
-                  className={`search-tab ${activeTab === 'trains' ? 'active' : ''}`}
-                  onClick={() => setActiveTab('trains')}
-                >
-                  <i className="fas fa-train"></i> Trains
-                </button>
-                <button 
-                  className={`search-tab ${activeTab === 'cabs' ? 'active' : ''}`}
-                  onClick={() => setActiveTab('cabs')}
-                >
-                  <i className="fas fa-car"></i> Cabs
+                  <div className="tab-icon-wrapper">
+                    <i className="fas fa-plane"></i>
+                  </div>
+                  <span>Flights</span>
+                  <span className="tab-badge">19% Off</span>
                 </button>
               </div>
 
-              {/* Flight Search Form */}
-              {activeTab === 'flights' && (
-                <div className="search-form-container" data-aos="fade-up">
-                  <div className="trip-type-selector">
-                    <label className={tripType === 'oneWay' ? 'active' : ''}>
-                      <input 
-                        type="radio" 
-                        name="tripType" 
-                        checked={tripType === 'oneWay'}
-                        onChange={() => setTripType('oneWay')}
-                      />
-                      One Way
-                    </label>
-                    <label className={tripType === 'roundTrip' ? 'active' : ''}>
-                      <input 
-                        type="radio" 
-                        name="tripType"
-                        checked={tripType === 'roundTrip'}
-                        onChange={() => setTripType('roundTrip')}
-                      />
-                      Round Trip
-                    </label>
-                    <label className={tripType === 'multiCity' ? 'active' : ''}>
-                      <input 
-                        type="radio" 
-                        name="tripType"
-                        checked={tripType === 'multiCity'}
-                        onChange={() => setTripType('multiCity')}
-                      />
-                      Multi City
-                    </label>
-                  </div>
-
-                  <div className="search-fields">
-                    <div className="field-group city-selector">
-                      <label>Departure From</label>
-                      <div className="city-input">
-                        <div className="city-name">{fromCity.name}</div>
-                        <div className="city-code">{fromCity.code}, {fromCity.airport}</div>
-                      </div>
-                    </div>
-
-                    <button className="swap-button" onClick={swapCities}>
-                      <i className="fas fa-exchange-alt"></i>
-                    </button>
-
-                    <div className="field-group city-selector">
-                      <label>Going To</label>
-                      <div className="city-input">
-                        <div className="city-name">{toCity.name}</div>
-                        <div className="city-code">{toCity.code}, {toCity.airport}</div>
-                      </div>
-                    </div>
-
-                    <div className="field-group date-selector">
-                      <label>Departure Date</label>
-                      <input 
-                        type="date" 
-                        value={departDate}
-                        onChange={(e) => setDepartDate(e.target.value)}
-                      />
-                    </div>
-
-                    {tripType === 'roundTrip' && (
-                      <div className="field-group date-selector">
-                        <label>Return Date</label>
-                        <input 
-                          type="date" 
-                          value={returnDate}
-                          onChange={(e) => setReturnDate(e.target.value)}
-                        />
-                      </div>
-                    )}
-
-                    <div className="field-group traveller-selector">
-                      <label>Travellers & Class</label>
-                      <div className="traveller-input">
-                        <div>{travellers} Traveller</div>
-                        <div className="class-type">{travelClass}</div>
-                      </div>
-                    </div>
-
-                    <button
-                      type="button"
-                      className="search-btn"
-                      onClick={() => {
-                        // Navigate to Tours page with destination as search filter
-                        navigate('/tour', { state: { searchTerm: holidaySearch.destination } });
-                      }}
-                    >
-                      <i className="fas fa-search"></i> Search
-                    </button>
-                  </div>
-
-                  <div className="search-options">
-                    <div className="fare-options">
-                      <label className="active">
-                        <input type="radio" name="fareType" defaultChecked /> 
-                        <span className="radio-custom"></span>
-                        Regular
-                        <small>Regular Fares</small>
-                      </label>
-                      <label>
-                        <input type="radio" name="fareType" /> 
-                        <span className="radio-custom"></span>
-                        Student
-                        <small>Extra Baggage</small>
-                      </label>
-                      <label>
-                        <input type="radio" name="fareType" /> 
-                        <span className="radio-custom"></span>
-                        Armed Forces
-                        <small>Extra Discount</small>
-                      </label>
-                      <label>
-                        <input type="radio" name="fareType" /> 
-                        <span className="radio-custom"></span>
-                        Senior Citizen
-                        <small>Extra Discount</small>
-                      </label>
-                    </div>
-                    <div className="additional-options">
-                      <label className="checkbox-option">
-                        <input type="checkbox" />
-                        <span className="checkbox-custom"></span>
-                        Non-Stop Flights
-                      </label>
-                      <Link to="/contact" className="covid-refund-link">
-                        <i className="fas fa-hand-holding-usd"></i>
-                        Claim your Covid Refund
-                      </Link>
-                    </div>
-                  </div>
-                </div>
-              )}
-
-              {/* Hotel Search Form */}
-              {activeTab === 'hotels' && (
-                <div className="search-form-container" data-aos="fade-up">
-                  <div className="search-fields hotel-search">
-                    <div className="field-group">
-                      <label>City, Area or Property</label>
-                      <input type="text" placeholder="Enter city, area or hotel name" />
-                    </div>
-
-                    <div className="field-group">
-                      <label>Check-in</label>
-                      <input type="date" />
-                    </div>
-
-                    <div className="field-group">
-                      <label>Check-out</label>
-                      <input type="date" />
-                    </div>
-
-                    <div className="field-group">
-                      <label>Rooms & Guests</label>
-                      <select>
-                        <option>1 Room, 2 Adults</option>
-                        <option>2 Rooms, 4 Adults</option>
-                        <option>3 Rooms, 6 Adults</option>
-                      </select>
-                    </div>
-
-                    <button
-                      type="button"
-                      className="search-btn"
-                      onClick={() => {
-                        navigate('/hotels');
-                      }}
-                    >
-                      <i className="fas fa-search"></i> Search
-                    </button>
-                  </div>
-                </div>
-              )}
-
-              {/* Holidays Search Form */}
-              {activeTab === 'holidays' && (
-                <div className="search-form-container" data-aos="fade-up">
-                  <div className="search-fields">
-                    <div className="field-group location-field">
-                      <label>Destination</label>
-                      <div className="location-input-wrapper">
-                        <input
-                          type="text"
-                          placeholder="Where do you want to go?"
-                          value={holidaySearch.destination}
-                          onChange={e => handleDestinationChange(e.target.value)}
-                          onFocus={() => setShowDestinationSuggestions(true)}
-                          onBlur={() => setTimeout(() => setShowDestinationSuggestions(false), 200)}
-                        />
-                        {showDestinationSuggestions && (
-                          <div className="location-suggestions">
-                            {filteredDestinations.length > 0 ? (
-                              <>
-                                <div className="suggestion-item" style={{ pointerEvents: 'none' }}>
-                                  <i className="fas fa-map-marker-alt"></i>
-                                  <span>Select Destination</span>
-                                </div>
-                                {filteredDestinations.map((destination, index) => (
-                                  <div
-                                    key={index}
-                                    className="suggestion-item"
-                                    onMouseDown={() => selectDestination(destination)}
-                                  >
-                                    <i className="fas fa-map-marker-alt"></i>
-                                    <span>{destination}</span>
-                                  </div>
-                                ))}
-                              </>
+              {/* Search Forms */}
+              <div className="search-form-new">
+                {/* Travel Fleet Form */}
+                {activeTab === 'fleet' && (
+                  <div className="form-content" data-aos="fade-up" data-aos-duration="400">
+                    <div className="form-grid fleet-grid">
+                      <div className="form-field location-field-new">
+                        <div className="field-label">
+                          <i className="fas fa-location-dot"></i>
+                          <span>Pickup Location</span>
+                        </div>
+                        <div className="field-input-wrapper" id="pickup-location-wrapper">
+                          <input 
+                            type="text" 
+                            placeholder="Search city or area..." 
+                            value={fleetSearch.location}
+                            onChange={(e) => handleLocationChange(e.target.value)}
+                            onFocus={(e) => {
+                              setShowLocationSuggestions(true);
+                              // Position the dropdown
+                              const wrapper = e.target.parentElement;
+                              const rect = wrapper.getBoundingClientRect();
+                              const dropdown = document.getElementById('location-dropdown-fleet');
+                              if (dropdown) {
+                                dropdown.style.top = `${rect.bottom + 8}px`;
+                                dropdown.style.left = `${rect.left}px`;
+                                dropdown.style.width = `${rect.width}px`;
+                              }
+                            }}
+                            onBlur={() => setTimeout(() => setShowLocationSuggestions(false), 200)}
+                          />
+                          <button 
+                            type="button"
+                            className="gps-btn"
+                            onClick={getCurrentLocation}
+                            disabled={isGettingLocation}
+                          >
+                            {isGettingLocation ? (
+                              <i className="fas fa-spinner fa-spin"></i>
                             ) : (
-                              <div className="no-suggestions">
-                                <i className="fas fa-info-circle"></i>
-                                <span>No matching destinations</span>
-                              </div>
+                              <i className="fas fa-crosshairs"></i>
                             )}
-                          </div>
-                        )}
-                      </div>
-                    </div>
-
-                    <div className="field-group">
-                      <label>Travel Date</label>
-                      <input
-                        type="date"
-                        value={holidaySearch.date}
-                        onChange={e => setHolidaySearch({ ...holidaySearch, date: e.target.value })}
-                      />
-                    </div>
-
-                    <div className="field-group">
-                      <label>Duration</label>
-                      <select
-                        value={holidaySearch.duration}
-                        onChange={e => setHolidaySearch({ ...holidaySearch, duration: e.target.value })}
-                      >
-                        <option>3-5 Days</option>
-                        <option>6-8 Days</option>
-                        <option>9-12 Days</option>
-                        <option>13+ Days</option>
-                      </select>
-                    </div>
-
-                    <button 
-                      className="search-btn"
-                      onClick={() => {
-                        navigate('/tour', { state: { searchTerm: holidaySearch.destination } });
-                      }}
-                    >
-                      <i className="fas fa-search"></i> Search
-                    </button>
-                  </div>
-                </div>
-              )}
-
-              {/* Travel Fleet Search Form */}
-              {activeTab === 'fleet' && (
-                <div className="search-form-container" data-aos="fade-up">
-                  <div className="search-fields fleet-search">
-                    <div className="field-group location-field">
-                      <label>Pickup Location *</label>
-                      <div className="location-input-wrapper">
-                        <input 
-                          type="text" 
-                          placeholder="Enter city or area (e.g., Kozhikkode)" 
-                          value={fleetSearch.location}
-                          onChange={(e) => handleLocationChange(e.target.value)}
-                          onFocus={() => setShowLocationSuggestions(true)}
-                          onBlur={() => setTimeout(() => setShowLocationSuggestions(false), 200)}
-                        />
-                        <button 
-                          type="button"
-                          className="current-location-btn"
-                          onClick={getCurrentLocation}
-                          disabled={isGettingLocation}
-                          title="Use current location"
-                        >
-                          {isGettingLocation ? (
-                            <i className="fas fa-spinner fa-spin"></i>
-                          ) : (
-                            <i className="fas fa-location-crosshairs"></i>
+                          </button>
+                          
+                          {showLocationSuggestions && (
+                            <div className="suggestions-dropdown-new" id="location-dropdown-fleet">
+                              <div className="dropdown-title">
+                                <i className="fas fa-map-pin"></i> Popular Locations
+                              </div>
+                              {filteredLocations.map((location, index) => (
+                                <div 
+                                  key={index}
+                                  className="suggestion-item-new"
+                                  onMouseDown={() => selectLocation(location)}
+                                >
+                                  <i className="fas fa-location-arrow"></i>
+                                  <span>{location}</span>
+                                </div>
+                              ))}
+                            </div>
                           )}
-                        </button>
-                        
-                        {showLocationSuggestions && (
-                          <div className="location-suggestions">
-                            {filteredLocations.length > 0 ? (
-                              <>
-                                <div className="suggestion-item" style={{ pointerEvents: 'none' }}>
-                                  <i className="fas fa-map-marker-alt"></i>
-                                  <span>Select Pickup Location</span>
-                                </div>
-                                {filteredLocations.map((location, index) => (
-                                  <div 
-                                    key={index}
-                                    className="suggestion-item"
-                                    onMouseDown={() => selectLocation(location)}
-                                  >
-                                    <i className="fas fa-map-marker-alt"></i>
-                                    <span>{location}</span>
-                                  </div>
-                                ))}
-                              </>
-                            ) : (
-                              <div className="no-suggestions">
-                                <i className="fas fa-info-circle"></i>
-                                <span>No matching locations</span>
-                              </div>
-                            )}
-                          </div>
-                        )}
+                        </div>
                       </div>
-                    </div>
 
-                    <div className="field-group">
-                      <label>Vehicle Category *</label>
-                      <select 
-                        value={fleetSearch.vehicleCategory}
-                        onChange={(e) => setFleetSearch({...fleetSearch, vehicleCategory: e.target.value})}
-                      >
-                        <option value="">Select Vehicle Type</option>
-                        <option value="car">Car</option>
-                        <option value="cab">Cab</option>
-                        <option value="tempo-traveller">Tempo Traveller</option>
-                        <option value="van">Van / Urvan</option>
-                        <option value="mini-bus">Mini Bus</option>
-                        <option value="tour-bus">Tour Bus</option>
-                        <option value="luxury">Luxury Vehicle</option>
-                      </select>
-                    </div>
-
-                    <div className="field-group">
-                      <label>Pickup Date *</label>
-                      <div 
-                        className="date-input-wrapper"
-                        onClick={() => document.getElementById('pickup-date-input').showPicker()}
-                      >
-                        <input 
-                          id="pickup-date-input"
-                          type="date" 
-                          value={fleetSearch.date}
-                          onChange={(e) => setFleetSearch({...fleetSearch, date: e.target.value})}
-                        />
+                      <div className="form-field">
+                        <div className="field-label">
+                          <i className="fas fa-car"></i>
+                          <span>Vehicle Type</span>
+                        </div>
+                        <div className="field-input-wrapper select-wrapper">
+                          <select 
+                            value={fleetSearch.vehicleCategory}
+                            onChange={(e) => setFleetSearch({...fleetSearch, vehicleCategory: e.target.value})}
+                          >
+                            <option value="">Choose vehicle...</option>
+                            <option value="car">🚗 Car</option>
+                            <option value="cab">🚕 Cab</option>
+                            <option value="tempo-traveller">🚐 Tempo Traveller</option>
+                            <option value="van">🚌 Van / Urvan</option>
+                            <option value="mini-bus">🚌 Mini Bus</option>
+                            <option value="tour-bus">🚎 Tour Bus</option>
+                            <option value="luxury">✨ Luxury Vehicle</option>
+                          </select>
+                        </div>
                       </div>
-                    </div>
 
-                    <div className="field-group">
-                      <label>Return Date *</label>
-                      <div 
-                        className="date-input-wrapper"
-                        onClick={() => document.getElementById('dropoff-date-input').showPicker()}
-                      >
-                        <input 
-                          id="dropoff-date-input"
-                          type="date" 
-                          value={fleetSearch.dropoffDate}
-                          onChange={(e) => setFleetSearch({...fleetSearch, dropoffDate: e.target.value})}
-                          min={fleetSearch.date}
-                        />
+                      <div className="form-field">
+                        <div className="field-label">
+                          <i className="fas fa-calendar-check"></i>
+                          <span>Pickup Date</span>
+                        </div>
+                        <div 
+                          className="field-input-wrapper date-wrapper"
+                          onClick={() => document.getElementById('pickup-date-new').showPicker()}
+                        >
+                          <input 
+                            id="pickup-date-new"
+                            type="date" 
+                            value={fleetSearch.date}
+                            onChange={(e) => setFleetSearch({...fleetSearch, date: e.target.value})}
+                          />
+                        </div>
                       </div>
-                    </div>
 
-                    <button 
-                      className="search-btn"
-                      onClick={() => navigate('/fleet-results', { state: fleetSearch })}
-                    >
-                      <i className="fas fa-search"></i> Search Vehicles
-                    </button>
+                      <div className="form-field">
+                        <div className="field-label">
+                          <i className="fas fa-calendar-xmark"></i>
+                          <span>Return Date</span>
+                        </div>
+                        <div 
+                          className="field-input-wrapper date-wrapper"
+                          onClick={() => document.getElementById('return-date-new').showPicker()}
+                        >
+                          <input 
+                            id="return-date-new"
+                            type="date" 
+                            value={fleetSearch.dropoffDate}
+                            onChange={(e) => setFleetSearch({...fleetSearch, dropoffDate: e.target.value})}
+                            min={fleetSearch.date}
+                          />
+                        </div>
+                      </div>
+
+                      <button 
+                        className="search-btn-new"
+                        onClick={() => navigate('/fleet-results', { state: fleetSearch })}
+                      >
+                        <i className="fas fa-search"></i>
+                        <span>Search Vehicles</span>
+                        <div className="btn-shine"></div>
+                      </button>
+                    </div>
                   </div>
-                </div>
-              )}
+                )}
+
+                {/* Holidays Form */}
+                {activeTab === 'holidays' && (
+                  <div className="form-content" data-aos="fade-up" data-aos-duration="400">
+                    <div className="form-grid holidays-grid">
+                      <div className="form-field location-field-new">
+                        <div className="field-label">
+                          <i className="fas fa-map-location-dot"></i>
+                          <span>Destination</span>
+                        </div>
+                        <div className="field-input-wrapper">
+                          <input
+                            type="text"
+                            placeholder="Where do you want to go?"
+                            value={holidaySearch.destination}
+                            onChange={e => handleDestinationChange(e.target.value)}
+                            onFocus={() => setShowDestinationSuggestions(true)}
+                            onBlur={() => setTimeout(() => setShowDestinationSuggestions(false), 200)}
+                          />
+                          {showDestinationSuggestions && (
+                            <div className="suggestions-dropdown-new">
+                              <div className="dropdown-title">
+                                <i className="fas fa-fire"></i> Popular Destinations
+                              </div>
+                              {filteredDestinations.map((destination, index) => (
+                                <div
+                                  key={index}
+                                  className="suggestion-item-new"
+                                  onMouseDown={() => selectDestination(destination)}
+                                >
+                                  <i className="fas fa-location-arrow"></i>
+                                  <span>{destination}</span>
+                                </div>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+                      </div>
+
+                      <div className="form-field">
+                        <div className="field-label">
+                          <i className="fas fa-calendar-days"></i>
+                          <span>Travel Date</span>
+                        </div>
+                        <div className="field-input-wrapper date-wrapper">
+                          <input
+                            type="date"
+                            value={holidaySearch.date}
+                            onChange={e => setHolidaySearch({ ...holidaySearch, date: e.target.value })}
+                          />
+                        </div>
+                      </div>
+
+                      <div className="form-field">
+                        <div className="field-label">
+                          <i className="fas fa-clock"></i>
+                          <span>Duration</span>
+                        </div>
+                        <div className="field-input-wrapper select-wrapper">
+                          <select
+                            value={holidaySearch.duration}
+                            onChange={e => setHolidaySearch({ ...holidaySearch, duration: e.target.value })}
+                          >
+                            <option>3-5 Days</option>
+                            <option>6-8 Days</option>
+                            <option>9-12 Days</option>
+                            <option>13+ Days</option>
+                          </select>
+                        </div>
+                      </div>
+
+                      <button 
+                        className="search-btn-new"
+                        onClick={() => navigate('/tour', { state: { searchTerm: holidaySearch.destination } })}
+                      >
+                        <i className="fas fa-search"></i>
+                        <span>Explore Packages</span>
+                        <div className="btn-shine"></div>
+                      </button>
+                    </div>
+                  </div>
+                )}
+
+                {/* Hotels Form */}
+                {activeTab === 'hotels' && (
+                  <div className="form-content" data-aos="fade-up" data-aos-duration="400">
+                    <div className="form-grid hotels-grid">
+                      <div className="form-field location-field-new">
+                        <div className="field-label">
+                          <i className="fas fa-building"></i>
+                          <span>City or Hotel</span>
+                        </div>
+                        <div className="field-input-wrapper">
+                          <input type="text" placeholder="Search city, area or property..." />
+                        </div>
+                      </div>
+
+                      <div className="form-field">
+                        <div className="field-label">
+                          <i className="fas fa-calendar-check"></i>
+                          <span>Check-in</span>
+                        </div>
+                        <div className="field-input-wrapper date-wrapper">
+                          <input type="date" />
+                        </div>
+                      </div>
+
+                      <div className="form-field">
+                        <div className="field-label">
+                          <i className="fas fa-calendar-xmark"></i>
+                          <span>Check-out</span>
+                        </div>
+                        <div className="field-input-wrapper date-wrapper">
+                          <input type="date" />
+                        </div>
+                      </div>
+
+                      <div className="form-field">
+                        <div className="field-label">
+                          <i className="fas fa-users"></i>
+                          <span>Guests</span>
+                        </div>
+                        <div className="field-input-wrapper select-wrapper">
+                          <select>
+                            <option>1 Room, 2 Adults</option>
+                            <option>2 Rooms, 4 Adults</option>
+                            <option>3 Rooms, 6 Adults</option>
+                          </select>
+                        </div>
+                      </div>
+
+                      <button 
+                        className="search-btn-new"
+                        onClick={() => navigate('/hotels')}
+                      >
+                        <i className="fas fa-search"></i>
+                        <span>Find Hotels</span>
+                        <div className="btn-shine"></div>
+                      </button>
+                    </div>
+                  </div>
+                )}
+
+                {/* Flights Form */}
+                {activeTab === 'flights' && (
+                  <div className="form-content" data-aos="fade-up" data-aos-duration="400">
+                    <div className="flight-trip-types">
+                      <label className={tripType === 'oneWay' ? 'active' : ''}>
+                        <input 
+                          type="radio" 
+                          name="tripType" 
+                          checked={tripType === 'oneWay'}
+                          onChange={() => setTripType('oneWay')}
+                        />
+                        <span>One Way</span>
+                      </label>
+                      <label className={tripType === 'roundTrip' ? 'active' : ''}>
+                        <input 
+                          type="radio" 
+                          name="tripType"
+                          checked={tripType === 'roundTrip'}
+                          onChange={() => setTripType('roundTrip')}
+                        />
+                        <span>Round Trip</span>
+                      </label>
+                      <label className={tripType === 'multiCity' ? 'active' : ''}>
+                        <input 
+                          type="radio" 
+                          name="tripType"
+                          checked={tripType === 'multiCity'}
+                          onChange={() => setTripType('multiCity')}
+                        />
+                        <span>Multi City</span>
+                      </label>
+                    </div>
+                    <div className="form-grid flights-grid">
+                      <div className="form-field">
+                        <div className="field-label">
+                          <i className="fas fa-plane-departure"></i>
+                          <span>From</span>
+                        </div>
+                        <div className="city-display">
+                          <div className="city-code">{fromCity.code}</div>
+                          <div className="city-name">{fromCity.name}</div>
+                        </div>
+                      </div>
+
+                      <button className="swap-btn" onClick={swapCities}>
+                        <i className="fas fa-right-left"></i>
+                      </button>
+
+                      <div className="form-field">
+                        <div className="field-label">
+                          <i className="fas fa-plane-arrival"></i>
+                          <span>To</span>
+                        </div>
+                        <div className="city-display">
+                          <div className="city-code">{toCity.code}</div>
+                          <div className="city-name">{toCity.name}</div>
+                        </div>
+                      </div>
+
+                      <div className="form-field">
+                        <div className="field-label">
+                          <i className="fas fa-calendar"></i>
+                          <span>Departure</span>
+                        </div>
+                        <div className="field-input-wrapper date-wrapper">
+                          <input 
+                            type="date" 
+                            value={departDate}
+                            onChange={(e) => setDepartDate(e.target.value)}
+                          />
+                        </div>
+                      </div>
+
+                      {tripType === 'roundTrip' && (
+                        <div className="form-field">
+                          <div className="field-label">
+                            <i className="fas fa-calendar"></i>
+                            <span>Return</span>
+                          </div>
+                          <div className="field-input-wrapper date-wrapper">
+                            <input 
+                              type="date" 
+                              value={returnDate}
+                              onChange={(e) => setReturnDate(e.target.value)}
+                            />
+                          </div>
+                        </div>
+                      )}
+
+                      <div className="form-field">
+                        <div className="field-label">
+                          <i className="fas fa-user-group"></i>
+                          <span>Travellers</span>
+                        </div>
+                        <div className="field-input-wrapper select-wrapper">
+                          <select>
+                            <option>1 Adult, Economy</option>
+                            <option>2 Adults, Economy</option>
+                            <option>1 Adult, Business</option>
+                          </select>
+                        </div>
+                      </div>
+
+                      <button 
+                        className="search-btn-new"
+                        onClick={() => navigate('/tour', { state: { searchTerm: holidaySearch.destination } })}
+                      >
+                        <i className="fas fa-search"></i>
+                        <span>Search Flights</span>
+                        <div className="btn-shine"></div>
+                      </button>
+                    </div>
+                  </div>
+                )}
+
+                {/* Trains Form */}
+                {activeTab === 'trains' && (
+                  <div className="form-content" data-aos="fade-up" data-aos-duration="400">
+                    <div className="form-grid trains-grid">
+                      <div className="form-field">
+                        <div className="field-label">
+                          <i className="fas fa-train-subway"></i>
+                          <span>From Station</span>
+                        </div>
+                        <div className="field-input-wrapper">
+                          <input type="text" placeholder="Enter departure station..." />
+                        </div>
+                      </div>
+
+                      <div className="form-field">
+                        <div className="field-label">
+                          <i className="fas fa-train"></i>
+                          <span>To Station</span>
+                        </div>
+                        <div className="field-input-wrapper">
+                          <input type="text" placeholder="Enter arrival station..." />
+                        </div>
+                      </div>
+
+                      <div className="form-field">
+                        <div className="field-label">
+                          <i className="fas fa-calendar-days"></i>
+                          <span>Travel Date</span>
+                        </div>
+                        <div className="field-input-wrapper date-wrapper">
+                          <input type="date" />
+                        </div>
+                      </div>
+
+                      <button className="search-btn-new">
+                        <i className="fas fa-search"></i>
+                        <span>Find Trains</span>
+                        <div className="btn-shine"></div>
+                      </button>
+                    </div>
+                  </div>
+                )}
+
+                {/* Cabs Form */}
+                {activeTab === 'cabs' && (
+                  <div className="form-content" data-aos="fade-up" data-aos-duration="400">
+                    <div className="form-grid cabs-grid">
+                      <div className="form-field location-field-new">
+                        <div className="field-label">
+                          <i className="fas fa-location-dot"></i>
+                          <span>Pickup Location</span>
+                        </div>
+                        <div className="field-input-wrapper">
+                          <input type="text" placeholder="Enter pickup address..." />
+                        </div>
+                      </div>
+
+                      <div className="form-field location-field-new">
+                        <div className="field-label">
+                          <i className="fas fa-flag-checkered"></i>
+                          <span>Drop Location</span>
+                        </div>
+                        <div className="field-input-wrapper">
+                          <input type="text" placeholder="Enter drop address..." />
+                        </div>
+                      </div>
+
+                      <div className="form-field">
+                        <div className="field-label">
+                          <i className="fas fa-calendar-check"></i>
+                          <span>Pickup Date</span>
+                        </div>
+                        <div className="field-input-wrapper date-wrapper">
+                          <input type="date" />
+                        </div>
+                      </div>
+
+                      <button className="search-btn-new">
+                        <i className="fas fa-search"></i>
+                        <span>Find Cabs</span>
+                        <div className="btn-shine"></div>
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Quick Stats */}
+            <div className="hero-quick-stats">
+              <div className="quick-stat">
+                <span className="stat-number">500+</span>
+                <span className="stat-label">Vehicles</span>
+              </div>
+              <div className="stat-divider"></div>
+              <div className="quick-stat">
+                <span className="stat-number">50+</span>
+                <span className="stat-label">Destinations</span>
+              </div>
+              <div className="stat-divider"></div>
+              <div className="quick-stat">
+                <span className="stat-number">24/7</span>
+                <span className="stat-label">Support</span>
+              </div>
             </div>
           </div>
         </div>
@@ -1369,7 +1586,7 @@ export default function Home() {
             
             {/* Location Picker for Travel Fleet */}
             {activeDealsTab === 'fleet' && (
-              <div className="deals-location-picker">
+              <div className="deals-location-picker" ref={dealsLocationPickerRef}>
                 <div className="location-picker-card">
                   <div className="location-picker-header">
                     <div className="location-icon-wrapper">

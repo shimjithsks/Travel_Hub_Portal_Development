@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import LoginModal from './LoginModal';
 import './NavbarNew.css';
@@ -10,9 +10,31 @@ export default function Navbar() {
   const [showUserDropdown, setShowUserDropdown] = useState(false);
   const [showLoginModal, setShowLoginModal] = useState(false);
   const navigate = useNavigate();
+  const location = useLocation();
   const { user, role, signOut } = useAuth();
   const userDropdownRef = useRef(null);
+  const supportDropdownRef = useRef(null);
 
+  // Handle logo click - smooth scroll if on home, navigate if not
+  const handleLogoClick = (e) => {
+    e.preventDefault();
+    if (location.pathname === '/') {
+      // Already on home page - smooth scroll to top
+      window.scrollTo({
+        top: 0,
+        behavior: 'smooth'
+      });
+    } else {
+      // Navigate to home page
+      navigate('/');
+      // Scroll to top after navigation
+      setTimeout(() => {
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      }, 100);
+    }
+  };
+
+  // Click outside handler for user dropdown
   useEffect(() => {
     const handleClickOutside = (event) => {
       if (userDropdownRef.current && !userDropdownRef.current.contains(event.target)) {
@@ -30,6 +52,25 @@ export default function Navbar() {
       document.removeEventListener('click', handleClickOutside);
     };
   }, [showUserDropdown]);
+
+  // Click outside handler for support/help dropdown
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (supportDropdownRef.current && !supportDropdownRef.current.contains(event.target)) {
+        setShowDropdown(null);
+      }
+    };
+
+    if (showDropdown) {
+      setTimeout(() => {
+        document.addEventListener('click', handleClickOutside);
+      }, 0);
+    }
+
+    return () => {
+      document.removeEventListener('click', handleClickOutside);
+    };
+  }, [showDropdown]);
 
   const toggleMenu = () => {
     setIsOpen(!isOpen);
@@ -71,18 +112,22 @@ export default function Navbar() {
         <div className="header-main">
           <div className="container-fluid">
             <div className="main-nav-content">
-              <Link to="/" className="brand-logo">
+              <a href="/" className="brand-logo" onClick={handleLogoClick}>
                 <div className="logo-wrapper">
                   <div className="logo-icon">
-                    <i className="fas fa-globe-americas"></i>
-                    <i className="fas fa-route route-overlay"></i>
+                    <i className="fas fa-globe-americas globe-main"></i>
+                    <i className="fas fa-plane icon-plane"></i>
+                    <i className="fas fa-bus icon-bus"></i>
+                    <i className="fas fa-car icon-car"></i>
+                    <i className="fas fa-ship icon-ship"></i>
+                    <i className="fas fa-car-side icon-luxury"></i>
                   </div>
                   <div className="logo-text">
-                    <h1>Travel Axis</h1>
-                    <span className="logo-tagline">Explore the World</span>
+                    <h1>Travel<span className="logo-accent">Axis</span></h1>
+                    <span className="logo-tagline">Your Journey, Our Passion</span>
                   </div>
                 </div>
-              </Link>
+              </a>
 
               <div className="mobile-toggle" onClick={toggleMenu}>
                 <i className={`fas ${isOpen ? 'fa-times' : 'fa-bars'}`}></i>
@@ -90,44 +135,48 @@ export default function Navbar() {
 
               <nav className={`main-navigation ${isOpen ? 'active' : ''}`}>
                 {user ? (
-                  <Link to="/customer/my-bookings" className="nav-link" onClick={() => setIsOpen(false)}>
-                    <i className="fas fa-suitcase"></i>
-                    <span>My Trips</span>
+                  <Link to="/customer/my-bookings" className="trips-link" onClick={() => setIsOpen(false)}>
+                    <i className="fas fa-compass"></i>
+                    <span>My Journeys</span>
                   </Link>
                 ) : null}
               </nav>
 
               <div className="nav-actions">
-                <Link to="/travel-agents" className="header-btn" target="_blank" rel="noopener noreferrer">
-                  <i className="fas fa-headphones"></i>
-                  <span>For Travel Agents</span>
+                <Link to="/travel-agents" className="header-btn agents-btn" target="_blank" rel="noopener noreferrer">
+                  <i className="fas fa-handshake"></i>
+                  <span>Become an Agent</span>
                 </Link>
 
-                <div className="nav-dropdown" style={{position: 'relative'}}>
+                <div className="nav-dropdown" ref={supportDropdownRef} style={{position: 'relative'}}>
                   <button 
-                    className="header-btn"
+                    className="header-btn support-btn"
                     onClick={() => setShowDropdown(showDropdown === 'support' ? null : 'support')}
                   >
-                    <i className="fas fa-phone-alt"></i>
-                    <span>Support</span>
-                    <i className="fas fa-chevron-down"></i>
+                    <i className="fas fa-life-ring"></i>
+                    <span>Help</span>
+                    <i className={`fas fa-chevron-down ${showDropdown === 'support' ? 'rotated' : ''}`}></i>
                   </button>
                   {showDropdown === 'support' && (
-                    <div className="dropdown-menu" style={{position: 'absolute', top: '100%', left: 0, zIndex: 9999, display: 'block', minWidth: '280px', whiteSpace: 'nowrap'}}>
+                    <div className="dropdown-menu" style={{position: 'absolute', top: '100%', right: 0, zIndex: 9999, display: 'block', minWidth: '260px', whiteSpace: 'nowrap'}}>
+                      <div className="dropdown-header">
+                        <i className="fas fa-headset"></i>
+                        <span>How can we help?</span>
+                      </div>
                       <Link to="/customer/my-refund" onClick={() => setShowDropdown(null)}>
-                        <i className="fas fa-undo"></i> Check Your Refund
+                        <i className="fas fa-rotate-left"></i> Track Refund
                       </Link>
                       <Link to="/contact" onClick={() => setShowDropdown(null)}>
-                        <i className="fas fa-envelope"></i> Contact Us
+                        <i className="fas fa-message"></i> Contact Support
                       </Link>
                       <Link to="/complete-booking" onClick={() => setShowDropdown(null)}>
-                        <i className="fas fa-check-circle"></i> Complete Your Booking
+                        <i className="fas fa-clipboard-check"></i> Complete Booking
                       </Link>
                       <Link to="/make-payment" onClick={() => setShowDropdown(null)}>
-                        <i className="fas fa-credit-card"></i> Make a Payment
+                        <i className="fas fa-credit-card"></i> Make Payment
                       </Link>
                       <Link to="/complete-holiday" onClick={() => setShowDropdown(null)}>
-                        <i className="fas fa-umbrella-beach"></i> Complete Holiday Bookings
+                        <i className="fas fa-palm-tree"></i> Holiday Bookings
                       </Link>
                     </div>
                   )}
