@@ -9,7 +9,7 @@ export default function About() {
   }, []);
 
   const stats = [
-    { icon: 'fa-user-tie', value: '50+', label: 'Expert Agents' },
+    { icon: 'fa-user-tie', value: '50+', label: 'Expert Partners' },
     { icon: 'fa-globe-americas', value: '100+', label: 'Destinations' },
     { icon: 'fa-route', value: '500+', label: 'Tour Packages' },
     { icon: 'fa-star', value: '24/7', label: 'Support Available' }
@@ -55,7 +55,7 @@ export default function About() {
               <span className="hero-badge">About Us</span>
               <h1>Fresh Vision, Seasoned Expertise</h1>
               <p className="hero-subtitle">
-                We're a new travel company powered by industry veterans — experienced tour operators, seasoned travel agents, and expert package designers who bring decades of collective knowledge to every journey.
+                We're a new travel company powered by industry veterans — experienced tour operators, seasoned travel partners, and expert package designers who bring decades of collective knowledge to every journey.
               </p>
             </div>
           </div>
@@ -94,7 +94,7 @@ export default function About() {
               <span className="section-badge">Our Story</span>
               <h2>New Company, Proven Expertise</h2>
               <p>
-                Travel Axis is a fresh venture founded by passionate travel professionals who have spent years mastering the art of travel. Our team includes experienced tour operators who have organized thousands of trips, seasoned travel agents who know every destination inside out, and expert package designers who craft perfect itineraries.
+                Travel Axis is a fresh venture founded by passionate travel professionals who have spent years mastering the art of travel. Our team includes experienced tour operators who have organized thousands of trips, seasoned travel partners who know every destination inside out, and expert package designers who craft perfect itineraries.
               </p>
               <p>
                 While our company is new, our expertise is not. We've brought together the best minds in the travel industry to create a platform that combines fresh innovation with time-tested knowledge. Our mission is simple: to make world-class travel accessible, affordable, and unforgettable.
@@ -106,7 +106,7 @@ export default function About() {
                 </div>
                 <div className="feature">
                   <i className="fas fa-check-circle"></i>
-                  <span>Seasoned Travel Agents</span>
+                  <span>Seasoned Travel Partners</span>
                 </div>
                 <div className="feature">
                   <i className="fas fa-check-circle"></i>

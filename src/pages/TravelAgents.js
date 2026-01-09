@@ -35,7 +35,7 @@ export default function TravelAgents() {
     {
       number: '01',
       title: 'Register',
-      description: 'Create your agent account in just 2 minutes'
+      description: 'Create your partner account in just 2 minutes'
     },
     {
       number: '02',
@@ -58,7 +58,7 @@ export default function TravelAgents() {
             <div className="hero-content" data-aos="fade-up">
               <span className="hero-badge">Partner Program</span>
               <h1>Grow Your Travel Business with Travel Axis</h1>
-              <p className="hero-subtitle">Join our network of successful travel agents and unlock unlimited earning potential</p>
+              <p className="hero-subtitle">Join our network of successful travel partners and unlock unlimited earning potential</p>
               <div className="stats-row">
                 <div className="stat-item">
                   <div className="stat-icon"><i className="fas fa-users"></i></div>
@@ -83,7 +83,7 @@ export default function TravelAgents() {
                 </Link>
                 <Link to="/agent-login" className="btn-secondary">
                   <i className="fas fa-sign-in-alt"></i>
-                  Agent Login
+                  Partner Login
                 </Link>
               </div>
             </div>
@@ -138,7 +138,7 @@ export default function TravelAgents() {
         <div className="container">
           <div className="cta-content">
             <h2>Ready to Start Your Journey?</h2>
-            <p>Join thousands of successful travel agents earning with Travel Axis</p>
+            <p>Join thousands of successful travel partners earning with Travel Axis</p>
             <div className="cta-buttons">
               <Link to="/agent-signup" className="btn-primary">
                 <i className="fas fa-user-plus"></i>

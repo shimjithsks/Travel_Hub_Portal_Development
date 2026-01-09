@@ -51,99 +51,148 @@ export default function Login() {
 
   return (
     <div className="login-page">
-      <Link to="/" className="back-to-home">
-        <i className="fas fa-arrow-left"></i>
-        <span>Back to Home</span>
-      </Link>
+      {/* Left Side - Branding */}
+      <div className="login-branding">
+        <Link to="/" className="brand-logo">
+          <i className="fas fa-plane-departure"></i>
+          <span>Travel Axis</span>
+        </Link>
 
-      <div className="login-container">
-        <div className="login-card">
-          <div className="login-header">
-            <div className="login-logo">
-              <i className="fas fa-user-circle"></i>
+        <div className="branding-content">
+          <h1>Partner Portal</h1>
+          <p>Manage your bookings, track earnings, and grow your travel business with our powerful dashboard.</p>
+          
+          <div className="brand-features">
+            <div className="brand-feature">
+              <div className="brand-feature-icon">
+                <i className="fas fa-chart-pie"></i>
+              </div>
+              <div className="brand-feature-text">
+                <h4>Real-time Analytics</h4>
+                <p>Track bookings and revenue instantly</p>
+              </div>
             </div>
-            <h2 className="login-title">User Login</h2>
-            <p className="login-subtitle">Welcome back! Please login to continue</p>
+            <div className="brand-feature">
+              <div className="brand-feature-icon">
+                <i className="fas fa-wallet"></i>
+              </div>
+              <div className="brand-feature-text">
+                <h4>Easy Payouts</h4>
+                <p>Secure and fast payment processing</p>
+              </div>
+            </div>
+            <div className="brand-feature">
+              <div className="brand-feature-icon">
+                <i className="fas fa-headset"></i>
+              </div>
+              <div className="brand-feature-text">
+                <h4>24/7 Support</h4>
+                <p>Dedicated partner support team</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div className="branding-footer">
+          <p>© 2026 Travel Axis. All rights reserved.</p>
+        </div>
+      </div>
+
+      {/* Right Side - Login Form */}
+      <div className="login-form-section">
+        <div className="login-form-container">
+          <div className="login-form-header">
+            <div className="login-icon">
+              <i className="fas fa-handshake"></i>
+            </div>
+            <h2>Welcome Back</h2>
+            <p>Sign in to your partner account</p>
           </div>
 
-          <div className="login-body">
-            {error && (
-              <div className="alert alert-danger">{error}</div>
-            )}
+          {error && (
+            <div className="login-alert">
+              <i className="fas fa-exclamation-triangle"></i>
+              <span>{error}</span>
+            </div>
+          )}
 
-            <form onSubmit={onSubmit}>
-              <div className="form-group">
-                <label className="form-label">Email Address</label>
+          <form onSubmit={onSubmit} className="login-form">
+            <div className="input-group">
+              <label>Email Address</label>
+              <div className="input-wrapper">
+                <i className="fas fa-envelope"></i>
                 <input
                   type="email"
-                  className="form-control"
-                  placeholder="Enter your email"
+                  placeholder="you@example.com"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   required
                   autoComplete="email"
                 />
               </div>
+            </div>
 
-              <div className="form-group">
-                <label className="form-label">Password</label>
-                <div className="password-wrapper">
-                  <input
-                    type={showPassword ? 'text' : 'password'}
-                    className="form-control"
-                    placeholder="Enter your password"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    required
-                    autoComplete="current-password"
-                  />
-                  <button
-                    type="button"
-                    className="password-toggle"
-                    onClick={() => setShowPassword(!showPassword)}
-                    aria-label={showPassword ? 'Hide password' : 'Show password'}
-                  >
-                    <i className={`fas ${showPassword ? 'fa-eye-slash' : 'fa-eye'}`}></i>
-                  </button>
-                </div>
+            <div className="input-group">
+              <label>Password</label>
+              <div className="input-wrapper">
+                <i className="fas fa-lock"></i>
+                <input
+                  type={showPassword ? 'text' : 'password'}
+                  placeholder="Enter your password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  required
+                  autoComplete="current-password"
+                />
+                <button
+                  type="button"
+                  className="toggle-password"
+                  onClick={() => setShowPassword(!showPassword)}
+                >
+                  <i className={`fas ${showPassword ? 'fa-eye-slash' : 'fa-eye'}`}></i>
+                </button>
               </div>
+            </div>
 
-              <button
-                type="submit"
-                className="login-button"
-                disabled={submitting || !isFirebaseConfigured}
-              >
-                {submitting ? (
-                  <span className="login-button-loading">
-                    <span className="spinner"></span>
-                    <span>Signing in...</span>
-                  </span>
-                ) : (
-                  'Login to Dashboard'
-                )}
-              </button>
-            </form>
+            <button
+              type="submit"
+              className="submit-btn"
+              disabled={submitting || !isFirebaseConfigured}
+            >
+              {submitting ? (
+                <>
+                  <span className="btn-spinner"></span>
+                  Signing in...
+                </>
+              ) : (
+                <>
+                  Sign In
+                  <i className="fas fa-arrow-right"></i>
+                </>
+              )}
+            </button>
+          </form>
 
-            <ul className="features-list">
-              <li className="feature-item">
-                <i className="fas fa-shield-alt"></i>
-                <span>Secure and encrypted login</span>
-              </li>
-              <li className="feature-item">
-                <i className="fas fa-chart-line"></i>
-                <span>Access your dashboard and analytics</span>
-              </li>
-              <li className="feature-item">
-                <i className="fas fa-users"></i>
-                <span>Manage bookings and customers</span>
-              </li>
-            </ul>
+          <div className="login-form-footer">
+            <p>
+              New to Travel Axis?{' '}
+              <Link to="/agent-signup">Create Partner Account</Link>
+            </p>
           </div>
 
-          <div className="login-footer">
-            <p className="signup-text">
-              Don't have an account? <Link to="/agent-signup" className="signup-link">Create Account</Link>
-            </p>
+          <div className="trust-badges">
+            <div className="trust-badge">
+              <i className="fas fa-shield-alt"></i>
+              <span>SSL Secured</span>
+            </div>
+            <div className="trust-badge">
+              <i className="fas fa-lock"></i>
+              <span>Encrypted</span>
+            </div>
+            <div className="trust-badge">
+              <i className="fas fa-check-circle"></i>
+              <span>Verified</span>
+            </div>
           </div>
         </div>
       </div>

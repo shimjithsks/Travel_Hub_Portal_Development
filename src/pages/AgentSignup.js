@@ -26,10 +26,6 @@ export default function AgentSignup() {
     panCardHolderName: '',
     iata: '',
     panCardScan: null,
-    noPECertificate: null,
-    depositType: '',
-    depositComment: '',
-    depositAmount: '',
     captchaText: '',
     termsAccepted: false
   });
@@ -58,7 +54,7 @@ export default function AgentSignup() {
       <div className="signup-content">
         <div className="container">
           <div className="signup-card">
-            <h1>Register User</h1>
+            <h1>Partner Registration</h1>
             <form onSubmit={handleSubmit} className="signup-form">
               {/* Contact Information */}
               <div className="form-section">
@@ -169,41 +165,6 @@ export default function AgentSignup() {
                   <div className="form-group">
                     <label>Upload Pan Card Scan Copy</label>
                     <input type="file" name="panCardScan" onChange={handleChange} />
-                  </div>
-                </div>
-              </div>
-
-              {/* NO Permanent Establishment in India Documents */}
-              <div className="form-section">
-                <h3>NO Permanent Establishment in India Documents</h3>
-                <div className="form-grid">
-                  <div className="form-group">
-                    <label>Upload NO Permanent Establishment in India certificate</label>
-                    <input type="file" name="noPECertificate" onChange={handleChange} />
-                  </div>
-                </div>
-              </div>
-
-              {/* Deposit Information */}
-              <div className="form-section">
-                <h3>Deposit Information</h3>
-                <div className="form-grid">
-                  <div className="form-group">
-                    <label>Deposit Type</label>
-                    <select name="depositType" value={formData.depositType} onChange={handleChange}>
-                      <option value="">Select</option>
-                      <option value="Cash">Cash</option>
-                      <option value="Cheque">Cheque</option>
-                      <option value="Online Transfer">Online Transfer</option>
-                    </select>
-                  </div>
-                  <div className="form-group">
-                    <label>Comment</label>
-                    <input type="text" name="depositComment" value={formData.depositComment} onChange={handleChange} />
-                  </div>
-                  <div className="form-group">
-                    <label>Deposit Amount</label>
-                    <input type="text" name="depositAmount" value={formData.depositAmount} onChange={handleChange} />
                   </div>
                 </div>
               </div>

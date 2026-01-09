@@ -145,7 +145,7 @@ export default function Navbar() {
               <div className="nav-actions">
                 <Link to="/travel-agents" className="header-btn agents-btn" target="_blank" rel="noopener noreferrer">
                   <i className="fas fa-handshake"></i>
-                  <span>Become an Agent</span>
+                  <span>Become a Partner</span>
                 </Link>
 
                 <div className="nav-dropdown" ref={supportDropdownRef} style={{position: 'relative'}}>
