@@ -108,18 +108,18 @@ export default function LoginModal({ isOpen, onClose }) {
             </div>
             <div className="benefits-list">
               <div className="benefit-item">
-                <i className="fas fa-gift"></i>
-                <span>Unlock Exclusive Deals on every booking</span>
+                <i className="fas fa-percent"></i>
+                <span>Save up to 25% on Fleet & Hotel bookings</span>
               </div>
               <div className="benefit-item">
-                <i className="fas fa-star"></i>
-                <span>Zero Convenience Fee with Travel Axis Prime</span>
+                <i className="fas fa-headset"></i>
+                <span>24/7 Priority Customer Support access</span>
               </div>
               <div className="benefit-item">
-                <i className="fas fa-calendar-check"></i>
-                <span>Easily View, Modify, or Cancel Bookings</span>
+                <i className="fas fa-bolt"></i>
+                <span>Instant booking confirmations & e-tickets</span>
               </div>
-              <p className="and-more">and more..</p>
+              <p className="and-more">Join 50,000+ happy travelers!</p>
             </div>
           </div>
 
