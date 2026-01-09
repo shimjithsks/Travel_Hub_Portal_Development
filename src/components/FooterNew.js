@@ -4,6 +4,7 @@ import './FooterNew.css';
 
 export default function Footer() {
   const [email, setEmail] = useState('');
+  const currentYear = new Date().getFullYear();
 
   const handleSubscribe = (e) => {
     e.preventDefault();
@@ -11,22 +12,20 @@ export default function Footer() {
     setEmail('');
   };
 
-  const currentYear = new Date().getFullYear();
-
   return (
-    <footer className="yatra-footer">
-      {/* Newsletter */}
-      <div className="footer-newsletter">
+    <footer className="main-footer">
+      {/* Newsletter Section */}
+      <div className="footer-newsletter-section">
         <div className="container">
-          <div className="newsletter-wrapper">
-            <div className="newsletter-info">
+          <div className="newsletter-wrapper-footer">
+            <div className="newsletter-info-footer">
               <i className="fas fa-envelope-open-text"></i>
               <div>
                 <h3>Subscribe to Our Newsletter</h3>
                 <p>Get exclusive deals and latest travel updates</p>
               </div>
             </div>
-            <form onSubmit={handleSubscribe} className="newsletter-form">
+            <form onSubmit={handleSubscribe} className="newsletter-form-footer">
               <input
                 type="email"
                 placeholder="Enter your email address"
@@ -42,20 +41,74 @@ export default function Footer() {
         </div>
       </div>
 
-      {/* Copyright */}
-      <div className="footer-bottom">
+      {/* Footer Content */}
+      <div className="footer-content-section">
         <div className="container">
-          <div className="bottom-content">
-            <div className="footer-brand">
-              <Link to="/" className="brand-link">
-                <i className="fas fa-plane-departure"></i>
-                <span>Travel Axis</span>
-              </Link>
+          <div className="footer-grid-new">
+            {/* Brand Column */}
+            <div className="footer-brand-col">
+              <div className="brand-logo-footer">
+                <div className="logo-icon">
+                  <i className="fas fa-globe-americas"></i>
+                </div>
+                <div className="logo-text">
+                  <h3>Travel Axis</h3>
+                  <span>Plan • Book • Explore</span>
+                </div>
+              </div>
+              <p className="brand-description">
+                Your trusted partner for seamless travel experiences across the globe.
+              </p>
+              <div className="social-icons">
+                <a href="#" className="social-icon"><i className="fab fa-facebook-f"></i></a>
+                <a href="#" className="social-icon"><i className="fab fa-instagram"></i></a>
+                <a href="#" className="social-icon"><i className="fab fa-twitter"></i></a>
+                <a href="#" className="social-icon"><i className="fab fa-linkedin-in"></i></a>
+                <a href="#" className="social-icon"><i className="fab fa-youtube"></i></a>
+              </div>
             </div>
-            <div className="copyright-text">
-              <p>Copyright © {currentYear} Travel Axis Online Limited (formerly known as Travel Axis Online Private Limited), India. All rights reserved</p>
+
+            {/* Company Links */}
+            <div className="footer-links-col">
+              <h4>Company</h4>
+              <ul>
+                <li><Link to="/about">About Us</Link></li>
+                <li><Link to="/contact">Contact Us</Link></li>
+                <li><Link to="/about">Careers</Link></li>
+              </ul>
             </div>
-            <div className="footer-links-bottom">
+
+            {/* Partners Links */}
+            <div className="footer-links-col">
+              <h4>Partners</h4>
+              <ul>
+                <li><Link to="/travel-agents">Become a Partner</Link></li>
+                <li><Link to="/travel-agents">Affiliate Program</Link></li>
+                <li><Link to="/contact">Advertise</Link></li>
+                <li><Link to="/travel-agents">Corporate Travel</Link></li>
+              </ul>
+            </div>
+
+            {/* Support Links */}
+            <div className="footer-links-col">
+              <h4>Support</h4>
+              <ul>
+                <li><Link to="/contact">Help Center</Link></li>
+                <li><Link to="/faq">FAQ</Link></li>
+                <li><Link to="/contact">Cancellations</Link></li>
+                <li><Link to="/faq">Terms & Conditions</Link></li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Copyright Bar */}
+      <div className="footer-copyright">
+        <div className="container">
+          <div className="copyright-content">
+            <p>© {currentYear} Travel Axis Online Limited, India. All rights reserved.</p>
+            <div className="copyright-links">
               <a href="#">Privacy Policy</a>
               <span>|</span>
               <a href="#">Terms of Use</a>
@@ -64,14 +117,6 @@ export default function Footer() {
             </div>
           </div>
         </div>
-      </div>
-
-      {/* Floating Chat Button */}
-      <div className="floating-chat">
-        <button className="chat-button">
-          <i className="fas fa-comments"></i>
-          <span className="chat-badge">Chat with us</span>
-        </button>
       </div>
     </footer>
   );

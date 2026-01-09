@@ -8,58 +8,44 @@ export default function TravelAgents() {
     AOS.init({ duration: 1000 });
   }, []);
 
-  const features = [
+  const benefits = [
     {
-      title: 'Round-the-clock customer and technical support'
+      icon: 'fa-chart-line',
+      title: 'Higher Earnings',
+      description: 'Earn attractive commissions on every booking you make'
     },
     {
-      title: '1000+ White Label/API customers across the globe'
+      icon: 'fa-headset',
+      title: '24/7 Support',
+      description: 'Dedicated support team available round the clock'
     },
     {
-      title: 'Wide range of hotels and flights at multiple locations suitable for every need'
+      icon: 'fa-bolt',
+      title: 'Instant Booking',
+      description: 'Real-time confirmations with our advanced booking system'
     },
     {
-      title: 'Seamless rescheduling and cancellations'
+      icon: 'fa-shield-alt',
+      title: 'Secure Payments',
+      description: 'Safe and secure payment gateway with multiple options'
     }
   ];
 
-  const services = [
-    { name: 'Flights', icon: 'fa-plane', link: '/flights' },
-    { name: 'Hotels', icon: 'fa-hotel', link: '/hotels' },
-    { name: 'Trains', icon: 'fa-train', link: '/trains' },
-    { name: 'Visa', icon: 'fa-passport', link: '/visa' },
-    { name: 'Holiday', icon: 'fa-umbrella-beach', link: '/holiday' },
-    { name: 'Bus', icon: 'fa-bus', link: '/bus' }
-  ];
-
-  const testimonials = [
+  const steps = [
     {
-      name: 'SANYOGITA PANDEY',
-      company: 'Partner - TRACOSE',
-      image: 'https://www.yatra.com/travel-agents/agent1.png',
-      rating: 5,
-      text: 'Travel Axis Online Services excels in the highly competitive travel industry. Their service is at par with top providers, offering smooth and efficient experiences. The fares are good, making them a reliable choice.'
+      number: '01',
+      title: 'Register',
+      description: 'Create your agent account in just 2 minutes'
     },
     {
-      name: 'Ace Travels',
-      company: 'Bhutan',
-      image: 'https://www.yatra.com/travel-agents/agent2.jpg',
-      rating: 5,
-      text: 'Greetings from Ace Travels Bhutan. This is a brief note to thank Travel Axis for being a great business partner for such a long time. It has been exactly 12 years of working with Travel Axis.'
+      number: '02',
+      title: 'Verify',
+      description: 'Complete KYC verification for account activation'
     },
     {
-      name: 'Suvendu Das',
-      company: 'Travel Professional',
-      image: 'https://www.yatra.com/travel-agents/agent3.jpg',
-      rating: 5,
-      text: 'I have been working with Travel Axis for a long, long period of time. It was a perfect experience for me while working with Travel Axis. In this competitive world of the tourism industry, Travel Axis has always upgraded.'
-    },
-    {
-      name: 'Tejinder Singh Sobti',
-      company: 'Whistling Vacations',
-      image: 'https://www.yatra.com/travel-agents/agent4.jpg',
-      rating: 5,
-      text: 'I would like to give a Testimonial to Travel Axis Limited. We have been working with them for the last 8 years and have had a great experience working with them. Their services and rates are excellent.'
+      number: '03',
+      title: 'Start Earning',
+      description: 'Begin booking and earning commissions instantly'
     }
   ];
 
@@ -70,80 +56,77 @@ export default function TravelAgents() {
         <div className="hero-overlay">
           <div className="container">
             <div className="hero-content" data-aos="fade-up">
-              <h1>Let India's top business travel brand handle your organization's travel needs!</h1>
+              <span className="hero-badge">Partner Program</span>
+              <h1>Grow Your Travel Business with Travel Axis</h1>
+              <p className="hero-subtitle">Join our network of successful travel agents and unlock unlimited earning potential</p>
               <div className="stats-row">
                 <div className="stat-item">
-                  <h3>31.9K+</h3>
-                  <p>Travel Agents</p>
+                  <div className="stat-icon"><i className="fas fa-users"></i></div>
+                  <h3>5,000+</h3>
+                  <p>Active Partners</p>
                 </div>
                 <div className="stat-item">
-                  <h3>150+</h3>
-                  <p>Distributors</p>
+                  <div className="stat-icon"><i className="fas fa-rupee-sign"></i></div>
+                  <h3>₹2Cr+</h3>
+                  <p>Bookings Managed</p>
                 </div>
                 <div className="stat-item">
-                  <h3>998.8K+</h3>
-                  <p>API Searches</p>
+                  <div className="stat-icon"><i className="fas fa-map-marker-alt"></i></div>
+                  <h3>200+</h3>
+                  <p>Cities Covered</p>
                 </div>
               </div>
               <div className="hero-actions">
-                <Link to="/agent-login" className="btn-primary">Login</Link>
-                <Link to="/agent-signup" className="btn-secondary">Sign up</Link>
+                <Link to="/agent-signup" className="btn-primary">
+                  <i className="fas fa-rocket"></i>
+                  Become a Partner
+                </Link>
+                <Link to="/agent-login" className="btn-secondary">
+                  <i className="fas fa-sign-in-alt"></i>
+                  Agent Login
+                </Link>
               </div>
             </div>
           </div>
         </div>
       </section>
 
-      {/* Services Section */}
-      <section className="services-section" data-aos="fade-up">
+      {/* Benefits Section */}
+      <section className="benefits-section" data-aos="fade-up">
         <div className="container">
-          <h2 className="section-title">Explore our range of services</h2>
-          <p className="section-subtitle">
-            Flights, hotels, car rentals, cruises, tours, and more—everything you need for your next adventure, all in one place. 
-            Let us help you craft unforgettable travel experiences, wherever you're headed.
-          </p>
-          <div className="services-grid">
-            {services.map((service, index) => (
-              <div key={index} className="service-item" data-aos="zoom-in" data-aos-delay={index * 100}>
-                <i className={`fas ${service.icon}`}></i>
-                <h3>{service.name}</h3>
-              </div>
-            ))}
+          <div className="section-header">
+            <span className="section-badge">Why Partner With Us</span>
+            <h2 className="section-title">Everything You Need to Succeed</h2>
+            <p className="section-subtitle">We provide all the tools and support you need to grow your travel business</p>
           </div>
-        </div>
-      </section>
-
-      {/* Why Book Section */}
-      <section className="why-book-section" data-aos="fade-up">
-        <div className="container">
-          <h2 className="section-title">Why Book with Travel Axis?</h2>
-          <div className="features-grid">
-            {features.map((feature, index) => (
-              <div key={index} className="feature-box" data-aos="fade-up" data-aos-delay={index * 100}>
-                <p>{feature.title}</p>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* Testimonials Section */}
-      <section className="testimonials-section" data-aos="fade-up">
-        <div className="container">
-          <h2 className="section-title">Don't just take our words</h2>
-          <h3 className="happy-users">3940+ Happy Travel Axis Users</h3>
-          <div className="testimonials-grid">
-            {testimonials.map((testimonial, index) => (
-              <div key={index} className="testimonial-card" data-aos="fade-up" data-aos-delay={index * 100}>
-                <img src={testimonial.image} alt={testimonial.name} className="testimonial-img" />
-                <div className="rating">
-                  {[...Array(testimonial.rating)].map((_, i) => (
-                    <i key={i} className="fas fa-star"></i>
-                  ))}
+          <div className="benefits-grid">
+            {benefits.map((benefit, index) => (
+              <div key={index} className="benefit-card" data-aos="fade-up" data-aos-delay={index * 100}>
+                <div className="benefit-icon">
+                  <i className={`fas ${benefit.icon}`}></i>
                 </div>
-                <p className="testimonial-text">{testimonial.text}</p>
-                <h4>{testimonial.name}</h4>
-                <p className="company">{testimonial.company}</p>
+                <h3>{benefit.title}</h3>
+                <p>{benefit.description}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* How It Works Section */}
+      <section className="steps-section" data-aos="fade-up">
+        <div className="container">
+          <div className="section-header">
+            <span className="section-badge">Getting Started</span>
+            <h2 className="section-title">Start in 3 Simple Steps</h2>
+          </div>
+          <div className="steps-grid">
+            {steps.map((step, index) => (
+              <div key={index} className="step-card" data-aos="fade-up" data-aos-delay={index * 150}>
+                <div className="step-number">{step.number}</div>
+                <h3>{step.title}</h3>
+                <p>{step.description}</p>
+                {index < steps.length - 1 && <div className="step-connector"></div>}
               </div>
             ))}
           </div>
@@ -151,49 +134,24 @@ export default function TravelAgents() {
       </section>
 
       {/* CTA Section */}
-      <section className="cta-section" data-aos="fade-up">
+      <section className="cta-section">
         <div className="container">
-          <h2>Ready to Partner with Travel Axis?</h2>
-          <p>Join thousands of travel agents who trust Travel Axis for their business needs</p>
-          <div className="cta-buttons">
-            <Link to="/agent-login" className="btn-primary">Login Now</Link>
-            <Link to="/agent-signup" className="btn-secondary">Create Account</Link>
+          <div className="cta-content">
+            <h2>Ready to Start Your Journey?</h2>
+            <p>Join thousands of successful travel agents earning with Travel Axis</p>
+            <div className="cta-buttons">
+              <Link to="/agent-signup" className="btn-primary">
+                <i className="fas fa-user-plus"></i>
+                Register Now
+              </Link>
+              <Link to="/contact" className="btn-secondary">
+                <i className="fas fa-phone-alt"></i>
+                Contact Sales
+              </Link>
+            </div>
           </div>
         </div>
       </section>
-
-      {/* Footer Section */}
-      <footer className="agents-footer">
-        <div className="container">
-          <div className="footer-grid">
-            <div className="footer-col">
-              <h3>Corporate Information</h3>
-              <Link to="/about">About Us</Link>
-              <Link to="/service">Our Products</Link>
-              <Link to="/contact">Terms and Conditions</Link>
-            </div>
-            <div className="footer-col">
-              <h3>TSI-Travel Axis Services</h3>
-              <Link to="/tour">Flights</Link>
-              <Link to="/tour">Hotels</Link>
-              <Link to="/tour">Trains</Link>
-            </div>
-            <div className="footer-col">
-              <h3>Customer Care</h3>
-              <Link to="/contact">Contact Us</Link>
-              <Link to="/faq">FAQs</Link>
-            </div>
-            <div className="footer-col">
-              <h3>Partner with Us</h3>
-              <Link to="/contact">API Services</Link>
-              <Link to="/agent-signup">Register as Agent</Link>
-            </div>
-          </div>
-          <div className="footer-bottom">
-            <p>© 2025 Travel Axis Online Limited, India. All rights reserved.</p>
-          </div>
-        </div>
-      </footer>
     </div>
   );
 }

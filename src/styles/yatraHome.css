@@ -7392,6 +7392,144 @@ section {
   padding-left: 5px;
 }
 
+/* ===== NEWSLETTER SECTION ===== */
+.newsletter-section-home {
+  background: linear-gradient(135deg, #0d4f6a 0%, #0a5e75 50%, #0d6878 100%);
+  padding: 40px 0;
+  position: relative;
+  overflow: hidden;
+}
+
+.newsletter-section-home::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: none;
+  pointer-events: none;
+}
+
+.newsletter-wrapper-home {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 40px;
+  position: relative;
+  z-index: 1;
+}
+
+.newsletter-info-home {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+}
+
+.newsletter-info-home > i {
+  font-size: 48px;
+  color: rgba(255, 255, 255, 0.85);
+}
+
+.newsletter-info-home h3 {
+  font-size: 24px;
+  font-weight: 800;
+  color: white;
+  margin: 0 0 6px 0;
+}
+
+.newsletter-info-home p {
+  font-size: 15px;
+  color: rgba(255, 255, 255, 0.75);
+  margin: 0;
+}
+
+.newsletter-form-home {
+  display: flex;
+  gap: 12px;
+  flex-shrink: 0;
+}
+
+.newsletter-form-home input {
+  width: 320px;
+  padding: 16px 24px;
+  border: none;
+  border-radius: 10px;
+  font-size: 15px;
+  background: white;
+  color: #1e293b;
+  outline: none;
+}
+
+.newsletter-form-home input::placeholder {
+  color: #94a3b8;
+}
+
+.newsletter-form-home button {
+  padding: 16px 32px;
+  background: #334155;
+  color: white;
+  border: none;
+  border-radius: 10px;
+  font-size: 15px;
+  font-weight: 700;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  transition: all 0.3s ease;
+  white-space: nowrap;
+}
+
+.newsletter-form-home button:hover {
+  background: #475569;
+  transform: translateY(-2px);
+}
+
+@media (max-width: 992px) {
+  .newsletter-wrapper-home {
+    flex-direction: column;
+    text-align: center;
+  }
+  
+  .newsletter-info-home {
+    flex-direction: column;
+  }
+  
+  .newsletter-form-home {
+    width: 100%;
+    max-width: 500px;
+  }
+  
+  .newsletter-form-home input {
+    flex: 1;
+    width: auto;
+  }
+}
+
+@media (max-width: 576px) {
+  .newsletter-section-home {
+    padding: 30px 0;
+  }
+  
+  .newsletter-info-home > i {
+    font-size: 36px;
+  }
+  
+  .newsletter-info-home h3 {
+    font-size: 20px;
+  }
+  
+  .newsletter-form-home {
+    flex-direction: column;
+  }
+  
+  .newsletter-form-home input,
+  .newsletter-form-home button {
+    width: 100%;
+  }
+}
+
 /* ===== FOOTER NEW ===== */
 .footer-new {
   background: #0f172a;
