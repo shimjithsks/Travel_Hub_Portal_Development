@@ -144,26 +144,21 @@ export default function Navbar() {
               </div>
 
               <nav className={`main-navigation ${isOpen ? 'active' : ''}`}>
-                {/* My Journeys link hidden
                 {user && !isPartnerPage ? (
                   <Link to="/customer/my-bookings" className="trips-link" onClick={() => setIsOpen(false)}>
                     <i className="fas fa-compass"></i>
                     <span>My Journeys</span>
                   </Link>
                 ) : null}
-                */}
               </nav>
 
               {!isPartnerPage && (
               <div className="nav-actions">
-                {/* Become a Partner link hidden
                 <Link to="/travel-agents" className="header-btn agents-btn" target="_blank" rel="noopener noreferrer">
                   <i className="fas fa-handshake"></i>
                   <span>Become a Partner</span>
                 </Link>
-                */}
 
-                {/* Help dropdown hidden
                 <div className="nav-dropdown" ref={supportDropdownRef} style={{position: 'relative'}}>
                   <button 
                     className="header-btn support-btn"
@@ -197,9 +192,7 @@ export default function Navbar() {
                     </div>
                   )}
                 </div>
-                */}
 
-                {/* Login / Signup and user dropdown hidden
                 {user ? (
                   <div className="user-dropdown-wrapper" ref={userDropdownRef}>
                     <button className="user-profile-btn" onClick={toggleUserDropdown}>
@@ -234,7 +227,6 @@ export default function Navbar() {
                     Login / Signup
                   </button>
                 )}
-                */}
               </div>
               )}
             </div>
