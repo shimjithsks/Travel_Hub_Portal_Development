@@ -201,6 +201,13 @@
   font-weight: 700;
   margin: 0 auto 20px;
   box-shadow: 0 4px 20px rgba(255, 153, 51, 0.3);
+  overflow: hidden;
+}
+
+.profile-avatar-large .profile-photo {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
 }
 
 .profile-name {
@@ -603,5 +610,35 @@
 
   .profile-content {
     grid-template-columns: 1fr;
+  }
+}
+
+/* Profile Loading State */
+.profile-loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 60vh;
+  gap: 20px;
+}
+
+.profile-loading p {
+  color: #64748b;
+  font-size: 16px;
+}
+
+.loading-spinner {
+  width: 50px;
+  height: 50px;
+  border: 4px solid #e2e8f0;
+  border-top-color: #14b8a6;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
   }
 }

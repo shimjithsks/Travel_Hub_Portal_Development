@@ -1,7 +1,7 @@
 import React, { useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import AOS from 'aos';
-import '../styles/travelAgents.css';
+import '../../styles/travelAgents.css';
 
 export default function TravelAgents() {
   useEffect(() => {

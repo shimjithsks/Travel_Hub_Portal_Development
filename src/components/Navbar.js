@@ -78,6 +78,9 @@ export default function Navbar() {
 
   const dashboardPath = role === 'operator' ? '/operator' : '/customer';
 
+  // Check if on agent/partner pages to hide nav items
+  const isPartnerPage = location.pathname === '/agent-signup' || location.pathname === '/travel-agents' || location.pathname === '/agent-login' || location.pathname === '/portal-dashboard' || location.pathname === '/partner-dashboard';
+
   const handleLogout = async () => {
     await signOut();
     setShowDropdown(null);
@@ -134,7 +137,7 @@ export default function Navbar() {
               </div>
 
               <nav className={`main-navigation ${isOpen ? 'active' : ''}`}>
-                {user ? (
+                {user && !isPartnerPage ? (
                   <Link to="/customer/my-bookings" className="trips-link" onClick={() => setIsOpen(false)}>
                     <i className="fas fa-compass"></i>
                     <span>My Journeys</span>
@@ -142,6 +145,7 @@ export default function Navbar() {
                 ) : null}
               </nav>
 
+              {!isPartnerPage && (
               <div className="nav-actions">
                 <Link to="/travel-agents" className="header-btn agents-btn" target="_blank" rel="noopener noreferrer">
                   <i className="fas fa-handshake"></i>
@@ -217,6 +221,7 @@ export default function Navbar() {
                   </button>
                 )}
               </div>
+              )}
             </div>
           </div>
         </div>

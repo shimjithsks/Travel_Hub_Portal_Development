@@ -50,6 +50,62 @@
   border-radius: 2px;
 }
 
+/* Signup Header */
+.signup-header {
+  text-align: center;
+  margin-bottom: 30px;
+}
+
+.partner-login-link {
+  margin-top: 20px;
+  font-size: 15px;
+  color: #64748b;
+}
+
+.login-link {
+  color: #14b8a6;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.3s;
+}
+
+.login-link:hover {
+  color: #0d9488;
+  text-decoration: underline;
+}
+
+/* Error Message */
+.error-message {
+  background: linear-gradient(135deg, #fef2f2 0%, #fee2e2 100%);
+  border: 2px solid #fca5a5;
+  border-left: 5px solid #ef4444;
+  color: #b91c1c;
+  padding: 20px 24px;
+  border-radius: 12px;
+  margin-bottom: 24px;
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  font-weight: 600;
+  font-size: 15px;
+  line-height: 1.5;
+  box-shadow: 0 4px 15px rgba(239, 68, 68, 0.15);
+  animation: shakeError 0.5s ease-in-out;
+}
+
+@keyframes shakeError {
+  0%, 100% { transform: translateX(0); }
+  10%, 30%, 50%, 70%, 90% { transform: translateX(-5px); }
+  20%, 40%, 60%, 80% { transform: translateX(5px); }
+}
+
+.error-message i {
+  font-size: 24px;
+  color: #ef4444;
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
 /* Form Sections */
 .form-section {
   margin-bottom: 40px;

@@ -1,19 +1,10 @@
-import React, { useMemo, useState } from 'react';
-import { Link, Navigate, useLocation, useNavigate } from 'react-router-dom';
-import { signInWithEmailAndPassword } from 'firebase/auth';
-import { auth } from '../firebase/firebase';
-import { useAuth } from '../context/AuthContext';
+import React, { useState } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
+import { loginPartner } from '../services/partnerService';
 import './Login.css';
 
 export default function Login() {
-  const { user, isFirebaseConfigured } = useAuth();
-  const location = useLocation();
   const navigate = useNavigate();
-
-  const from = useMemo(() => {
-    const stateFrom = location.state?.from?.pathname;
-    return stateFrom && stateFrom !== '/login' ? stateFrom : '/dashboard';
-  }, [location.state]);
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -21,7 +12,12 @@ export default function Login() {
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState('');
 
-  if (user) return <Navigate to={from} replace />;
+  // Check if partner is already logged in
+  const storedPartner = localStorage.getItem('partnerSession');
+  if (storedPartner) {
+    navigate('/partner-dashboard', { replace: true });
+    return null;
+  }
 
   async function onSubmit(e) {
     e.preventDefault();
@@ -29,21 +25,15 @@ export default function Login() {
     setSubmitting(true);
 
     try {
-      await signInWithEmailAndPassword(auth, email, password);
-      navigate(from, { replace: true });
+      const result = await loginPartner(email, password);
+      
+      if (result.success) {
+        // Store partner session
+        localStorage.setItem('partnerSession', JSON.stringify(result.partner));
+        navigate('/partner-dashboard', { replace: true });
+      }
     } catch (err) {
-      const errorCode = err?.code;
-      setError(
-        errorCode === 'auth/user-not-found'
-          ? 'No user found with this email address'
-          : errorCode === 'auth/wrong-password'
-          ? 'Incorrect password. Please try again'
-          : errorCode === 'auth/invalid-email'
-          ? 'Invalid email address format'
-          : errorCode === 'auth/too-many-requests'
-          ? 'Too many failed attempts. Please try again later'
-          : err?.message || 'Login failed. Please check your credentials'
-      );
+      setError(err.message || 'Login failed. Please check your credentials');
     } finally {
       setSubmitting(false);
     }
@@ -157,7 +147,7 @@ export default function Login() {
             <button
               type="submit"
               className="submit-btn"
-              disabled={submitting || !isFirebaseConfigured}
+              disabled={submitting}
             >
               {submitting ? (
                 <>

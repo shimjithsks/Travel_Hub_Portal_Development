@@ -23,8 +23,10 @@ import TourGuide from './pages/TourGuide';
 import BlogDetail from './pages/BlogDetail';
 import Login from './pages/Login';
 import Register from './pages/Register';
-import TravelAgents from './pages/TravelAgents';
-import AgentSignup from './pages/AgentSignup';
+import TravelAgents from './pages/Partner/TravelAgents';
+import AgentSignup from './pages/Partner/AgentSignup';
+import PortalDashboard from './pages/Partner/PortalDashboard';
+import PartnerDashboard from './pages/Partner/PartnerDashboard';
 import NotFound from './pages/NotFound';
 import Hotels from './pages/Hotels';
 import HotelDetail from './pages/HotelDetail';
@@ -74,11 +76,16 @@ function App() {
       <Navbar />
       <Routes>
         <Route path="/" element={<Home />} />
-        <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
+        
+        {/* Partner/Agent Routes */}
         <Route path="/travel-agents" element={<TravelAgents />} />
         <Route path="/agent-signup" element={<AgentSignup />} />
         <Route path="/agent-login" element={<Login />} />
+        <Route path="/portal-dashboard" element={<PortalDashboard />} />
+        <Route path="/partner-dashboard" element={<PartnerDashboard />} />
+        
+        {/* Dashboard Routes */}
         <Route path="/dashboard" element={<DashboardRedirect />} />
         <Route
           path="/operator"

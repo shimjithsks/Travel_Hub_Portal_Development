@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { signInWithEmailAndPassword, createUserWithEmailAndPassword, updateProfile, GoogleAuthProvider, signInWithPopup } from 'firebase/auth';
-import { doc, serverTimestamp, setDoc } from 'firebase/firestore';
+import { doc, serverTimestamp, setDoc, getDoc } from 'firebase/firestore';
 import { auth, db } from '../firebase/firebase';
 import { useAuth } from '../context/AuthContext';
 import './LoginModal.css';
@@ -10,6 +10,8 @@ export default function LoginModal({ isOpen, onClose }) {
   const { isFirebaseConfigured } = useAuth();
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState('login');
+  const [showProfileCompletion, setShowProfileCompletion] = useState(false);
+  const [googleUser, setGoogleUser] = useState(null);
   
   // Login states
   const [emailOrPhone, setEmailOrPhone] = useState('');
@@ -23,6 +25,19 @@ export default function LoginModal({ isOpen, onClose }) {
   const [countryCode, setCountryCode] = useState('+91');
   const [title, setTitle] = useState('Mr.');
   const [name, setName] = useState('');
+  
+  // Profile completion states (for Google sign-in)
+  const [profileData, setProfileData] = useState({
+    fullName: '',
+    email: '',
+    phone: '',
+    dateOfBirth: '',
+    gender: '',
+    address: '',
+    city: '',
+    state: '',
+    pincode: ''
+  });
   
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState('');
@@ -48,13 +63,127 @@ export default function LoginModal({ isOpen, onClose }) {
 
   const handleGoogleSignIn = async () => {
     try {
+      setSubmitting(true);
+      setError('');
       const provider = new GoogleAuthProvider();
-      await signInWithPopup(auth, provider);
+      const result = await signInWithPopup(auth, provider);
+      const user = result.user;
+      
+      // Check if user already has a complete profile in Firestore
+      const userDocRef = doc(db, 'users', user.uid);
+      const userDoc = await getDoc(userDocRef);
+      
+      if (userDoc.exists()) {
+        const existingData = userDoc.data();
+        // Check if profile is complete (has phone number at minimum)
+        if (existingData.phone && existingData.phone.length > 5) {
+          // Profile is complete, proceed to dashboard
+          onClose();
+          navigate('/customer');
+          return;
+        }
+      }
+      
+      // New user or incomplete profile - show profile completion form
+      setGoogleUser(user);
+      setProfileData({
+        fullName: user.displayName || '',
+        email: user.email || '',
+        phone: '',
+        dateOfBirth: '',
+        gender: '',
+        address: '',
+        city: '',
+        state: '',
+        pincode: ''
+      });
+      setShowProfileCompletion(true);
+    } catch (err) {
+      setError(err?.message || 'Google sign-in failed');
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const handleProfileChange = (e) => {
+    const { name, value } = e.target;
+    setProfileData(prev => ({
+      ...prev,
+      [name]: value
+    }));
+  };
+
+  const handleProfileCompletion = async (e) => {
+    e.preventDefault();
+    setError('');
+    setSubmitting(true);
+
+    try {
+      if (!googleUser) {
+        throw new Error('User session expired. Please try again.');
+      }
+
+      // Validate required fields
+      if (!profileData.fullName.trim()) {
+        throw new Error('Full name is required');
+      }
+      if (!profileData.phone.trim()) {
+        throw new Error('Phone number is required');
+      }
+
+      // Save complete profile to Firestore
+      await setDoc(doc(db, 'users', googleUser.uid), {
+        role: 'customer',
+        name: profileData.fullName,
+        email: profileData.email,
+        phone: `${countryCode}${profileData.phone}`,
+        dateOfBirth: profileData.dateOfBirth,
+        gender: profileData.gender,
+        address: profileData.address,
+        city: profileData.city,
+        state: profileData.state,
+        pincode: profileData.pincode,
+        photoURL: googleUser.photoURL || '',
+        createdAt: serverTimestamp(),
+        verificationStatus: 'verified',
+        authProvider: 'google'
+      });
+
+      // Update display name if different
+      if (profileData.fullName !== googleUser.displayName) {
+        await updateProfile(googleUser, { displayName: profileData.fullName });
+      }
+
+      setShowProfileCompletion(false);
       onClose();
       navigate('/customer');
     } catch (err) {
-      setError(err?.message || 'Google sign-in failed');
+      setError(err?.message || 'Failed to save profile');
+    } finally {
+      setSubmitting(false);
     }
+  };
+
+  const handleSkipProfile = async () => {
+    // Save minimal profile and proceed
+    if (googleUser) {
+      try {
+        await setDoc(doc(db, 'users', googleUser.uid), {
+          role: 'customer',
+          name: googleUser.displayName || '',
+          email: googleUser.email || '',
+          photoURL: googleUser.photoURL || '',
+          createdAt: serverTimestamp(),
+          verificationStatus: 'verified',
+          authProvider: 'google'
+        });
+      } catch (err) {
+        console.error('Error saving minimal profile:', err);
+      }
+    }
+    setShowProfileCompletion(false);
+    onClose();
+    navigate('/customer');
   };
 
   const handleSignUp = async (e) => {
@@ -91,11 +220,177 @@ export default function LoginModal({ isOpen, onClose }) {
 
   return (
     <div className="login-modal-overlay" onClick={onClose}>
-      <div className="login-modal-content" onClick={(e) => e.stopPropagation()}>
+      <div className={`login-modal-content ${showProfileCompletion ? 'profile-completion-mode' : ''}`} onClick={(e) => e.stopPropagation()}>
         <button className="modal-close" onClick={onClose}>
           <i className="fas fa-times"></i>
         </button>
 
+        {showProfileCompletion ? (
+          /* Profile Completion Form for Google Sign-in */
+          <div className="profile-completion-container">
+            <div className="profile-completion-header">
+              <div className="google-avatar">
+                {googleUser?.photoURL ? (
+                  <img src={googleUser.photoURL} alt="Profile" />
+                ) : (
+                  <i className="fas fa-user"></i>
+                )}
+              </div>
+              <h2>Complete Your Profile</h2>
+              <p>Welcome! Please provide additional details to enhance your experience.</p>
+            </div>
+
+            {error && <div className="alert-danger-modal">{error}</div>}
+
+            <form onSubmit={handleProfileCompletion} className="profile-completion-form">
+              <div className="form-row">
+                <div className="form-group-modal">
+                  <label>Full Name <span className="required">*</span></label>
+                  <input
+                    type="text"
+                    name="fullName"
+                    placeholder="Enter your full name"
+                    value={profileData.fullName}
+                    onChange={handleProfileChange}
+                    required
+                    className="modal-input"
+                  />
+                </div>
+                <div className="form-group-modal">
+                  <label>Email Address <span className="required">*</span></label>
+                  <input
+                    type="email"
+                    name="email"
+                    value={profileData.email}
+                    className="modal-input"
+                    disabled
+                  />
+                </div>
+              </div>
+
+              <div className="form-row">
+                <div className="form-group-modal phone-input-group">
+                  <label>Phone Number <span className="required">*</span></label>
+                  <div className="phone-wrapper">
+                    <select 
+                      value={countryCode}
+                      onChange={(e) => setCountryCode(e.target.value)}
+                      className="country-code-select"
+                    >
+                      <option value="+91">+91</option>
+                      <option value="+1">+1</option>
+                      <option value="+44">+44</option>
+                      <option value="+971">+971</option>
+                    </select>
+                    <input
+                      type="tel"
+                      name="phone"
+                      placeholder="Enter your phone number"
+                      value={profileData.phone}
+                      onChange={handleProfileChange}
+                      required
+                      className="modal-input phone-input"
+                    />
+                  </div>
+                </div>
+                <div className="form-group-modal">
+                  <label>Date of Birth</label>
+                  <input
+                    type="date"
+                    name="dateOfBirth"
+                    value={profileData.dateOfBirth}
+                    onChange={handleProfileChange}
+                    className="modal-input"
+                  />
+                </div>
+              </div>
+
+              <div className="form-row">
+                <div className="form-group-modal">
+                  <label>Gender</label>
+                  <select
+                    name="gender"
+                    value={profileData.gender}
+                    onChange={handleProfileChange}
+                    className="modal-input"
+                  >
+                    <option value="">Select gender</option>
+                    <option value="male">Male</option>
+                    <option value="female">Female</option>
+                    <option value="other">Other</option>
+                    <option value="prefer-not-to-say">Prefer not to say</option>
+                  </select>
+                </div>
+                <div className="form-group-modal">
+                  <label>Pincode</label>
+                  <input
+                    type="text"
+                    name="pincode"
+                    placeholder="Enter pincode"
+                    value={profileData.pincode}
+                    onChange={handleProfileChange}
+                    className="modal-input"
+                    maxLength="6"
+                  />
+                </div>
+              </div>
+
+              <div className="form-group-modal">
+                <label>Address</label>
+                <input
+                  type="text"
+                  name="address"
+                  placeholder="Enter your complete address"
+                  value={profileData.address}
+                  onChange={handleProfileChange}
+                  className="modal-input"
+                />
+              </div>
+
+              <div className="form-row">
+                <div className="form-group-modal">
+                  <label>City</label>
+                  <input
+                    type="text"
+                    name="city"
+                    placeholder="Enter your city"
+                    value={profileData.city}
+                    onChange={handleProfileChange}
+                    className="modal-input"
+                  />
+                </div>
+                <div className="form-group-modal">
+                  <label>State</label>
+                  <input
+                    type="text"
+                    name="state"
+                    placeholder="Enter your state"
+                    value={profileData.state}
+                    onChange={handleProfileChange}
+                    className="modal-input"
+                  />
+                </div>
+              </div>
+
+              <div className="profile-completion-actions">
+                <button 
+                  type="button" 
+                  className="skip-btn"
+                  onClick={handleSkipProfile}
+                >
+                  Skip for now
+                </button>
+                <button 
+                  type="submit" 
+                  className="save-profile-btn"
+                  disabled={submitting}
+                >
+                  {submitting ? 'Saving...' : 'Save & Continue'}
+                </button>
+              </div>
+            </form>
+          </div>
+        ) : (
         <div className="modal-body">
           {/* Left Side - Benefits */}
           <div className="modal-left">
@@ -291,6 +586,7 @@ export default function LoginModal({ isOpen, onClose }) {
             )}
           </div>
         </div>
+        )}
       </div>
     </div>
   );

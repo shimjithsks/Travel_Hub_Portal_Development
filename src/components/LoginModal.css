@@ -699,6 +699,189 @@
   text-decoration: underline;
 }
 
+/* Profile Completion Mode */
+.login-modal-content.profile-completion-mode {
+  max-width: 700px;
+  max-height: 90vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.profile-completion-container {
+  padding: 40px;
+  overflow-y: auto;
+  max-height: calc(90vh - 20px);
+}
+
+.profile-completion-header {
+  text-align: center;
+  margin-bottom: 30px;
+  position: sticky;
+  top: 0;
+  background: linear-gradient(145deg, #ffffff 0%, #f8fafc 100%);
+  padding-top: 10px;
+  z-index: 1;
+}
+
+.google-avatar {
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  margin: 0 auto 15px;
+  overflow: hidden;
+  background: linear-gradient(135deg, #14b8a6, #0d9488);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4px 15px rgba(20, 184, 166, 0.3);
+}
+
+.google-avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.google-avatar i {
+  font-size: 32px;
+  color: white;
+}
+
+.profile-completion-header h2 {
+  font-size: 24px;
+  color: #0f172a;
+  margin-bottom: 8px;
+  font-weight: 700;
+}
+
+.profile-completion-header p {
+  color: #64748b;
+  font-size: 14px;
+}
+
+.profile-completion-form {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.profile-completion-form .form-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+
+.profile-completion-form .form-group-modal {
+  margin-bottom: 0;
+}
+
+.profile-completion-form label {
+  display: block;
+  font-size: 13px;
+  font-weight: 600;
+  color: #334155;
+  margin-bottom: 6px;
+}
+
+.profile-completion-form label .required {
+  color: #ef4444;
+}
+
+.profile-completion-form .phone-wrapper {
+  display: flex;
+  gap: 8px;
+}
+
+.profile-completion-form .phone-wrapper .country-code-select {
+  width: 80px;
+  flex-shrink: 0;
+}
+
+.profile-completion-form .phone-wrapper .phone-input {
+  flex: 1;
+}
+
+.profile-completion-form .modal-input {
+  width: 100%;
+  padding: 12px 14px;
+  border: 2px solid #e2e8f0;
+  border-radius: 10px;
+  font-size: 14px;
+  transition: all 0.2s ease;
+  background: #f8fafc;
+}
+
+.profile-completion-form .modal-input:focus {
+  border-color: #14b8a6;
+  background: white;
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(20, 184, 166, 0.1);
+}
+
+.profile-completion-form .modal-input:disabled {
+  background: #e2e8f0;
+  color: #64748b;
+  cursor: not-allowed;
+}
+
+.profile-completion-form select.modal-input {
+  cursor: pointer;
+}
+
+.profile-completion-actions {
+  display: flex;
+  gap: 12px;
+  margin-top: 24px;
+  padding-top: 20px;
+  justify-content: flex-end;
+  border-top: 1px solid #e2e8f0;
+  position: sticky;
+  bottom: 0;
+  background: linear-gradient(to top, #ffffff 80%, transparent);
+  padding-bottom: 10px;
+}
+
+.skip-btn {
+  padding: 12px 24px;
+  background: transparent;
+  border: 2px solid #e2e8f0;
+  border-radius: 10px;
+  font-size: 14px;
+  font-weight: 600;
+  color: #64748b;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.skip-btn:hover {
+  background: #f1f5f9;
+  border-color: #cbd5e1;
+}
+
+.save-profile-btn {
+  padding: 12px 32px;
+  background: linear-gradient(135deg, #14b8a6, #0d9488);
+  border: none;
+  border-radius: 10px;
+  font-size: 14px;
+  font-weight: 600;
+  color: white;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 0 4px 15px rgba(20, 184, 166, 0.3);
+}
+
+.save-profile-btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 20px rgba(20, 184, 166, 0.4);
+}
+
+.save-profile-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
+}
+
 /* Responsive */
 @media (max-width: 768px) {
   .modal-body {
@@ -716,6 +899,30 @@
 
   .login-modal-content {
     margin: 0 10px;
+  }
+
+  .profile-completion-container {
+    padding: 30px 20px;
+    max-height: calc(90vh - 10px);
+  }
+
+  .profile-completion-header {
+    position: relative;
+    padding-top: 0;
+  }
+
+  .profile-completion-form .form-row {
+    grid-template-columns: 1fr;
+  }
+
+  .profile-completion-actions {
+    flex-direction: column-reverse;
+    position: relative;
+    background: white;
+  }
+
+  .skip-btn, .save-profile-btn {
+    width: 100%;
   }
 }
 

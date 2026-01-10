@@ -1,9 +1,12 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import '../styles/agentSignup.css';
+import { registerPartner } from '../../services/partnerService';
+import '../../styles/agentSignup.css';
 
 export default function AgentSignup() {
   const navigate = useNavigate();
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [error, setError] = useState('');
   const [formData, setFormData] = useState({
     companyName: '',
     address1: '',
@@ -41,12 +44,34 @@ export default function AgentSignup() {
     }
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    // Handle form submission
-    console.log('Form submitted:', formData);
-    alert('Registration submitted successfully! Our team will contact you soon.');
-    navigate('/travel-agents');
+    setError('');
+    setIsSubmitting(true);
+
+    try {
+      // Prepare files for upload
+      const files = {
+        addressProofScan: formData.addressProofScan,
+        panCardScan: formData.panCardScan
+      };
+
+      // Register partner in database
+      const result = await registerPartner(formData, files);
+      
+      if (result.success) {
+        alert('🎉 Registration Successful!\n\nThank you for registering as a Travel Axis Partner.\nOur team will review your application and contact you soon.\n\nYou can now login with your registered email.');
+        navigate('/agent-login');
+      }
+    } catch (err) {
+      console.error('Registration error details:', err);
+      const errorMessage = err.message || 'Failed to register. Please try again.';
+      setError(errorMessage);
+      // Scroll to top to show error
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -54,7 +79,18 @@ export default function AgentSignup() {
       <div className="signup-content">
         <div className="container">
           <div className="signup-card">
-            <h1>Partner Registration</h1>
+            {error && (
+              <div className="error-message">
+                <i className="fas fa-exclamation-circle"></i>
+                {error}
+              </div>
+            )}
+            <div className="signup-header">
+              <h1>Partner Registration</h1>
+              <div className="partner-login-link">
+                Already a partner? <span onClick={() => navigate('/agent-login')} className="login-link">Partner Login</span>
+              </div>
+            </div>
             <form onSubmit={handleSubmit} className="signup-form">
               {/* Contact Information */}
               <div className="form-section">
@@ -169,7 +205,7 @@ export default function AgentSignup() {
                 </div>
               </div>
 
-              {/* Captcha Information */}
+              {/* Captcha Information - Temporarily Disabled
               <div className="form-section">
                 <h3>Captcha Information</h3>
                 <div className="form-grid">
@@ -184,6 +220,7 @@ export default function AgentSignup() {
                   </div>
                 </div>
               </div>
+              */}
 
               {/* Terms & Submit */}
               <div className="form-section">
@@ -192,8 +229,16 @@ export default function AgentSignup() {
                   <span>I have read and accepted the <a href="/terms">Terms of Use</a></span>
                 </label>
                 <div className="form-actions">
-                  <button type="submit" className="btn-submit">Register</button>
-                  <button type="button" className="btn-cancel" onClick={() => navigate('/travel-agents')}>Cancel</button>
+                  <button type="submit" className="btn-submit" disabled={isSubmitting}>
+                    {isSubmitting ? (
+                      <>
+                        <i className="fas fa-spinner fa-spin"></i> Registering...
+                      </>
+                    ) : (
+                      'Register'
+                    )}
+                  </button>
+                  <button type="button" className="btn-cancel" onClick={() => navigate('/travel-agents')} disabled={isSubmitting}>Cancel</button>
                 </div>
               </div>
             </form>

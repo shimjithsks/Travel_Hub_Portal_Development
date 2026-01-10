@@ -17,24 +17,79 @@ export default function MyProfile() {
     address: '',
     city: '',
     state: '',
-    pincode: ''
+    pincode: '',
+    photoURL: ''
   });
   const [loading, setLoading] = useState(false);
+  const [fetchingProfile, setFetchingProfile] = useState(true);
 
   useEffect(() => {
-    if (user && profile) {
-      setFormData({
-        name: profile.name || user.displayName || '',
-        email: user.email || '',
-        phone: profile.phone || '',
-        dateOfBirth: profile.dateOfBirth || '',
-        gender: profile.gender || '',
-        address: profile.address || '',
-        city: profile.city || '',
-        state: profile.state || '',
-        pincode: profile.pincode || ''
-      });
-    }
+    const loadProfile = async () => {
+      if (!user) {
+        setFetchingProfile(false);
+        return;
+      }
+
+      // If profile is available from context, use it
+      if (profile) {
+        setFormData({
+          name: profile.name || user.displayName || '',
+          email: user.email || '',
+          phone: profile.phone || '',
+          dateOfBirth: profile.dateOfBirth || '',
+          gender: profile.gender || '',
+          address: profile.address || '',
+          city: profile.city || '',
+          state: profile.state || '',
+          pincode: profile.pincode || '',
+          photoURL: profile.photoURL || user.photoURL || ''
+        });
+        setFetchingProfile(false);
+        return;
+      }
+
+      // Otherwise, fetch directly from Firestore
+      try {
+        const userDocRef = doc(db, 'users', user.uid);
+        const userDoc = await getDoc(userDocRef);
+        
+        if (userDoc.exists()) {
+          const data = userDoc.data();
+          setFormData({
+            name: data.name || user.displayName || '',
+            email: user.email || '',
+            phone: data.phone || '',
+            dateOfBirth: data.dateOfBirth || '',
+            gender: data.gender || '',
+            address: data.address || '',
+            city: data.city || '',
+            state: data.state || '',
+            pincode: data.pincode || '',
+            photoURL: data.photoURL || user.photoURL || ''
+          });
+        } else {
+          // No profile exists, use auth user data
+          setFormData({
+            name: user.displayName || '',
+            email: user.email || '',
+            phone: '',
+            dateOfBirth: '',
+            gender: '',
+            address: '',
+            city: '',
+            state: '',
+            pincode: '',
+            photoURL: user.photoURL || ''
+          });
+        }
+      } catch (error) {
+        console.error('Error fetching profile:', error);
+      } finally {
+        setFetchingProfile(false);
+      }
+    };
+
+    loadProfile();
   }, [user, profile]);
 
   const handleChange = (e) => {
@@ -112,6 +167,18 @@ export default function MyProfile() {
     return user?.email?.charAt(0).toUpperCase() || 'U';
   };
 
+  // Show loading state while fetching profile
+  if (fetchingProfile) {
+    return (
+      <div className="my-profile-container">
+        <div className="profile-loading">
+          <div className="loading-spinner"></div>
+          <p>Loading your profile...</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="my-profile-container">
       <div className="profile-header">
@@ -135,7 +202,11 @@ export default function MyProfile() {
         <div className="profile-sidebar">
           <div className="profile-avatar-section">
             <div className="profile-avatar-large">
-              {getInitials()}
+              {formData.photoURL ? (
+                <img src={formData.photoURL} alt="Profile" className="profile-photo" />
+              ) : (
+                getInitials()
+              )}
             </div>
             <h3 className="profile-name">{formData.name || user?.email}</h3>
             <p className="profile-email">{user?.email}</p>
