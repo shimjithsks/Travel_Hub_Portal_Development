@@ -9,8 +9,9 @@ import { db } from '../firebase/firebase';
 const COMPANY_NAME = 'Travel Axis';
 const COMPANY_EMAIL = 'partners@travelaxis.com';
 const COMPANY_PHONE = '+91 1800 123 4567';
-const LOGIN_URL = 'https://travelaxis.com/agent-login';
-const SET_PASSWORD_URL = 'https://travelaxis.com/set-password';
+const BASE_URL = 'https://shimjithsks.github.io/Travel_Portal_Development';
+const LOGIN_URL = `${BASE_URL}/#/agent-login`;
+const SET_PASSWORD_URL = `${BASE_URL}/#/set-password`;
 
 // Firestore collection for emails (used by Firebase Trigger Email extension)
 const MAIL_COLLECTION = 'mail';
