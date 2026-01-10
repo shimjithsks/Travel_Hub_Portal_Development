@@ -500,3 +500,118 @@
     justify-content: center;
   }
 }
+
+/* ========================================
+   SET PASSWORD PAGE ADDITIONAL STYLES
+======================================== */
+
+.success-icon {
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%) !important;
+}
+
+.success-message {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  padding: 20px;
+  background: linear-gradient(135deg, rgba(16, 185, 129, 0.1) 0%, rgba(5, 150, 105, 0.1) 100%);
+  border: 1px solid rgba(16, 185, 129, 0.3);
+  border-radius: 12px;
+  color: #059669;
+  font-weight: 500;
+  margin: 20px 0;
+}
+
+.success-message i {
+  font-size: 1.2rem;
+}
+
+.readonly-input {
+  background: #f1f5f9 !important;
+  cursor: not-allowed;
+}
+
+.input-lock {
+  position: absolute;
+  right: 45px;
+  color: #94a3b8;
+  font-size: 0.8rem;
+}
+
+.password-strength {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-top: 8px;
+}
+
+.strength-bar {
+  flex: 1;
+  height: 4px;
+  background: #e2e8f0;
+  border-radius: 2px;
+  overflow: hidden;
+}
+
+.strength-fill {
+  height: 100%;
+  border-radius: 2px;
+  transition: all 0.3s ease;
+}
+
+.password-strength span {
+  font-size: 0.75rem;
+  font-weight: 600;
+  min-width: 80px;
+  text-align: right;
+}
+
+.password-hints {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 16px;
+  margin-top: 10px;
+}
+
+.password-hints span {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.75rem;
+  color: #94a3b8;
+  transition: color 0.3s ease;
+}
+
+.password-hints span i {
+  font-size: 0.5rem;
+}
+
+.password-hints span.hint-valid {
+  color: #10b981;
+}
+
+.password-hints span.hint-valid i {
+  font-size: 0.75rem;
+}
+
+.password-match {
+  margin-top: 8px;
+}
+
+.password-match span {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.8rem;
+  font-weight: 500;
+}
+
+.match-valid {
+  color: #10b981;
+}
+
+.match-invalid {
+  color: #ef4444;
+}
+
