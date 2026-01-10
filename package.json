@@ -2,6 +2,7 @@
   "name": "stts-website",
   "version": "0.1.0",
   "private": true,
+  "homepage": "https://shimjithsks.github.io/Travel_Portal_Development",
   "dependencies": {
     "@emailjs/browser": "^4.4.1",
     "@testing-library/dom": "^10.4.0",
@@ -27,7 +28,9 @@
     "start": "react-scripts start",
     "build": "react-scripts build && cpy public/_redirects build",
     "test": "react-scripts test",
-    "eject": "react-scripts eject"
+    "eject": "react-scripts eject",
+    "predeploy": "npm run build",
+    "deploy": "gh-pages -d build"
   },
   "engines": {
     "node": "18.x"
@@ -52,6 +55,7 @@
   },
   "devDependencies": {
     "cpy": "^11.1.0",
-    "cpy-cli": "^5.0.0"
+    "cpy-cli": "^5.0.0",
+    "gh-pages": "^6.3.0"
   }
 }
