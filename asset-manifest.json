@@ -1,15 +1,15 @@
 {
   "files": {
     "main.css": "/Travel_Portal_Development/static/css/main.c6e0a0fb.css",
-    "main.js": "/Travel_Portal_Development/static/js/main.e7cb7633.js",
+    "main.js": "/Travel_Portal_Development/static/js/main.da703ce5.js",
     "static/media/bootstrap-icons.woff?": "/Travel_Portal_Development/static/media/bootstrap-icons.1295669cd4e305c97f2c.woff",
     "static/media/bootstrap-icons.woff2?": "/Travel_Portal_Development/static/media/bootstrap-icons.92ea18a81d737146ff04.woff2",
     "index.html": "/Travel_Portal_Development/index.html",
     "main.c6e0a0fb.css.map": "/Travel_Portal_Development/static/css/main.c6e0a0fb.css.map",
-    "main.e7cb7633.js.map": "/Travel_Portal_Development/static/js/main.e7cb7633.js.map"
+    "main.da703ce5.js.map": "/Travel_Portal_Development/static/js/main.da703ce5.js.map"
   },
   "entrypoints": [
     "static/css/main.c6e0a0fb.css",
-    "static/js/main.e7cb7633.js"
+    "static/js/main.da703ce5.js"
   ]
 }
