@@ -15,9 +15,19 @@ export default function Navbar() {
   const userDropdownRef = useRef(null);
   const supportDropdownRef = useRef(null);
 
-  // Handle logo click - smooth scroll if on home, navigate if not
+  // Check if on agent/partner pages to hide nav items and open logo in new tab
+  const isPartnerPage = location.pathname === '/agent-signup' || location.pathname === '/travel-agents' || location.pathname === '/agent-login' || location.pathname === '/portal-dashboard' || location.pathname === '/partner-dashboard' || location.pathname === '/set-password';
+
+  // Handle logo click - smooth scroll if on home, navigate if not, open new tab if on partner pages
   const handleLogoClick = (e) => {
     e.preventDefault();
+    
+    // If on partner-related pages, open in new tab
+    if (isPartnerPage) {
+      window.open('/', '_blank');
+      return;
+    }
+    
     if (location.pathname === '/') {
       // Already on home page - smooth scroll to top
       window.scrollTo({
@@ -77,9 +87,6 @@ export default function Navbar() {
   };
 
   const dashboardPath = role === 'operator' ? '/operator' : '/customer';
-
-  // Check if on agent/partner pages to hide nav items
-  const isPartnerPage = location.pathname === '/agent-signup' || location.pathname === '/travel-agents' || location.pathname === '/agent-login' || location.pathname === '/portal-dashboard' || location.pathname === '/partner-dashboard';
 
   const handleLogout = async () => {
     await signOut();
