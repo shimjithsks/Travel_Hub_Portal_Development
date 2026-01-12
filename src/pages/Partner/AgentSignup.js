@@ -242,15 +242,7 @@ export default function AgentSignup() {
                 </div>
               </div>
             </form>
-            <div className="signup-footer">
-              <p>Contact Us | FAQs<br />Your IP is: 2405:201:d04f:c054:84db:ffa3:2022:7991</p>
-            </div>
           </div>
-        </div>
-      </div>
-      <div className="signup-page-footer">
-        <div className="container">
-          <p>© 2026 Travel Axis Online Limited, India. All rights reserved.</p>
         </div>
       </div>
     </div>

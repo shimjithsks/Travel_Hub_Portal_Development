@@ -1,0 +1,427 @@
+/* Partner Navbar - Simple header for partner pages */
+
+.partner-navbar {
+  position: relative;
+  background: #ffffff;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+}
+
+.partner-navbar-gradient {
+  height: 4px;
+  background: linear-gradient(90deg, 
+    #ff6b6b 0%, 
+    #ffa500 20%, 
+    #ffd700 40%, 
+    #14b8a6 60%, 
+    #3b82f6 80%, 
+    #8b5cf6 100%
+  );
+}
+
+.partner-navbar-container {
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 15px 30px;
+  display: flex;
+  align-items: center;
+}
+
+.partner-navbar-brand {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  text-decoration: none;
+  padding: 8px 14px;
+  border-radius: 16px;
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  background: linear-gradient(135deg, rgba(255, 109, 56, 0.04) 0%, rgba(37, 99, 235, 0.04) 100%);
+  position: relative;
+}
+
+.partner-navbar-brand::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(135deg, rgba(255, 109, 56, 0.12) 0%, rgba(37, 99, 235, 0.12) 100%);
+  border-radius: 16px;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.partner-navbar-brand:hover::before {
+  opacity: 1;
+}
+
+.partner-navbar-brand:hover {
+  transform: translateY(-2px);
+}
+
+.partner-navbar-brand:hover .partner-logo-icon {
+  animation: partnerLogoFloat 2s ease-in-out infinite, partnerLogoHoverPulse 0.6s ease-out;
+  box-shadow: 
+    0 12px 32px rgba(15, 23, 42, 0.6), 
+    0 8px 20px rgba(30, 41, 59, 0.4),
+    0 0 20px rgba(249, 115, 22, 0.3),
+    inset 0 1px 2px rgba(255, 255, 255, 0.1);
+}
+
+.partner-navbar-brand:hover .globe-main {
+  animation: partnerEarthColors 3s ease-in-out infinite, partnerGlobeFloat 1s ease-in-out infinite;
+  filter: drop-shadow(0 0 12px rgba(34, 197, 94, 0.8));
+}
+
+.partner-navbar-brand:hover .icon-plane {
+  animation: partnerPlaneFly 1.5s ease-in-out infinite;
+  filter: drop-shadow(0 2px 6px rgba(251, 191, 36, 0.8));
+}
+
+.partner-navbar-brand:hover .icon-bus {
+  animation: partnerBusDrive 2s ease-in-out infinite;
+}
+
+.partner-navbar-brand:hover .icon-car {
+  animation: partnerCarDrive 2.5s ease-in-out infinite;
+}
+
+.partner-navbar-brand:hover .icon-ship {
+  animation: partnerShipSail 2s ease-in-out infinite;
+}
+
+@keyframes partnerLogoHoverPulse {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.08); }
+  100% { transform: scale(1); }
+}
+
+/* Logo Icon Container - matching main navbar style with continuous animation */
+.partner-logo-icon {
+  position: relative;
+  width: 50px;
+  height: 50px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #0f172a 100%);
+  border-radius: 14px;
+  box-shadow: 
+    0 8px 24px rgba(15, 23, 42, 0.5), 
+    0 4px 12px rgba(30, 41, 59, 0.3),
+    inset 0 1px 2px rgba(255, 255, 255, 0.1);
+  animation: partnerLogoFloat 4s ease-in-out infinite;
+  overflow: visible;
+}
+
+@keyframes partnerLogoFloat {
+  0%, 100% {
+    transform: translateY(0px);
+    box-shadow: 
+      0 8px 24px rgba(15, 23, 42, 0.5), 
+      0 4px 12px rgba(30, 41, 59, 0.3),
+      inset 0 1px 2px rgba(255, 255, 255, 0.1);
+  }
+  50% {
+    transform: translateY(-4px);
+    box-shadow: 
+      0 12px 32px rgba(15, 23, 42, 0.6), 
+      0 8px 20px rgba(30, 41, 59, 0.4),
+      inset 0 1px 2px rgba(255, 255, 255, 0.1);
+  }
+}
+
+/* Globe Icon - 3D Rotating Earth with continuous animation */
+.partner-logo-icon .globe-main {
+  font-size: 24px;
+  position: relative;
+  z-index: 2;
+  background: linear-gradient(
+    135deg, 
+    #22c55e 0%, 
+    #16a34a 20%, 
+    #0ea5e9 40%, 
+    #0284c7 60%, 
+    #22c55e 80%, 
+    #16a34a 100%
+  );
+  background-size: 300% 300%;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  animation: partnerEarthColors 6s ease-in-out infinite, partnerGlobeFloat 2s ease-in-out infinite;
+  filter: drop-shadow(0 0 8px rgba(34, 197, 94, 0.5));
+}
+
+@keyframes partnerEarthColors {
+  0%, 100% { 
+    background-position: 0% 50%;
+    filter: drop-shadow(0 0 8px rgba(34, 197, 94, 0.6));
+  }
+  33% { 
+    background-position: 50% 50%;
+    filter: drop-shadow(0 0 10px rgba(14, 165, 233, 0.6));
+  }
+  66% { 
+    background-position: 100% 50%;
+    filter: drop-shadow(0 0 8px rgba(34, 197, 94, 0.6));
+  }
+}
+
+@keyframes partnerGlobeFloat {
+  0%, 100% { 
+    transform: translateY(0) scale(1);
+  }
+  50% { 
+    transform: translateY(-2px) scale(1.02);
+  }
+}
+
+/* Orbiting dots around globe - continuous */
+.partner-logo-icon::after {
+  content: '';
+  position: absolute;
+  width: 36px;
+  height: 36px;
+  border: 2px solid transparent;
+  border-top-color: rgba(251, 191, 36, 0.6);
+  border-right-color: rgba(236, 72, 153, 0.6);
+  border-radius: 50%;
+  animation: partnerOrbitSpin 3s linear infinite;
+  z-index: 1;
+}
+
+@keyframes partnerOrbitSpin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+/* Plane - Flying top right with continuous animation */
+.partner-logo-icon .icon-plane {
+  position: absolute;
+  font-size: 9px;
+  color: #fbbf24;
+  z-index: 3;
+  top: -2px;
+  right: -4px;
+  filter: drop-shadow(0 1px 3px rgba(251, 191, 36, 0.6));
+  animation: partnerPlaneFly 3s ease-in-out infinite;
+}
+
+@keyframes partnerPlaneFly {
+  0%, 100% { 
+    transform: translate(0, 0) rotate(-45deg); 
+    opacity: 1;
+  }
+  50% { 
+    transform: translate(4px, -4px) rotate(-45deg); 
+    opacity: 0.8;
+  }
+}
+
+/* Bus - Moving bottom with continuous animation */
+.partner-logo-icon .icon-bus {
+  position: absolute;
+  font-size: 8px;
+  color: #f97316;
+  z-index: 3;
+  bottom: -1px;
+  left: 50%;
+  filter: drop-shadow(0 1px 3px rgba(249, 115, 22, 0.6));
+  animation: partnerBusDrive 4s ease-in-out infinite;
+}
+
+@keyframes partnerBusDrive {
+  0% { 
+    left: -5px;
+    opacity: 0;
+  }
+  20% {
+    opacity: 1;
+  }
+  80% {
+    opacity: 1;
+  }
+  100% { 
+    left: calc(100% + 5px);
+    opacity: 0;
+  }
+}
+
+/* Car - Moving top with continuous animation */
+.partner-logo-icon .icon-car {
+  position: absolute;
+  font-size: 7px;
+  color: #a3e635;
+  z-index: 3;
+  top: 0px;
+  left: 50%;
+  filter: drop-shadow(0 1px 3px rgba(163, 230, 53, 0.6));
+  animation: partnerCarDrive 5s ease-in-out infinite;
+  animation-delay: 1s;
+}
+
+@keyframes partnerCarDrive {
+  0% { 
+    left: calc(100% + 5px);
+    opacity: 0;
+  }
+  20% {
+    opacity: 1;
+  }
+  80% {
+    opacity: 1;
+  }
+  100% { 
+    left: -10px;
+    opacity: 0;
+  }
+}
+
+/* Ship - Sailing left side with continuous animation */
+.partner-logo-icon .icon-ship {
+  position: absolute;
+  font-size: 8px;
+  color: #22d3ee;
+  z-index: 3;
+  left: -4px;
+  top: 50%;
+  transform: translateY(-50%);
+  filter: drop-shadow(0 1px 3px rgba(34, 211, 238, 0.6));
+  animation: partnerShipSail 4s ease-in-out infinite;
+}
+
+@keyframes partnerShipSail {
+  0%, 100% { 
+    transform: translateY(-50%) rotate(0deg); 
+  }
+  25% { 
+    transform: translateY(-50%) rotate(5deg) translateY(-2px); 
+  }
+  75% { 
+    transform: translateY(-50%) rotate(-5deg) translateY(2px); 
+  }
+}
+
+/* Shine effect on logo */
+.partner-logo-icon::before {
+  content: '';
+  position: absolute;
+  top: -50%;
+  left: -50%;
+  width: 200%;
+  height: 200%;
+  background: linear-gradient(45deg, transparent 30%, rgba(255,255,255,0.1) 50%, transparent 70%);
+  animation: partnerLogoShine 4s ease-in-out infinite;
+}
+
+@keyframes partnerLogoShine {
+  0%, 100% { transform: translateX(-100%) rotate(45deg); }
+  50% { transform: translateX(100%) rotate(45deg); }
+}
+
+.partner-navbar-text {
+  display: flex;
+  flex-direction: column;
+}
+
+.partner-navbar-title {
+  font-size: 1.6rem;
+  font-weight: 700;
+  color: #1e293b;
+  letter-spacing: -0.5px;
+  position: relative;
+}
+
+.partner-navbar-title .highlight {
+  color: #f97316;
+}
+
+.partner-navbar-title::after {
+  content: '';
+  position: absolute;
+  bottom: -4px;
+  left: 0;
+  width: 0;
+  height: 3px;
+  background: linear-gradient(90deg, #ff6d38, #7c3aed, #2563eb);
+  border-radius: 2px;
+  transition: width 0.4s ease;
+}
+
+.partner-navbar-brand:hover .partner-navbar-title::after {
+  width: 100%;
+}
+
+.partner-navbar-tagline {
+  font-size: 0.7rem;
+  font-weight: 600;
+  color: #64748b;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .partner-navbar-container {
+    padding: 12px 20px;
+  }
+
+  .partner-logo-icon {
+    width: 42px;
+    height: 42px;
+    border-radius: 12px;
+  }
+
+  .partner-logo-icon .globe-main {
+    font-size: 20px;
+  }
+
+  .partner-logo-icon::after {
+    width: 30px;
+    height: 30px;
+  }
+
+  .partner-navbar-title {
+    font-size: 1.3rem;
+  }
+
+  .partner-navbar-tagline {
+    font-size: 0.6rem;
+    letter-spacing: 1.2px;
+  }
+}
+
+@media (max-width: 480px) {
+  .partner-navbar-container {
+    padding: 10px 15px;
+  }
+
+  .partner-logo-icon {
+    width: 38px;
+    height: 38px;
+    border-radius: 10px;
+  }
+
+  .partner-logo-icon .globe-main {
+    font-size: 18px;
+  }
+
+  .partner-logo-icon::after {
+    width: 26px;
+    height: 26px;
+  }
+
+  .partner-logo-icon .icon-plane,
+  .partner-logo-icon .icon-bus,
+  .partner-logo-icon .icon-car,
+  .partner-logo-icon .icon-ship {
+    font-size: 6px;
+  }
+
+  .partner-navbar-title {
+    font-size: 1.1rem;
+  }
+
+  .partner-navbar-tagline {
+    font-size: 0.55rem;
+    letter-spacing: 1px;
+  }
+}

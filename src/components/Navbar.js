@@ -11,22 +11,13 @@ export default function Navbar() {
   const [showLoginModal, setShowLoginModal] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
-  const { user, role, signOut } = useAuth();
+  const { user, signOut } = useAuth();
   const userDropdownRef = useRef(null);
   const supportDropdownRef = useRef(null);
 
-  // Check if on agent/partner pages to hide nav items and open logo in new tab
-  const isPartnerPage = location.pathname === '/agent-signup' || location.pathname === '/travel-agents' || location.pathname === '/agent-login' || location.pathname === '/portal-dashboard' || location.pathname === '/partner-dashboard' || location.pathname === '/set-password';
-
-  // Handle logo click - smooth scroll if on home, navigate if not, open new tab if on partner pages
+  // Handle logo click - smooth scroll if on home, navigate if not
   const handleLogoClick = (e) => {
     e.preventDefault();
-    
-    // If on partner-related pages, open in new tab
-    if (isPartnerPage) {
-      window.open('/', '_blank');
-      return;
-    }
     
     if (location.pathname === '/') {
       // Already on home page - smooth scroll to top
@@ -86,8 +77,6 @@ export default function Navbar() {
     setIsOpen(!isOpen);
   };
 
-  const dashboardPath = role === 'operator' ? '/operator' : '/customer';
-
   const handleLogout = async () => {
     await signOut();
     setShowDropdown(null);
@@ -144,7 +133,7 @@ export default function Navbar() {
               </div>
 
               <nav className={`main-navigation ${isOpen ? 'active' : ''}`}>
-                {user && !isPartnerPage ? (
+                {user ? (
                   <Link to="/customer/my-bookings" className="trips-link" onClick={() => setIsOpen(false)}>
                     <i className="fas fa-compass"></i>
                     <span>My Journeys</span>
@@ -152,7 +141,6 @@ export default function Navbar() {
                 ) : null}
               </nav>
 
-              {!isPartnerPage && (
               <div className="nav-actions">
                 <Link to="/travel-agents" className="header-btn agents-btn" target="_blank" rel="noopener noreferrer">
                   <i className="fas fa-handshake"></i>
@@ -228,7 +216,6 @@ export default function Navbar() {
                   </button>
                 )}
               </div>
-              )}
             </div>
           </div>
         </div>

@@ -5,6 +5,7 @@ import 'aos/dist/aos.css';
 
 import ScrollToTop from './components/ScrollToTop';
 import Navbar from './components/Navbar';
+import PartnerNavbar from './components/PartnerNavbar';
 import Footer from './components/FooterNew';
 import PartnerFooter from './components/PartnerFooter';
 import LocationPermission from './components/LocationPermission';
@@ -50,17 +51,36 @@ import CompleteHoliday from './pages/CompleteHoliday';
 import Offers from './pages/Offers';
 import './App.css';
 
-// Routes that should show PartnerFooter
-const partnerFooterRoutes = ['/travel-agents'];
+// Routes that should show PartnerNavbar and PartnerFooter
+const partnerRoutes = ['/travel-agents', '/agent-login', '/agent-signup', '/set-password', '/portal-dashboard'];
 
 // Routes that should have NO footer
 const noFooterRoutes = [
-  '/agent-signup',
-  '/agent-login',
-  '/set-password',
-  '/portal-dashboard',
   '/partner-dashboard'
 ];
+
+// Routes that should have NO navbar
+const noNavbarRoutes = [
+  '/partner-dashboard'
+];
+
+// Navbar component that conditionally renders based on route
+function ConditionalNavbar() {
+  const location = useLocation();
+  
+  // No navbar for dashboard pages
+  if (noNavbarRoutes.some(route => location.pathname === route || location.pathname.startsWith(route + '/'))) {
+    return null;
+  }
+  
+  // Partner navbar for partner pages
+  if (partnerRoutes.some(route => location.pathname === route || location.pathname.startsWith(route + '/'))) {
+    return <PartnerNavbar />;
+  }
+  
+  // Default navbar for all other pages
+  return <Navbar />;
+}
 
 // Footer component that conditionally renders based on route
 function ConditionalFooter() {
@@ -71,8 +91,8 @@ function ConditionalFooter() {
     return null;
   }
   
-  // Partner footer for travel-agents page
-  if (partnerFooterRoutes.some(route => location.pathname === route || location.pathname.startsWith(route + '/'))) {
+  // Partner footer for partner pages
+  if (partnerRoutes.some(route => location.pathname === route || location.pathname.startsWith(route + '/'))) {
     return <PartnerFooter />;
   }
   
@@ -105,7 +125,7 @@ function App() {
     <HashRouter>
       <ScrollToTop />
       <LocationPermission />
-      <Navbar />
+      <ConditionalNavbar />
       <Routes>
         <Route path="/" element={<Home />} />
         <Route path="/register" element={<Register />} />

@@ -43,11 +43,6 @@ export default function Login() {
     <div className="login-page">
       {/* Left Side - Branding */}
       <div className="login-branding">
-        <Link to="/" className="brand-logo">
-          <i className="fas fa-plane-departure"></i>
-          <span>Travel Axis</span>
-        </Link>
-
         <div className="branding-content">
           <h1>Partner Portal</h1>
           <p>Manage your bookings, track earnings, and grow your travel business with our powerful dashboard.</p>
