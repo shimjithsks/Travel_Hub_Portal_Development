@@ -163,7 +163,9 @@ const PartnerDashboard = () => {
           <p className="pd-partner-id">
             <i className="fas fa-id-badge"></i> {partner.partnerId}
           </p>
-          <span className="pd-status-badge approved">Approved Partner</span>
+          <span className="pd-status-badge approved">
+            <i className="fas fa-check-circle"></i> Verified Partner
+          </span>
         </div>
 
         <nav className="pd-nav">

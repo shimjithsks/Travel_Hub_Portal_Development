@@ -4891,6 +4891,428 @@ section {
    REDESIGNED SECTIONS - NEW STYLES
    ======================================== */
 
+/* ===== EXPERIENCE TRAVEL SECTION ===== */
+.experience-travel-section {
+  padding: 80px 0;
+  background: linear-gradient(180deg, #0a1628 0%, #0f1f3d 50%, #0d1a30 100%);
+  position: relative;
+  overflow: hidden;
+}
+
+.experience-bg-elements {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  pointer-events: none;
+}
+
+.exp-gradient-orb {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(100px);
+  opacity: 0.4;
+}
+
+.exp-orb-1 {
+  width: 400px;
+  height: 400px;
+  background: radial-gradient(circle, rgba(20, 184, 166, 0.4) 0%, transparent 70%);
+  top: -100px;
+  left: -100px;
+}
+
+.exp-orb-2 {
+  width: 350px;
+  height: 350px;
+  background: radial-gradient(circle, rgba(59, 130, 246, 0.3) 0%, transparent 70%);
+  bottom: -80px;
+  right: -80px;
+}
+
+.experience-wrapper {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 60px;
+  align-items: center;
+  position: relative;
+  z-index: 1;
+}
+
+/* Left Content */
+.experience-content {
+  display: flex;
+  flex-direction: column;
+  gap: 28px;
+}
+
+.experience-header {
+  margin-bottom: 8px;
+}
+
+.experience-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 16px;
+  background: rgba(20, 184, 166, 0.15);
+  border: 1px solid rgba(20, 184, 166, 0.3);
+  border-radius: 30px;
+  color: #14b8a6;
+  font-size: 0.85rem;
+  font-weight: 600;
+  margin-bottom: 16px;
+}
+
+.experience-badge i {
+  font-size: 0.8rem;
+}
+
+.experience-header h2 {
+  font-size: 2.5rem;
+  font-weight: 800;
+  color: white;
+  line-height: 1.2;
+  margin: 0 0 16px 0;
+}
+
+.experience-header h2 span {
+  background: linear-gradient(135deg, #14b8a6 0%, #06b6d4 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.experience-header p {
+  font-size: 1.1rem;
+  color: #94a3b8;
+  margin: 0;
+  line-height: 1.6;
+}
+
+/* Best Deals Card */
+.deals-promo-card {
+  display: flex;
+  gap: 20px;
+  padding: 24px;
+  background: linear-gradient(135deg, rgba(20, 184, 166, 0.1) 0%, rgba(6, 182, 212, 0.05) 100%);
+  border: 1px solid rgba(20, 184, 166, 0.2);
+  border-radius: 20px;
+  transition: all 0.3s ease;
+}
+
+.deals-promo-card:hover {
+  transform: translateY(-4px);
+  border-color: rgba(20, 184, 166, 0.4);
+  box-shadow: 0 20px 40px rgba(20, 184, 166, 0.15);
+}
+
+.deals-promo-icon {
+  width: 60px;
+  height: 60px;
+  background: linear-gradient(135deg, #14b8a6 0%, #0d9488 100%);
+  border-radius: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.deals-promo-icon i {
+  font-size: 1.6rem;
+  color: white;
+}
+
+.deals-promo-content h3 {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: white;
+  margin: 0 0 8px 0;
+}
+
+.deals-promo-content p {
+  font-size: 0.95rem;
+  color: #94a3b8;
+  margin: 0 0 16px 0;
+  line-height: 1.5;
+}
+
+.deals-promo-badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.promo-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  border-radius: 8px;
+  font-size: 0.8rem;
+  font-weight: 700;
+}
+
+.promo-badge.discount {
+  background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+  color: white;
+}
+
+.promo-badge.flash {
+  background: linear-gradient(135deg, #f97316 0%, #ea580c 100%);
+  color: white;
+}
+
+.promo-badge.best {
+  background: linear-gradient(135deg, #eab308 0%, #ca8a04 100%);
+  color: white;
+}
+
+.promo-badge i {
+  font-size: 0.75rem;
+}
+
+/* Secure Card */
+.secure-promo-card {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  padding: 20px 24px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 16px;
+  transition: all 0.3s ease;
+}
+
+.secure-promo-card:hover {
+  background: rgba(255, 255, 255, 0.06);
+  border-color: rgba(255, 255, 255, 0.2);
+}
+
+.secure-icon-box {
+  width: 48px;
+  height: 48px;
+  background: linear-gradient(135deg, #22c55e 0%, #16a34a 100%);
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.secure-icon-box i {
+  font-size: 1.3rem;
+  color: white;
+}
+
+.secure-content {
+  flex: 1;
+}
+
+.secure-content h4 {
+  font-size: 1rem;
+  font-weight: 700;
+  color: white;
+  margin: 0 0 4px 0;
+}
+
+.secure-content p {
+  font-size: 0.85rem;
+  color: #94a3b8;
+  margin: 0;
+}
+
+.ssl-badge {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 16px;
+  background: linear-gradient(135deg, #1e293b 0%, #334155 100%);
+  border: 1px solid rgba(34, 197, 94, 0.3);
+  border-radius: 12px;
+  flex-shrink: 0;
+}
+
+.ssl-badge i {
+  font-size: 1.2rem;
+  color: #22c55e;
+}
+
+.ssl-text {
+  display: flex;
+  flex-direction: column;
+}
+
+.ssl-label {
+  font-size: 0.9rem;
+  font-weight: 800;
+  color: white;
+  line-height: 1;
+}
+
+.ssl-verified {
+  font-size: 0.7rem;
+  color: #22c55e;
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+/* Stats Grid - Right Side (Matching Image Design) */
+.experience-stats-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+  padding: 30px;
+  background: linear-gradient(145deg, rgba(15, 35, 60, 0.9) 0%, rgba(10, 25, 45, 0.95) 100%);
+  border: 2px solid rgba(20, 184, 166, 0.2);
+  border-radius: 24px;
+  position: relative;
+}
+
+.experience-stats-grid::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 4px;
+  height: 70%;
+  background: linear-gradient(180deg, transparent 0%, rgba(20, 184, 166, 0.4) 30%, rgba(20, 184, 166, 0.4) 70%, transparent 100%);
+  border-radius: 2px;
+}
+
+.experience-stats-grid::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 70%;
+  height: 4px;
+  background: linear-gradient(90deg, transparent 0%, rgba(20, 184, 166, 0.4) 30%, rgba(20, 184, 166, 0.4) 70%, transparent 100%);
+  border-radius: 2px;
+}
+
+.exp-stat-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 35px 20px;
+  background: linear-gradient(145deg, rgba(20, 30, 50, 0.8) 0%, rgba(15, 25, 45, 0.9) 100%);
+  border-radius: 16px;
+  border: 1px solid rgba(20, 184, 166, 0.15);
+  transition: all 0.3s ease;
+}
+
+.exp-stat-card:hover {
+  transform: translateY(-5px);
+  border-color: rgba(20, 184, 166, 0.4);
+  box-shadow: 0 15px 30px rgba(0, 0, 0, 0.3);
+}
+
+.exp-stat-number {
+  font-size: 2.2rem;
+  font-weight: 800;
+  background: linear-gradient(135deg, #14b8a6 0%, #06b6d4 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  margin-bottom: 8px;
+}
+
+.exp-stat-label {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #94a3b8;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+}
+
+/* Responsive - Experience Travel Section */
+@media (max-width: 1024px) {
+  .experience-wrapper {
+    grid-template-columns: 1fr;
+    gap: 40px;
+  }
+
+  .experience-stats-grid {
+    max-width: 500px;
+    margin: 0 auto;
+  }
+}
+
+@media (max-width: 768px) {
+  .experience-travel-section {
+    padding: 60px 0;
+  }
+
+  .experience-header h2 {
+    font-size: 2rem;
+  }
+
+  .deals-promo-card {
+    flex-direction: column;
+    text-align: center;
+  }
+
+  .deals-promo-icon {
+    margin: 0 auto;
+  }
+
+  .deals-promo-badges {
+    justify-content: center;
+  }
+
+  .secure-promo-card {
+    flex-wrap: wrap;
+    justify-content: center;
+    text-align: center;
+    gap: 14px;
+  }
+
+  .secure-content {
+    width: 100%;
+    order: 3;
+  }
+
+  .exp-stat-number {
+    font-size: 1.8rem;
+  }
+
+  .exp-stat-card {
+    padding: 25px 15px;
+  }
+}
+
+@media (max-width: 480px) {
+  .experience-header h2 {
+    font-size: 1.7rem;
+  }
+
+  .experience-header p {
+    font-size: 0.95rem;
+  }
+
+  .experience-stats-grid {
+    gap: 12px;
+    padding: 20px;
+  }
+
+  .exp-stat-number {
+    font-size: 1.5rem;
+  }
+
+  .exp-stat-label {
+    font-size: 0.65rem;
+  }
+
+  .exp-stat-card {
+    padding: 20px 10px;
+  }
+}
+
 /* ===== DEALS HUB SECTION ===== */
 .deals-hub-section {
   padding: 100px 0 80px;

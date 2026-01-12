@@ -9,7 +9,9 @@ import { db } from '../firebase/firebase';
 const COMPANY_NAME = 'Travel Axis';
 const COMPANY_EMAIL = 'partners@travelaxis.com';
 const COMPANY_PHONE = '+91 1800 123 4567';
-const BASE_URL = 'https://shimjithsks.github.io/Travel_Portal_Development';
+const BASE_URL = process.env.NODE_ENV === 'production' 
+  ? 'https://shimjithsks.github.io/Travel_Hub_Portal_Development'
+  : 'http://localhost:3000';
 const LOGIN_URL = `${BASE_URL}/#/agent-login`;
 const SET_PASSWORD_URL = `${BASE_URL}/#/set-password`;
 

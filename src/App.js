@@ -1,11 +1,12 @@
 import React, { useEffect, useState } from 'react';
-import { HashRouter, Routes, Route } from 'react-router-dom';
+import { HashRouter, Routes, Route, useLocation } from 'react-router-dom';
 import AOS from 'aos';
 import 'aos/dist/aos.css';
 
 import ScrollToTop from './components/ScrollToTop';
 import Navbar from './components/Navbar';
 import Footer from './components/FooterNew';
+import PartnerFooter from './components/PartnerFooter';
 import LocationPermission from './components/LocationPermission';
 import LoadingPage from './components/LoadingPage';
 
@@ -48,6 +49,36 @@ import MakePayment from './pages/MakePayment';
 import CompleteHoliday from './pages/CompleteHoliday';
 import Offers from './pages/Offers';
 import './App.css';
+
+// Routes that should show PartnerFooter
+const partnerFooterRoutes = ['/travel-agents'];
+
+// Routes that should have NO footer
+const noFooterRoutes = [
+  '/agent-signup',
+  '/agent-login',
+  '/set-password',
+  '/portal-dashboard',
+  '/partner-dashboard'
+];
+
+// Footer component that conditionally renders based on route
+function ConditionalFooter() {
+  const location = useLocation();
+  
+  // No footer for these partner pages
+  if (noFooterRoutes.some(route => location.pathname === route || location.pathname.startsWith(route + '/'))) {
+    return null;
+  }
+  
+  // Partner footer for travel-agents page
+  if (partnerFooterRoutes.some(route => location.pathname === route || location.pathname.startsWith(route + '/'))) {
+    return <PartnerFooter />;
+  }
+  
+  // Default footer for all other pages
+  return <Footer />;
+}
 
 function App() {
   const [loading, setLoading] = useState(true);
@@ -146,7 +177,7 @@ function App() {
         <Route path="/tour-guide/:id" element={<TourGuide />} />
         <Route path="*" element={<NotFound />} />
       </Routes>
-      <Footer />
+      <ConditionalFooter />
     </HashRouter>
   );
 }
