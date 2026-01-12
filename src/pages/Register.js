@@ -86,11 +86,11 @@ export default function Register() {
             </div>
             <div className="mb-3">
               <label className="form-label">Password</label>
-              <input className="form-control" type="password" value={password} onChange={(e) => setPassword(e.target.value)} required />
+              <input className="form-control" type="password" value={password} onChange={(e) => setPassword(e.target.value)} required autoCapitalize="off" autoCorrect="off" spellCheck="false" autoComplete="new-password" />
             </div>
             <div className="mb-3">
               <label className="form-label">Confirm password</label>
-              <input className="form-control" type="password" value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} required />
+              <input className="form-control" type="password" value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} required autoCapitalize="off" autoCorrect="off" spellCheck="false" autoComplete="new-password" />
             </div>
             <button className="btn btn-primary w-100" type="submit" disabled={submitting || !isFirebaseConfigured}>
               {submitting ? 'Creating...' : 'Create account'}

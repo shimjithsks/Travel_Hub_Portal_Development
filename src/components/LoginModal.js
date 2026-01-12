@@ -1,9 +1,10 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { signInWithEmailAndPassword, createUserWithEmailAndPassword, updateProfile, GoogleAuthProvider, signInWithPopup } from 'firebase/auth';
-import { doc, serverTimestamp, setDoc, getDoc } from 'firebase/firestore';
+import { signInWithEmailAndPassword, createUserWithEmailAndPassword, updateProfile, GoogleAuthProvider, signInWithPopup, updatePassword, sendPasswordResetEmail } from 'firebase/auth';
+import { doc, serverTimestamp, setDoc, getDoc, updateDoc, collection, query, where, getDocs } from 'firebase/firestore';
 import { auth, db } from '../firebase/firebase';
 import { useAuth } from '../context/AuthContext';
+import { sendCustomerPasswordResetEmail, sendCustomerPasswordChangedEmail } from '../services/emailService';
 import './LoginModal.css';
 
 export default function LoginModal({ isOpen, onClose }) {
@@ -41,6 +42,11 @@ export default function LoginModal({ isOpen, onClose }) {
   
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState('');
+  const [showLoginPassword, setShowLoginPassword] = useState(false);
+  const [showForgotPassword, setShowForgotPassword] = useState(false);
+  const [forgotEmail, setForgotEmail] = useState('');
+  const [forgotSubmitting, setForgotSubmitting] = useState(false);
+  const [forgotSuccess, setForgotSuccess] = useState(false);
 
   if (!isOpen) return null;
 
@@ -50,14 +56,113 @@ export default function LoginModal({ isOpen, onClose }) {
     setSubmitting(true);
 
     try {
-      // Login with email and password
+      // Try normal login first
       await signInWithEmailAndPassword(auth, emailOrPhone, password);
+      
+      // After successful login, check if password was recently reset
+      try {
+        const usersRef = collection(db, 'users');
+        const q = query(usersRef, where('email', '==', emailOrPhone));
+        const querySnapshot = await getDocs(q);
+        
+        if (!querySnapshot.empty) {
+          const userDoc = querySnapshot.docs[0];
+          const userData = userDoc.data();
+          
+          // Check if user had requested a password reset
+          if (userData.passwordResetRequested) {
+            // Send password changed confirmation email
+            await sendCustomerPasswordChangedEmail({
+              email: emailOrPhone,
+              name: userData.name || userData.fullName || 'Valued Customer'
+            });
+            
+            // Clear the flag and update login time
+            await updateDoc(doc(db, 'users', userDoc.id), {
+              passwordResetRequested: null,
+              passwordResetRequestedAt: null,
+              pendingPassword: null,
+              lastLogin: serverTimestamp(),
+              passwordChangedAt: serverTimestamp()
+            });
+          } else if (userData.pendingPassword) {
+            // Clear pending password if exists (legacy)
+            await updateDoc(doc(db, 'users', userDoc.id), {
+              pendingPassword: null,
+              lastLogin: serverTimestamp()
+            });
+          }
+        }
+      } catch (firestoreErr) {
+        // Ignore Firestore errors - login was successful
+        console.log('Firestore update skipped:', firestoreErr.message);
+      }
+      
       onClose();
       navigate('/customer');
     } catch (err) {
-      setError(err?.message || 'Login failed. Please check your credentials.');
+      if (err.code === 'auth/wrong-password' || err.code === 'auth/invalid-credential') {
+        setError('Invalid email or password. Please try again or use Forgot Password.');
+      } else if (err.code === 'auth/user-not-found') {
+        setError('No account found with this email. Please sign up.');
+      } else {
+        setError(err?.message || 'Login failed. Please check your credentials.');
+      }
     } finally {
       setSubmitting(false);
+    }
+  };
+
+  const handleForgotPassword = async (e) => {
+    e.preventDefault();
+    setError('');
+    setForgotSubmitting(true);
+
+    try {
+      // Get user's name and doc ID from Firestore (if exists)
+      let customerName = 'Valued Customer';
+      let userDocId = null;
+      try {
+        const usersRef = collection(db, 'users');
+        const q = query(usersRef, where('email', '==', forgotEmail));
+        const querySnapshot = await getDocs(q);
+        if (!querySnapshot.empty) {
+          const userDoc = querySnapshot.docs[0];
+          const userData = userDoc.data();
+          customerName = userData.name || userData.fullName || 'Valued Customer';
+          userDocId = userDoc.id;
+          
+          // Set flag to track password reset was requested
+          await updateDoc(doc(db, 'users', userDocId), {
+            passwordResetRequested: true,
+            passwordResetRequestedAt: serverTimestamp()
+          });
+        }
+      } catch (e) {
+        // Ignore Firestore errors, continue with reset
+        console.log('Firestore update skipped:', e.message);
+      }
+
+      // Send Firebase's built-in password reset (this is the actual reset link)
+      await sendPasswordResetEmail(auth, forgotEmail);
+      
+      // Also send our beautiful custom notification email
+      await sendCustomerPasswordResetEmail({
+        email: forgotEmail,
+        name: customerName
+      });
+      
+      setForgotSuccess(true);
+    } catch (err) {
+      if (err.code === 'auth/user-not-found') {
+        setError('No account found with this email address.');
+      } else if (err.code === 'auth/invalid-email') {
+        setError('Please enter a valid email address.');
+      } else {
+        setError(err?.message || 'Failed to send reset email. Please try again.');
+      }
+    } finally {
+      setForgotSubmitting(false);
     }
   };
 
@@ -438,7 +543,70 @@ export default function LoginModal({ isOpen, onClose }) {
 
             {error && <div className="alert-danger-modal">{error}</div>}
 
-            {activeTab === 'login' ? (
+            {showForgotPassword ? (
+              // Forgot Password Form
+              <>
+                {forgotSuccess ? (
+                  <div className="forgot-success">
+                    <div className="forgot-success-icon">
+                      <i className="fas fa-envelope-open-text"></i>
+                    </div>
+                    <h3>Check Your Email</h3>
+                    <p>We've sent password reset instructions to <strong>{forgotEmail}</strong></p>
+                    <div className="forgot-info">
+                      <div className="forgot-info-item">
+                        <i className="fas fa-clock"></i>
+                        <span>The link will expire in 1 hour</span>
+                      </div>
+                      <div className="forgot-info-item">
+                        <i className="fas fa-inbox"></i>
+                        <span>Check your spam folder if you don't see the email</span>
+                      </div>
+                    </div>
+                    <button 
+                      className="back-to-login-btn"
+                      onClick={() => { setShowForgotPassword(false); setForgotSuccess(false); setForgotEmail(''); setError(''); }}
+                    >
+                      <i className="fas fa-arrow-left"></i> Back to Login
+                    </button>
+                  </div>
+                ) : (
+                  <>
+                    <div className="forgot-header">
+                      <i className="fas fa-key"></i>
+                      <h3>Forgot Password?</h3>
+                      <p>Enter your email and we'll send you a reset link</p>
+                    </div>
+                    <form onSubmit={handleForgotPassword}>
+                      <div className="form-group-modal">
+                        <label>Email Address</label>
+                        <input
+                          type="email"
+                          placeholder="Enter your email"
+                          value={forgotEmail}
+                          onChange={(e) => setForgotEmail(e.target.value)}
+                          required
+                          className="modal-input"
+                        />
+                      </div>
+                      <button 
+                        type="submit" 
+                        className="login-btn-modal"
+                        disabled={forgotSubmitting}
+                      >
+                        {forgotSubmitting ? 'Sending...' : 'Send Reset Link'}
+                      </button>
+                    </form>
+                    <button 
+                      className="back-to-login-btn"
+                      onClick={() => { setShowForgotPassword(false); setError(''); }}
+                    >
+                      <i className="fas fa-arrow-left"></i> Back to Login
+                    </button>
+                  </>
+                )}
+              </>
+            ) : activeTab === 'login' ? (
               <>
                 <form onSubmit={handleLogin}>
                   <div className="form-group-modal">
@@ -455,14 +623,36 @@ export default function LoginModal({ isOpen, onClose }) {
 
                   <div className="form-group-modal">
                     <label>Password</label>
-                    <input
-                      type="password"
-                      placeholder="Password"
-                      value={password}
-                      onChange={(e) => setPassword(e.target.value)}
-                      required
-                      className="modal-input"
-                    />
+                    <div className="password-input-wrapper">
+                      <input
+                        type={showLoginPassword ? 'text' : 'password'}
+                        placeholder="Password"
+                        value={password}
+                        onChange={(e) => setPassword(e.target.value)}
+                        required
+                        className="modal-input"
+                        autoCapitalize="off"
+                        autoCorrect="off"
+                        spellCheck="false"
+                        autoComplete="current-password"
+                      />
+                      <button 
+                        type="button"
+                        className="password-toggle"
+                        onClick={() => setShowLoginPassword(!showLoginPassword)}
+                      >
+                        <i className={`fas ${showLoginPassword ? 'fa-eye-slash' : 'fa-eye'}`}></i>
+                      </button>
+                    </div>
+                  </div>
+
+                  <div className="forgot-password-link-modal">
+                    <button 
+                      type="button" 
+                      onClick={() => { setShowForgotPassword(true); setError(''); }}
+                    >
+                      Forgot Password?
+                    </button>
                   </div>
 
                   <button 
@@ -508,22 +698,28 @@ export default function LoginModal({ isOpen, onClose }) {
                     />
                   </div>
 
-                  <div className="form-group-modal password-input-wrapper">
-                    <input
-                      type={showPassword ? 'text' : 'password'}
-                      placeholder="Enter Password"
-                      value={signupPassword}
-                      onChange={(e) => setSignupPassword(e.target.value)}
-                      required
-                      className="modal-input"
-                    />
-                    <button 
-                      type="button"
-                      className="password-toggle"
-                      onClick={() => setShowPassword(!showPassword)}
-                    >
-                      <i className={`fas ${showPassword ? 'fa-eye-slash' : 'fa-eye'}`}></i>
-                    </button>
+                  <div className="form-group-modal">
+                    <div className="password-input-wrapper">
+                      <input
+                        type={showPassword ? 'text' : 'password'}
+                        placeholder="Enter Password"
+                        value={signupPassword}
+                        onChange={(e) => setSignupPassword(e.target.value)}
+                        required
+                        className="modal-input"
+                        autoCapitalize="off"
+                        autoCorrect="off"
+                        spellCheck="false"
+                        autoComplete="new-password"
+                      />
+                      <button 
+                        type="button"
+                        className="password-toggle"
+                        onClick={() => setShowPassword(!showPassword)}
+                      >
+                        <i className={`fas ${showPassword ? 'fa-eye-slash' : 'fa-eye'}`}></i>
+                      </button>
+                    </div>
                   </div>
 
                   <div className="form-group-modal phone-input-group">

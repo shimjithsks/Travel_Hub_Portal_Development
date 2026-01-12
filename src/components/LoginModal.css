@@ -153,18 +153,18 @@
   transform: scale(1.1);
 }
 
-.benefits-list {
+.modal-left .benefits-list {
   width: 100%;
   position: relative;
   z-index: 1;
 }
 
-.benefit-item {
+.modal-left .benefit-item {
   display: flex;
   align-items: center;
   gap: 16px;
   margin-bottom: 18px;
-  color: rgba(255, 255, 255, 0.95);
+  color: rgba(255, 255, 255, 0.95) !important;
   font-size: 14px;
   font-weight: 500;
   padding: 12px 16px;
@@ -175,15 +175,15 @@
   transition: all 0.3s ease;
 }
 
-.benefit-item:hover {
+.modal-left .benefit-item:hover {
   background: rgba(255, 255, 255, 0.15);
   transform: translateX(8px);
   border-color: rgba(255, 255, 255, 0.2);
 }
 
-.benefit-item i {
+.modal-left .benefit-item i {
   font-size: 18px;
-  color: #5eead4;
+  color: #5eead4 !important;
   width: 36px;
   height: 36px;
   display: flex;
@@ -194,9 +194,13 @@
   flex-shrink: 0;
 }
 
-.and-more {
+.modal-left .benefit-item span {
+  color: rgba(255, 255, 255, 0.95) !important;
+}
+
+.modal-left .and-more {
   text-align: center;
-  color: rgba(255, 255, 255, 0.6);
+  color: rgba(255, 255, 255, 0.6) !important;
   font-size: 14px;
   margin-top: 10px;
   font-style: italic;
@@ -939,4 +943,166 @@
     font-size: 13px;
     padding: 10px 15px;
   }
+}
+
+/* Forgot Password Link in Modal */
+.forgot-password-link-modal {
+  text-align: right;
+  margin-bottom: 15px;
+  margin-top: -5px;
+}
+
+.forgot-password-link-modal button {
+  background: none;
+  border: none;
+  color: #14b8a6;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  padding: 0;
+}
+
+.forgot-password-link-modal button:hover {
+  color: #0d9488;
+  text-decoration: underline;
+}
+
+/* Forgot Password Form Styles */
+.forgot-header {
+  text-align: center;
+  margin-bottom: 30px;
+}
+
+.forgot-header i {
+  font-size: 48px;
+  color: #14b8a6;
+  margin-bottom: 15px;
+  display: block;
+}
+
+.forgot-header h3 {
+  font-size: 24px;
+  font-weight: 700;
+  color: #1e293b;
+  margin-bottom: 8px;
+}
+
+.forgot-header p {
+  color: #64748b;
+  font-size: 15px;
+}
+
+.forgot-success {
+  text-align: center;
+  padding: 20px 0;
+}
+
+.forgot-success-icon {
+  width: 80px;
+  height: 80px;
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 20px;
+  box-shadow: 0 10px 30px rgba(16, 185, 129, 0.3);
+}
+
+.forgot-success-icon i {
+  font-size: 36px;
+  color: white;
+}
+
+.forgot-success h3 {
+  font-size: 22px;
+  font-weight: 700;
+  color: #1e293b;
+  margin-bottom: 10px;
+}
+
+.forgot-success p {
+  color: #64748b;
+  font-size: 15px;
+  margin-bottom: 20px;
+}
+
+.forgot-success p strong {
+  color: #14b8a6;
+}
+
+.forgot-info {
+  background: linear-gradient(135deg, #f0fdfa 0%, #ccfbf1 100%);
+  border-radius: 12px;
+  padding: 20px;
+  margin-bottom: 25px;
+}
+
+.forgot-info-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  color: #0f766e;
+  font-size: 14px;
+  padding: 8px 0;
+}
+
+.forgot-info-item i {
+  color: #14b8a6;
+  font-size: 16px;
+}
+
+.back-to-login-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: none;
+  border: 2px solid #e2e8f0;
+  color: #64748b;
+  padding: 12px 24px;
+  border-radius: 10px;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  margin-top: 10px;
+}
+
+.back-to-login-btn:hover {
+  border-color: #14b8a6;
+  color: #14b8a6;
+  background: #f0fdfa;
+}
+
+/* Password Toggle in Login Form */
+.form-group-modal .password-input-wrapper {
+  position: relative;
+  width: 100%;
+}
+
+.form-group-modal .password-input-wrapper .modal-input {
+  padding-right: 45px;
+  width: 100%;
+}
+
+.form-group-modal .password-input-wrapper .password-toggle {
+  position: absolute;
+  right: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  color: #94a3b8;
+  cursor: pointer;
+  padding: 5px;
+  transition: color 0.3s ease;
+}
+
+.form-group-modal .password-input-wrapper .password-toggle:hover {
+  color: #14b8a6;
+}
+
+.form-group-modal .password-toggle:hover {
+  color: #14b8a6;
 }

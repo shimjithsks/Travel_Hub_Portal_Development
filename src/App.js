@@ -30,6 +30,7 @@ import AgentSignup from './pages/Partner/AgentSignup';
 import PortalDashboard from './pages/Partner/PortalDashboard';
 import PartnerDashboard from './pages/Partner/PartnerDashboard';
 import SetPassword from './pages/Partner/SetPassword';
+import ForgotPassword from './pages/Partner/ForgotPassword';
 import NotFound from './pages/NotFound';
 import Hotels from './pages/Hotels';
 import HotelDetail from './pages/HotelDetail';
@@ -41,10 +42,7 @@ import DashboardRedirect from './components/auth/DashboardRedirect';
 import RequireRole from './components/auth/RequireRole';
 import OperatorDashboard from './pages/operator/OperatorDashboard';
 import CustomerDashboard from './pages/customer/CustomerDashboard';
-import MyBookings from './pages/customer/MyBookings';
-import MyRefund from './pages/customer/MyRefund';
-import MyECash from './pages/customer/MyECash';
-import MyProfile from './pages/customer/MyProfile';
+import CustomerForgotPassword from './pages/customer/CustomerForgotPassword';
 import CompleteBooking from './pages/CompleteBooking';
 import MakePayment from './pages/MakePayment';
 import CompleteHoliday from './pages/CompleteHoliday';
@@ -52,7 +50,7 @@ import Offers from './pages/Offers';
 import './App.css';
 
 // Routes that should show PartnerNavbar and PartnerFooter
-const partnerRoutes = ['/travel-agents', '/agent-login', '/agent-signup', '/set-password', '/portal-dashboard'];
+const partnerRoutes = ['/travel-agents', '/agent-login', '/agent-signup', '/set-password', '/forgot-password', '/portal-dashboard'];
 
 // Routes that should have NO footer
 const noFooterRoutes = [
@@ -134,6 +132,7 @@ function App() {
         <Route path="/travel-agents" element={<TravelAgents />} />
         <Route path="/agent-signup" element={<AgentSignup />} />
         <Route path="/agent-login" element={<Login />} />
+        <Route path="/forgot-password" element={<ForgotPassword />} />
         <Route path="/set-password" element={<SetPassword />} />
         <Route path="/portal-dashboard" element={<PortalDashboard />} />
         <Route path="/partner-dashboard" element={<PartnerDashboard />} />
@@ -156,22 +155,10 @@ function App() {
             </RequireRole>
           }
         />
-        <Route
-          path="/customer/my-bookings"
-          element={<MyBookings />}
-        />
-        <Route
-          path="/customer/my-refund"
-          element={<MyRefund />}
-        />
-        <Route
-          path="/customer/my-ecash"
-          element={<MyECash />}
-        />
-        <Route
-          path="/customer/my-profile"
-          element={<MyProfile />}
-        />
+        
+        {/* Customer Auth Routes */}
+        <Route path="/customer-forgot-password" element={<CustomerForgotPassword />} />
+        
         <Route path="/complete-booking" element={<CompleteBooking />} />
         <Route path="/make-payment" element={<MakePayment />} />
         <Route path="/complete-holiday" element={<CompleteHoliday />} />

@@ -1,12 +1,13 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useAuth } from '../../context/AuthContext';
-import { doc, updateDoc, setDoc, getDoc } from 'firebase/firestore';
-import { db } from '../../firebase/firebase';
-import { updateProfile, updateEmail } from 'firebase/auth';
+import { doc, updateDoc, setDoc, getDoc, serverTimestamp } from 'firebase/firestore';
+import { db, auth } from '../../firebase/firebase';
+import { updateProfile, updateEmail, updatePassword, EmailAuthProvider, reauthenticateWithCredential, sendPasswordResetEmail } from 'firebase/auth';
+import { sendCustomerPasswordResetEmail, sendCustomerPasswordChangedEmail } from '../../services/emailService';
 import '../../styles/myProfile.css';
 
 export default function MyProfile() {
-  const { user, profile } = useAuth();
+  const { user, profile, updateProfileLocal } = useAuth();
   const [editing, setEditing] = useState(false);
   const [formData, setFormData] = useState({
     name: '',
@@ -22,6 +23,19 @@ export default function MyProfile() {
   });
   const [loading, setLoading] = useState(false);
   const [fetchingProfile, setFetchingProfile] = useState(true);
+  const [uploadingPhoto, setUploadingPhoto] = useState(false);
+  const [showPasswordModal, setShowPasswordModal] = useState(false);
+  const [passwordData, setPasswordData] = useState({
+    currentPassword: '',
+    newPassword: '',
+    confirmPassword: ''
+  });
+  const [passwordLoading, setPasswordLoading] = useState(false);
+  const [passwordError, setPasswordError] = useState('');
+  const [passwordSuccess, setPasswordSuccess] = useState('');
+  const [sendingResetEmail, setSendingResetEmail] = useState(false);
+  const [resetEmailSent, setResetEmailSent] = useState(false);
+  const fileInputRef = useRef(null);
 
   useEffect(() => {
     const loadProfile = async () => {
@@ -167,6 +181,149 @@ export default function MyProfile() {
     return user?.email?.charAt(0).toUpperCase() || 'U';
   };
 
+  // Handle photo upload
+  const handlePhotoUpload = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    // Validate file type
+    if (!file.type.startsWith('image/')) {
+      alert('Please select an image file');
+      return;
+    }
+
+    // Validate file size (max 500KB for Firestore storage)
+    if (file.size > 500 * 1024) {
+      alert('Image size should be less than 500KB. Please compress the image or choose a smaller one.');
+      return;
+    }
+
+    setUploadingPhoto(true);
+    try {
+      // Convert to base64 and compress
+      const reader = new FileReader();
+      reader.onload = async (event) => {
+        const base64Image = event.target.result;
+        
+        try {
+          // Only store in Firestore (Firebase Auth has URL length limits)
+          const userRef = doc(db, 'users', user.uid);
+          await updateDoc(userRef, {
+            photoURL: base64Image,
+            updatedAt: new Date().toISOString()
+          });
+
+          // Update local state immediately
+          setFormData(prev => ({ ...prev, photoURL: base64Image }));
+          
+          // Update global profile context so header updates immediately
+          updateProfileLocal({ photoURL: base64Image });
+          
+          setUploadingPhoto(false);
+          alert('Profile photo updated successfully!');
+        } catch (error) {
+          console.error('Error saving photo:', error);
+          alert('Failed to upload photo. The image might be too large. Please try a smaller image.');
+          setUploadingPhoto(false);
+        }
+      };
+      reader.readAsDataURL(file);
+    } catch (error) {
+      console.error('Error uploading photo:', error);
+      alert('Failed to upload photo. Please try again.');
+      setUploadingPhoto(false);
+    }
+  };
+
+  // Handle password change
+  const handlePasswordChange = async (e) => {
+    e.preventDefault();
+    setPasswordError('');
+    setPasswordSuccess('');
+
+    if (passwordData.newPassword !== passwordData.confirmPassword) {
+      setPasswordError('New passwords do not match');
+      return;
+    }
+
+    if (passwordData.newPassword.length < 6) {
+      setPasswordError('New password must be at least 6 characters');
+      return;
+    }
+
+    setPasswordLoading(true);
+    try {
+      // Re-authenticate user
+      const credential = EmailAuthProvider.credential(
+        user.email,
+        passwordData.currentPassword
+      );
+      await reauthenticateWithCredential(user, credential);
+
+      // Update password
+      await updatePassword(user, passwordData.newPassword);
+
+      // Update Firestore with password change timestamp
+      const userRef = doc(db, 'users', user.uid);
+      await updateDoc(userRef, {
+        passwordChangedAt: new Date().toISOString()
+      });
+
+      // Send confirmation email
+      await sendCustomerPasswordChangedEmail({
+        email: user.email,
+        name: formData.name || user.displayName || 'Valued Customer'
+      });
+
+      setPasswordSuccess('Password changed successfully!');
+      setPasswordData({ currentPassword: '', newPassword: '', confirmPassword: '' });
+      setTimeout(() => {
+        setShowPasswordModal(false);
+        setPasswordSuccess('');
+      }, 2000);
+    } catch (error) {
+      console.error('Password change error:', error);
+      if (error.code === 'auth/wrong-password') {
+        setPasswordError('Current password is incorrect');
+      } else if (error.code === 'auth/requires-recent-login') {
+        setPasswordError('Please log out and log in again before changing password');
+      } else {
+        setPasswordError(error.message || 'Failed to change password');
+      }
+    } finally {
+      setPasswordLoading(false);
+    }
+  };
+
+  // Send password reset email using Firebase Auth
+  const handleSendPasswordResetEmail = async () => {
+    setSendingResetEmail(true);
+    setResetEmailSent(false);
+    
+    try {
+      // Use Firebase's built-in password reset
+      // This sends a Firebase email that actually updates the Auth password
+      await sendPasswordResetEmail(auth, user.email);
+      
+      // Also send our beautiful custom notification email
+      await sendCustomerPasswordResetEmail({
+        email: user.email,
+        name: formData.name || user.displayName || 'Valued Customer'
+      });
+      
+      setResetEmailSent(true);
+    } catch (error) {
+      console.error('Error sending password reset email:', error);
+      if (error.code === 'auth/too-many-requests') {
+        alert('Too many requests. Please wait a few minutes before trying again.');
+      } else {
+        alert('Failed to send password reset email. Please try again.');
+      }
+    } finally {
+      setSendingResetEmail(false);
+    }
+  };
+
   // Show loading state while fetching profile
   if (fetchingProfile) {
     return (
@@ -201,12 +358,34 @@ export default function MyProfile() {
       <div className="profile-content">
         <div className="profile-sidebar">
           <div className="profile-avatar-section">
-            <div className="profile-avatar-large">
-              {formData.photoURL ? (
-                <img src={formData.photoURL} alt="Profile" className="profile-photo" />
-              ) : (
-                getInitials()
-              )}
+            <div className="profile-avatar-wrapper">
+              <div className="profile-avatar-large">
+                {formData.photoURL ? (
+                  <img src={formData.photoURL} alt="Profile" className="profile-photo" />
+                ) : (
+                  getInitials()
+                )}
+                {uploadingPhoto && (
+                  <div className="photo-upload-overlay">
+                    <i className="fas fa-spinner fa-spin"></i>
+                  </div>
+                )}
+              </div>
+              <button 
+                className="photo-upload-btn" 
+                onClick={() => fileInputRef.current?.click()}
+                disabled={uploadingPhoto}
+                title="Change profile photo"
+              >
+                <i className="fas fa-camera"></i>
+              </button>
+              <input
+                type="file"
+                ref={fileInputRef}
+                onChange={handlePhotoUpload}
+                accept="image/*"
+                style={{ display: 'none' }}
+              />
             </div>
             <h3 className="profile-name">{formData.name || user?.email}</h3>
             <p className="profile-email">{user?.email}</p>
@@ -362,24 +541,101 @@ export default function MyProfile() {
             </div>
           </div>
 
-          <div className="profile-card">
+          <div className="profile-card security-card">
             <div className="card-header">
+              <div className="card-header-icon">
+                <i className="fas fa-shield-alt"></i>
+              </div>
               <h2>Account Security</h2>
             </div>
             <div className="security-section">
               <div className="security-item">
+                <div className="security-icon password-icon">
+                  <i className="fas fa-key"></i>
+                </div>
                 <div className="security-info">
                   <h4>Password</h4>
-                  <p>Last changed: Never</p>
+                  <p className="security-status">
+                    <i className="fas fa-clock"></i>
+                    Last changed: {profile?.passwordChangedAt 
+                      ? new Date(profile.passwordChangedAt).toLocaleDateString('en-IN', { 
+                          day: 'numeric', 
+                          month: 'short', 
+                          year: 'numeric' 
+                        })
+                      : 'Never'}
+                  </p>
+                  {resetEmailSent ? (
+                    <p className="security-tip success-tip">
+                      <i className="fas fa-check-circle"></i>
+                      Password reset link sent! Check your inbox.
+                    </p>
+                  ) : (
+                    <p className="security-tip">Use a strong password with letters, numbers & symbols</p>
+                  )}
                 </div>
-                <button className="btn-secondary">Change Password</button>
+                <button 
+                  className="btn-security" 
+                  onClick={handleSendPasswordResetEmail}
+                  disabled={sendingResetEmail || resetEmailSent}
+                >
+                  {sendingResetEmail ? (
+                    <>
+                      <i className="fas fa-spinner fa-spin"></i>
+                      Sending...
+                    </>
+                  ) : resetEmailSent ? (
+                    <>
+                      <i className="fas fa-check"></i>
+                      Email Sent
+                    </>
+                  ) : (
+                    <>
+                      <i className="fas fa-envelope"></i>
+                      Change Password
+                    </>
+                  )}
+                </button>
               </div>
+              
+              <div className="security-divider"></div>
+              
               <div className="security-item">
+                <div className="security-icon twofa-icon">
+                  <i className="fas fa-mobile-alt"></i>
+                </div>
                 <div className="security-info">
                   <h4>Two-Factor Authentication</h4>
-                  <p>Add an extra layer of security</p>
+                  <p className="security-status">
+                    <i className="fas fa-times-circle status-disabled"></i>
+                    Currently disabled
+                  </p>
+                  <p className="security-tip">Add an extra layer of security to your account</p>
                 </div>
-                <button className="btn-secondary">Enable 2FA</button>
+                <button className="btn-security btn-security-enable">
+                  <i className="fas fa-shield-alt"></i>
+                  Enable 2FA
+                </button>
+              </div>
+              
+              <div className="security-divider"></div>
+              
+              <div className="security-item">
+                <div className="security-icon sessions-icon">
+                  <i className="fas fa-laptop"></i>
+                </div>
+                <div className="security-info">
+                  <h4>Active Sessions</h4>
+                  <p className="security-status">
+                    <i className="fas fa-check-circle status-active"></i>
+                    1 active session
+                  </p>
+                  <p className="security-tip">Manage devices where you're logged in</p>
+                </div>
+                <button className="btn-security btn-security-view">
+                  <i className="fas fa-eye"></i>
+                  View All
+                </button>
               </div>
             </div>
           </div>
@@ -423,6 +679,130 @@ export default function MyProfile() {
           </div>
         </div>
       </div>
+
+      {/* Password Change Modal */}
+      {showPasswordModal && (
+        <div className="modal-overlay" onClick={() => setShowPasswordModal(false)}>
+          <div className="password-modal" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-header">
+              <div className="modal-icon">
+                <i className="fas fa-key"></i>
+              </div>
+              <h3>Change Password</h3>
+              <button className="modal-close" onClick={() => setShowPasswordModal(false)}>
+                <i className="fas fa-times"></i>
+              </button>
+            </div>
+            
+            <form onSubmit={handlePasswordChange} className="password-form">
+              {passwordError && (
+                <div className="password-alert error">
+                  <i className="fas fa-exclamation-circle"></i>
+                  {passwordError}
+                </div>
+              )}
+              {passwordSuccess && (
+                <div className="password-alert success">
+                  <i className="fas fa-check-circle"></i>
+                  {passwordSuccess}
+                </div>
+              )}
+
+              <div className="password-form-group">
+                <label>
+                  <i className="fas fa-lock"></i>
+                  Current Password
+                </label>
+                <input
+                  type="password"
+                  value={passwordData.currentPassword}
+                  onChange={(e) => setPasswordData({...passwordData, currentPassword: e.target.value})}
+                  placeholder="Enter current password"
+                  required
+                  autoCapitalize="off"
+                  autoCorrect="off"
+                  spellCheck="false"
+                  autoComplete="current-password"
+                />
+              </div>
+
+              <div className="password-form-group">
+                <label>
+                  <i className="fas fa-key"></i>
+                  New Password
+                </label>
+                <input
+                  type="password"
+                  value={passwordData.newPassword}
+                  onChange={(e) => setPasswordData({...passwordData, newPassword: e.target.value})}
+                  placeholder="Enter new password"
+                  required
+                  minLength="6"
+                  autoCapitalize="off"
+                  autoCorrect="off"
+                  spellCheck="false"
+                  autoComplete="new-password"
+                />
+              </div>
+
+              <div className="password-form-group">
+                <label>
+                  <i className="fas fa-check-double"></i>
+                  Confirm New Password
+                </label>
+                <input
+                  type="password"
+                  value={passwordData.confirmPassword}
+                  onChange={(e) => setPasswordData({...passwordData, confirmPassword: e.target.value})}
+                  placeholder="Confirm new password"
+                  required
+                  autoCapitalize="off"
+                  autoCorrect="off"
+                  spellCheck="false"
+                  autoComplete="new-password"
+                />
+              </div>
+
+              <div className="password-requirements">
+                <p><i className="fas fa-info-circle"></i> Password Requirements:</p>
+                <ul>
+                  <li className={passwordData.newPassword.length >= 6 ? 'valid' : ''}>
+                    <i className={`fas ${passwordData.newPassword.length >= 6 ? 'fa-check' : 'fa-circle'}`}></i>
+                    At least 6 characters
+                  </li>
+                  <li className={/[A-Z]/.test(passwordData.newPassword) ? 'valid' : ''}>
+                    <i className={`fas ${/[A-Z]/.test(passwordData.newPassword) ? 'fa-check' : 'fa-circle'}`}></i>
+                    One uppercase letter
+                  </li>
+                  <li className={/[0-9]/.test(passwordData.newPassword) ? 'valid' : ''}>
+                    <i className={`fas ${/[0-9]/.test(passwordData.newPassword) ? 'fa-check' : 'fa-circle'}`}></i>
+                    One number
+                  </li>
+                </ul>
+              </div>
+
+              <div className="password-actions">
+                <button type="button" className="btn-cancel" onClick={() => setShowPasswordModal(false)}>
+                  Cancel
+                </button>
+                <button type="submit" className="btn-change-password" disabled={passwordLoading}>
+                  {passwordLoading ? (
+                    <>
+                      <i className="fas fa-spinner fa-spin"></i>
+                      Changing...
+                    </>
+                  ) : (
+                    <>
+                      <i className="fas fa-check"></i>
+                      Change Password
+                    </>
+                  )}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

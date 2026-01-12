@@ -238,6 +238,9 @@ export default function SetPassword() {
                   required
                   minLength={6}
                   autoComplete="new-password"
+                  autoCapitalize="off"
+                  autoCorrect="off"
+                  spellCheck="false"
                 />
                 <button
                   type="button"
@@ -291,6 +294,9 @@ export default function SetPassword() {
                   required
                   minLength={6}
                   autoComplete="new-password"
+                  autoCapitalize="off"
+                  autoCorrect="off"
+                  spellCheck="false"
                 />
                 <button
                   type="button"

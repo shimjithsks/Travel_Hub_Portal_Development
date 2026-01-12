@@ -12,6 +12,7 @@ import {
   orderBy,
   serverTimestamp 
 } from 'firebase/firestore';
+import { sendPasswordResetEmail as sendPasswordResetEmailService, sendPasswordChangedEmail } from './emailService';
 
 const PARTNERS_COLLECTION = 'partners';
 
@@ -363,12 +364,69 @@ export const setPartnerPassword = async (email, password, confirmPassword) => {
     await updateDoc(docRef, {
       password: password, // In production, hash this!
       passwordSetAt: serverTimestamp(),
+      resetToken: null, // Clear reset token after password change
+      resetTokenExpiry: null,
       lastUpdated: serverTimestamp()
     });
+
+    // Send password changed confirmation email
+    await sendPasswordChangedEmail(partner);
+    console.log('Password changed confirmation email sent to:', email);
 
     return { success: true, message: 'Password set successfully!' };
   } catch (error) {
     console.error('Set password error:', error);
+    throw error;
+  }
+};
+
+// Send password reset email
+export const sendPasswordResetEmail = async (email) => {
+  if (!db) {
+    throw new Error('Database not configured.');
+  }
+
+  try {
+    const partner = await getPartnerByEmail(email);
+    
+    if (!partner) {
+      throw new Error('No partner account found with this email address.');
+    }
+
+    if (partner.status === 'pending') {
+      throw new Error('Your account is pending approval. Password reset is not available yet.');
+    }
+
+    if (partner.status === 'rejected') {
+      throw new Error('Your partner application was rejected. Please contact support.');
+    }
+
+    if (partner.status === 'suspended') {
+      throw new Error('Your account has been suspended. Please contact support.');
+    }
+
+    // Generate a reset token (in production, use secure random token)
+    const resetToken = Date.now().toString(36) + Math.random().toString(36).substring(2);
+    const resetTokenExpiry = new Date(Date.now() + 3600000); // 1 hour from now
+
+    // Store reset token in partner document
+    const docRef = doc(db, PARTNERS_COLLECTION, partner.id);
+    await updateDoc(docRef, {
+      resetToken: resetToken,
+      resetTokenExpiry: resetTokenExpiry,
+      lastUpdated: serverTimestamp()
+    });
+
+    // Send password reset email
+    await sendPasswordResetEmailService(partner, resetToken);
+    console.log('Password reset email sent to:', email);
+
+    return { 
+      success: true, 
+      message: 'Password reset email sent successfully!' 
+    };
+  } catch (error) {
+    console.error('Send password reset email error:', error);
     throw error;
   }
 };

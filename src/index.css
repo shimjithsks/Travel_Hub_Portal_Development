@@ -42,6 +42,13 @@ code {
     monospace;
 }
 
+/* Ensure password inputs preserve case sensitivity */
+input[type="password"],
+input[type="text"][autocomplete="new-password"],
+input[type="text"][autocomplete="current-password"] {
+  text-transform: none !important;
+}
+
 /* Fix Bootstrap row overflow */
 .row {
   margin-left: -15px;

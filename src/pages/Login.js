@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { loginPartner } from '../services/partnerService';
 import './Login.css';
@@ -11,13 +11,25 @@ export default function Login() {
   const [showPassword, setShowPassword] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState('');
+  const [checkingSession, setCheckingSession] = useState(true);
 
   // Check if partner is already logged in
-  const storedPartner = localStorage.getItem('partnerSession');
-  if (storedPartner) {
-    navigate('/partner-dashboard', { replace: true });
-    return null;
-  }
+  useEffect(() => {
+    const storedPartner = localStorage.getItem('partnerSession');
+    if (storedPartner) {
+      try {
+        const partner = JSON.parse(storedPartner);
+        if (partner && partner.id) {
+          navigate('/partner-dashboard', { replace: true });
+          return;
+        }
+      } catch (e) {
+        // Invalid session data, clear it
+        localStorage.removeItem('partnerSession');
+      }
+    }
+    setCheckingSession(false);
+  }, [navigate]);
 
   async function onSubmit(e) {
     e.preventDefault();
@@ -37,6 +49,18 @@ export default function Login() {
     } finally {
       setSubmitting(false);
     }
+  }
+
+  // Show loading while checking session
+  if (checkingSession) {
+    return (
+      <div className="login-page" style={{ justifyContent: 'center', alignItems: 'center' }}>
+        <div style={{ textAlign: 'center', color: '#64748b' }}>
+          <i className="fas fa-spinner fa-spin" style={{ fontSize: '2rem', marginBottom: '10px' }}></i>
+          <p>Loading...</p>
+        </div>
+      </div>
+    );
   }
 
   return (
@@ -128,6 +152,9 @@ export default function Login() {
                   onChange={(e) => setPassword(e.target.value)}
                   required
                   autoComplete="current-password"
+                  autoCapitalize="off"
+                  autoCorrect="off"
+                  spellCheck="false"
                 />
                 <button
                   type="button"
@@ -136,6 +163,9 @@ export default function Login() {
                 >
                   <i className={`fas ${showPassword ? 'fa-eye-slash' : 'fa-eye'}`}></i>
                 </button>
+              </div>
+              <div className="forgot-password-link">
+                <Link to="/forgot-password">Forgot Password?</Link>
               </div>
             </div>
 

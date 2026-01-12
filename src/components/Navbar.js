@@ -11,7 +11,7 @@ export default function Navbar() {
   const [showLoginModal, setShowLoginModal] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
-  const { user, signOut } = useAuth();
+  const { user, profile, signOut } = useAuth();
   const userDropdownRef = useRef(null);
   const supportDropdownRef = useRef(null);
 
@@ -104,6 +104,12 @@ export default function Navbar() {
     return name.charAt(0).toUpperCase();
   };
 
+  const getUserPhoto = () => {
+    if (!user) return null;
+    // Check profile (Firestore) first, then fall back to Auth photoURL
+    return profile?.photoURL || user.photoURL || null;
+  };
+
   return (
     <>
       <nav className="yatra-header">
@@ -134,7 +140,7 @@ export default function Navbar() {
 
               <nav className={`main-navigation ${isOpen ? 'active' : ''}`}>
                 {user ? (
-                  <Link to="/customer/my-bookings" className="trips-link" onClick={() => setIsOpen(false)}>
+                  <Link to="/customer?tab=overview" className="trips-link" onClick={() => setIsOpen(false)}>
                     <i className="fas fa-compass"></i>
                     <span>My Journeys</span>
                   </Link>
@@ -162,19 +168,19 @@ export default function Navbar() {
                         <i className="fas fa-headset"></i>
                         <span>How can we help?</span>
                       </div>
-                      <Link to="/customer/my-refund" onClick={() => setShowDropdown(null)}>
+                      <Link to="/customer?tab=track-refund" onClick={() => setShowDropdown(null)}>
                         <i className="fas fa-rotate-left"></i> Track Refund
                       </Link>
                       <Link to="/contact" onClick={() => setShowDropdown(null)}>
                         <i className="fas fa-message"></i> Contact Support
                       </Link>
-                      <Link to="/complete-booking" onClick={() => setShowDropdown(null)}>
+                      <Link to="/customer?tab=complete-booking" onClick={() => setShowDropdown(null)}>
                         <i className="fas fa-clipboard-check"></i> Complete Booking
                       </Link>
-                      <Link to="/make-payment" onClick={() => setShowDropdown(null)}>
+                      <Link to="/customer?tab=make-payment" onClick={() => setShowDropdown(null)}>
                         <i className="fas fa-credit-card"></i> Make Payment
                       </Link>
-                      <Link to="/complete-holiday" onClick={() => setShowDropdown(null)}>
+                      <Link to="/customer?tab=holiday-booking" onClick={() => setShowDropdown(null)}>
                         <i className="fas fa-palm-tree"></i> Holiday Bookings
                       </Link>
                     </div>
@@ -185,23 +191,27 @@ export default function Navbar() {
                   <div className="user-dropdown-wrapper" ref={userDropdownRef}>
                     <button className="user-profile-btn" onClick={toggleUserDropdown}>
                       <div className="user-avatar">
-                        {getUserInitial()}
+                        {getUserPhoto() ? (
+                          <img src={getUserPhoto()} alt={getUserName()} className="user-avatar-img" />
+                        ) : (
+                          getUserInitial()
+                        )}
                       </div>
                       <span className="user-greeting">Hi {getUserName()}</span>
                       <i className={`fas fa-chevron-down ${showUserDropdown ? 'rotated' : ''}`}></i>
                     </button>
                     {showUserDropdown && (
                       <div className="user-dropdown-menu">
-                        <button onClick={() => handleMenuNavigation('/customer/my-bookings')}>
-                          <i className="fas fa-suitcase"></i> My Booking
+                        <button onClick={() => handleMenuNavigation('/customer?tab=journeys')}>
+                          <i className="fas fa-suitcase"></i> My Journeys
                         </button>
-                        <button onClick={() => handleMenuNavigation('/customer/my-refund')}>
+                        <button onClick={() => handleMenuNavigation('/customer?tab=refund')}>
                           <i className="fas fa-undo"></i> My Refund
                         </button>
-                        <button onClick={() => handleMenuNavigation('/customer/my-ecash')}>
+                        <button onClick={() => handleMenuNavigation('/customer?tab=ecash')}>
                           <i className="fas fa-wallet"></i> My eCash
                         </button>
-                        <button onClick={() => handleMenuNavigation('/customer/my-profile')}>
+                        <button onClick={() => handleMenuNavigation('/customer?tab=profile')}>
                           <i className="fas fa-user"></i> My Profile
                         </button>
                         <button onClick={handleLogout} className="logout-menu-item">

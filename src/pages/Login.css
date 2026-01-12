@@ -288,6 +288,25 @@
   color: #14b8a6;
 }
 
+/* Forgot Password Link */
+.forgot-password-link {
+  text-align: right;
+  margin-top: 8px;
+}
+
+.forgot-password-link a {
+  font-size: 0.85rem;
+  font-weight: 500;
+  color: #14b8a6;
+  text-decoration: none;
+  transition: all 0.3s ease;
+}
+
+.forgot-password-link a:hover {
+  color: #0d9488;
+  text-decoration: underline;
+}
+
 /* Submit Button */
 .submit-btn {
   display: flex;
@@ -342,6 +361,38 @@
 
 @keyframes spin {
   to { transform: rotate(360deg); }
+}
+
+/* Success Info Box */
+.success-info-box {
+  background: linear-gradient(135deg, rgba(20, 184, 166, 0.08) 0%, rgba(13, 148, 136, 0.08) 100%);
+  border: 1px solid rgba(20, 184, 166, 0.2);
+  border-radius: 12px;
+  padding: 20px;
+  margin: 25px 0;
+}
+
+.success-info-box .info-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 0;
+}
+
+.success-info-box .info-item:not(:last-child) {
+  border-bottom: 1px solid rgba(20, 184, 166, 0.15);
+}
+
+.success-info-box .info-item i {
+  color: #14b8a6;
+  font-size: 1rem;
+  width: 20px;
+  text-align: center;
+}
+
+.success-info-box .info-item span {
+  color: #334155;
+  font-size: 0.9rem;
 }
 
 /* Footer */
