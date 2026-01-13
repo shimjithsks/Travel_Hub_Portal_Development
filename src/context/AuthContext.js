@@ -36,9 +36,8 @@ export function AuthProvider({ children }) {
     }
 
     const unsubscribe = onAuthStateChanged(auth, async (nextUser) => {
-      setUser(nextUser);
-
       if (!nextUser) {
+        setUser(null);
         setProfile(null);
         setLoading(false);
         return;
@@ -47,9 +46,33 @@ export function AuthProvider({ children }) {
       try {
         const profileRef = doc(db, 'users', nextUser.uid);
         const snap = await getDoc(profileRef);
-        setProfile(snap.exists() ? snap.data() : null);
+        
+        if (snap.exists()) {
+          const profileData = snap.data();
+          
+          // Check if account is deactivated
+          if (profileData.accountStatus === 'inactive') {
+            // Sign out the user immediately
+            await firebaseSignOut(auth);
+            setUser(null);
+            setProfile(null);
+            setLoading(false);
+            // Show alert after a small delay to ensure state is updated
+            setTimeout(() => {
+              alert('Your account has been deactivated. Please contact support for assistance.');
+            }, 100);
+            return;
+          }
+          
+          setUser(nextUser);
+          setProfile(profileData);
+        } else {
+          setUser(nextUser);
+          setProfile(null);
+        }
       } catch (e) {
         // Keep UX simple: treat as no-profile
+        setUser(nextUser);
         setProfile(null);
       } finally {
         setLoading(false);

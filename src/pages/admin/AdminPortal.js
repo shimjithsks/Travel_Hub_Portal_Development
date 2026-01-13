@@ -65,6 +65,16 @@ const AdminPortal = () => {
   const [documentToView, setDocumentToView] = useState({ title: '', data: '' });
   const [partnerActiveTab, setPartnerActiveTab] = useState('company');
   
+  // Deactivation Modal State
+  const [showDeactivateModal, setShowDeactivateModal] = useState(false);
+  const [deactivateReason, setDeactivateReason] = useState('');
+  const [customerToDeactivate, setCustomerToDeactivate] = useState(null);
+  
+  // Activation Modal State
+  const [showActivateModal, setShowActivateModal] = useState(false);
+  const [activateReason, setActivateReason] = useState('');
+  const [customerToActivate, setCustomerToActivate] = useState(null);
+  
   // Action States
   const [actionLoading, setActionLoading] = useState(false);
   const [notification, setNotification] = useState({ show: false, message: '', type: '' });
@@ -210,6 +220,147 @@ const AdminPortal = () => {
       setStats(prev => ({ ...prev, totalCustomers: customersList.length }));
     } catch (error) {
       console.error('Error fetching users:', error);
+    }
+  };
+
+  // Handle deactivate button click - show modal
+  const handleDeactivateClick = (e, customer) => {
+    e.stopPropagation();
+    setCustomerToDeactivate(customer);
+    setDeactivateReason('');
+    setShowDeactivateModal(true);
+  };
+
+  // Handle activate button click - show modal
+  const handleActivateClick = (e, customer) => {
+    e.stopPropagation();
+    setCustomerToActivate(customer);
+    setActivateReason('');
+    setShowActivateModal(true);
+  };
+
+  // Confirm deactivation with reason
+  const confirmDeactivation = async () => {
+    if (!deactivateReason.trim()) {
+      alert('Please provide a reason for deactivating this account.');
+      return;
+    }
+
+    try {
+      const userDocRef = doc(db, 'users', customerToDeactivate.id);
+      const timestamp = new Date().toISOString();
+      
+      // Create history entry
+      const historyEntry = {
+        action: 'deactivated',
+        reason: deactivateReason.trim(),
+        actionBy: user?.email || 'Admin',
+        actionAt: timestamp
+      };
+      
+      // Get existing history or create new array
+      const existingHistory = customerToDeactivate.statusHistory || [];
+      const newHistory = [historyEntry, ...existingHistory];
+      
+      await updateDoc(userDocRef, { 
+        accountStatus: 'inactive',
+        deactivationReason: deactivateReason.trim(),
+        deactivatedBy: user?.email || 'Admin',
+        statusUpdatedAt: timestamp,
+        statusHistory: newHistory
+      });
+      
+      // Update local state
+      const updatedData = { 
+        accountStatus: 'inactive', 
+        deactivationReason: deactivateReason.trim(),
+        deactivatedBy: user?.email || 'Admin',
+        statusUpdatedAt: timestamp,
+        statusHistory: newHistory
+      };
+      
+      setCustomers(prev => prev.map(c => 
+        c.id === customerToDeactivate.id ? { ...c, ...updatedData } : c
+      ));
+      setFilteredCustomers(prev => prev.map(c => 
+        c.id === customerToDeactivate.id ? { ...c, ...updatedData } : c
+      ));
+      
+      // Update selected customer if viewing
+      if (selectedCustomer?.id === customerToDeactivate.id) {
+        setSelectedCustomer(prev => ({ ...prev, ...updatedData }));
+      }
+      
+      setShowDeactivateModal(false);
+      setCustomerToDeactivate(null);
+      setDeactivateReason('');
+      
+      alert('Customer account deactivated successfully!');
+    } catch (error) {
+      console.error('Error deactivating customer:', error);
+      alert(`Failed to deactivate customer: ${error.message}`);
+    }
+  };
+
+  // Confirm activation with reason
+  const confirmActivation = async () => {
+    if (!activateReason.trim()) {
+      alert('Please provide a reason for activating this account.');
+      return;
+    }
+
+    try {
+      const userDocRef = doc(db, 'users', customerToActivate.id);
+      const timestamp = new Date().toISOString();
+      
+      // Create history entry
+      const historyEntry = {
+        action: 'activated',
+        reason: activateReason.trim(),
+        actionBy: user?.email || 'Admin',
+        actionAt: timestamp
+      };
+      
+      // Get existing history or create new array
+      const existingHistory = customerToActivate.statusHistory || [];
+      const newHistory = [historyEntry, ...existingHistory];
+      
+      await updateDoc(userDocRef, { 
+        accountStatus: 'active',
+        activationReason: activateReason.trim(),
+        reactivatedBy: user?.email || 'Admin',
+        statusUpdatedAt: timestamp,
+        statusHistory: newHistory
+      });
+      
+      const updatedData = { 
+        accountStatus: 'active', 
+        activationReason: activateReason.trim(),
+        reactivatedBy: user?.email || 'Admin',
+        statusUpdatedAt: timestamp,
+        statusHistory: newHistory
+      };
+      
+      setCustomers(prev => prev.map(c => 
+        c.id === customerToActivate.id ? { ...c, ...updatedData } : c
+      ));
+      setFilteredCustomers(prev => prev.map(c => 
+        c.id === customerToActivate.id ? { ...c, ...updatedData } : c
+      ));
+      
+      // Update selected customer if viewing
+      if (selectedCustomer?.id === customerToActivate.id) {
+        setSelectedCustomer(prev => ({ ...prev, ...updatedData }));
+      }
+      
+      setShowActivateModal(false);
+      setCustomerToActivate(null);
+      setActivateReason('');
+      
+      alert('Customer account activated successfully!');
+    } catch (error) {
+      console.error('Error activating customer:', error);
+      alert(`Failed to activate customer: ${error.message}`);
     }
   };
 
@@ -1078,13 +1229,14 @@ const AdminPortal = () => {
             ) : (
               <div className="customer-list">
                 {filteredCustomers.map(customer => (
-                  <div key={customer.id} className="customer-list-item" onClick={() => handleViewCustomer(customer)}>
+                  <div key={customer.id} className={`customer-list-item ${customer.accountStatus === 'inactive' ? 'inactive' : ''}`} onClick={() => handleViewCustomer(customer)}>
                     <div className="customer-avatar-medium">
                       {customer.photoURL ? (
                         <img src={customer.photoURL} alt={customer.name} />
                       ) : (
                         <span>{customer.name?.charAt(0) || '?'}</span>
                       )}
+                      <span className={`status-dot ${customer.accountStatus === 'inactive' ? 'inactive' : 'active'}`}></span>
                     </div>
                     <div className="customer-list-info">
                       <h4>{customer.name || 'Unknown User'}</h4>
@@ -1108,11 +1260,36 @@ const AdminPortal = () => {
                         <i className="fas fa-calendar-alt"></i>
                         {formatDate(customer.createdAt)}
                       </span>
+                      <span className={`account-status-badge ${customer.accountStatus === 'inactive' ? 'inactive' : 'active'}`}>
+                        <i className={`fas ${customer.accountStatus === 'inactive' ? 'fa-ban' : 'fa-check-circle'}`}></i>
+                        {customer.accountStatus === 'inactive' ? 'Inactive' : 'Active'}
+                      </span>
                     </div>
-                    <button className="view-dashboard-btn">
-                      <i className="fas fa-external-link-alt"></i>
-                      <span>View Details</span>
-                    </button>
+                    <div className="customer-list-actions">
+                      {customer.accountStatus === 'inactive' ? (
+                        <button 
+                          className="toggle-status-btn activate"
+                          onClick={(e) => handleActivateClick(e, customer)}
+                          title="Activate Account"
+                        >
+                          <i className="fas fa-user-check"></i>
+                          <span>Activate</span>
+                        </button>
+                      ) : (
+                        <button 
+                          className="toggle-status-btn deactivate"
+                          onClick={(e) => handleDeactivateClick(e, customer)}
+                          title="Deactivate Account"
+                        >
+                          <i className="fas fa-user-slash"></i>
+                          <span>Deactivate</span>
+                        </button>
+                      )}
+                      <button className="view-dashboard-btn">
+                        <i className="fas fa-external-link-alt"></i>
+                        <span>View</span>
+                      </button>
+                    </div>
                   </div>
                 ))}
               </div>
@@ -1643,6 +1820,87 @@ const AdminPortal = () => {
                         <label>Pincode</label>
                         <span>{selectedCustomer.pincode || 'Not provided'}</span>
                       </div>
+                    </div>
+                  </div>
+
+                  {/* Account Status Section */}
+                  <div className={`profile-section account-status-section ${selectedCustomer.accountStatus === 'inactive' ? 'inactive' : 'active'}`}>
+                    <h3>
+                      <i className={`fas ${selectedCustomer.accountStatus === 'inactive' ? 'fa-user-slash' : 'fa-user-check'}`}></i> 
+                      Account Status
+                    </h3>
+                    <div className="account-status-content">
+                      <div className="status-badge-large">
+                        <span className={`status-indicator ${selectedCustomer.accountStatus === 'inactive' ? 'inactive' : 'active'}`}>
+                          <i className={`fas ${selectedCustomer.accountStatus === 'inactive' ? 'fa-ban' : 'fa-check-circle'}`}></i>
+                          {selectedCustomer.accountStatus === 'inactive' ? 'Deactivated' : 'Active'}
+                        </span>
+                      </div>
+                      
+                      {selectedCustomer.accountStatus === 'inactive' && (
+                        <div className="deactivation-details">
+                          <div className="deactivation-reason-box">
+                            <label><i className="fas fa-exclamation-triangle"></i> Reason for Deactivation</label>
+                            <p>{selectedCustomer.deactivationReason || 'No reason provided'}</p>
+                          </div>
+                          <div className="deactivation-meta">
+                            <span><i className="fas fa-user-tie"></i> Deactivated by: {selectedCustomer.deactivatedBy || 'Unknown'}</span>
+                            <span><i className="fas fa-clock"></i> On: {formatDateTime(selectedCustomer.statusUpdatedAt)}</span>
+                          </div>
+                        </div>
+                      )}
+                      
+                      <div className="status-actions">
+                        {selectedCustomer.accountStatus === 'inactive' ? (
+                          <button 
+                            className="status-action-btn activate"
+                            onClick={(e) => handleActivateClick(e, selectedCustomer)}
+                          >
+                            <i className="fas fa-user-check"></i> Activate Account
+                          </button>
+                        ) : (
+                          <button 
+                            className="status-action-btn deactivate"
+                            onClick={(e) => handleDeactivateClick(e, selectedCustomer)}
+                          >
+                            <i className="fas fa-user-slash"></i> Deactivate Account
+                          </button>
+                        )}
+                      </div>
+
+                      {/* Status History */}
+                      {selectedCustomer.statusHistory && selectedCustomer.statusHistory.length > 0 && (
+                        <div className="status-history-section">
+                          <h4><i className="fas fa-history"></i> Account Status History</h4>
+                          <div className="status-history-timeline">
+                            {selectedCustomer.statusHistory
+                              .sort((a, b) => new Date(b.actionAt) - new Date(a.actionAt))
+                              .map((history, index) => (
+                                <div key={index} className={`history-item ${history.action}`}>
+                                  <div className="history-icon">
+                                    <i className={`fas ${history.action === 'activated' ? 'fa-user-check' : 'fa-user-slash'}`}></i>
+                                  </div>
+                                  <div className="history-content">
+                                    <div className="history-header">
+                                      <span className={`history-action ${history.action}`}>
+                                        {history.action === 'activated' ? 'Account Activated' : 'Account Deactivated'}
+                                      </span>
+                                      <span className="history-date">{formatDateTime(history.actionAt)}</span>
+                                    </div>
+                                    <div className="history-details">
+                                      <p className="history-reason">
+                                        <i className="fas fa-comment-alt"></i> {history.reason || 'No reason provided'}
+                                      </p>
+                                      <p className="history-by">
+                                        <i className="fas fa-user-tie"></i> By: {history.actionBy}
+                                      </p>
+                                    </div>
+                                  </div>
+                                </div>
+                              ))}
+                          </div>
+                        </div>
+                      )}
                     </div>
                   </div>
                 </div>
@@ -2189,6 +2447,131 @@ const AdminPortal = () => {
                 Confirm Rejection
               </button>
               <button className="btn btn-close" onClick={() => setShowRejectModal(false)}>Cancel</button>
+            </div>
+          </div>
+        </div>,
+        document.body
+      )}
+
+      {/* Deactivate Customer Modal */}
+      {showDeactivateModal && customerToDeactivate && createPortal(
+        <div className="modal-overlay" onClick={() => setShowDeactivateModal(false)}>
+          <div className="deactivate-modal" onClick={e => e.stopPropagation()}>
+            <div className="deactivate-modal-header">
+              <div className="deactivate-icon">
+                <i className="fas fa-user-slash"></i>
+              </div>
+              <h3>Deactivate Account</h3>
+              <p>You are about to deactivate the following account:</p>
+            </div>
+            
+            <div className="deactivate-customer-info">
+              <div className="deactivate-avatar">
+                {customerToDeactivate.photoURL ? (
+                  <img src={customerToDeactivate.photoURL} alt={customerToDeactivate.name} />
+                ) : (
+                  <span>{customerToDeactivate.name?.charAt(0) || '?'}</span>
+                )}
+              </div>
+              <div className="deactivate-details">
+                <h4>{customerToDeactivate.name || 'Unknown User'}</h4>
+                <p>{customerToDeactivate.email}</p>
+              </div>
+            </div>
+
+            <div className="deactivate-reason-input">
+              <label><i className="fas fa-comment-alt"></i> Reason for Deactivation <span className="required">*</span></label>
+              <textarea
+                placeholder="Please provide a reason for deactivating this account (e.g., Violation of terms, Fraudulent activity, User request, etc.)"
+                value={deactivateReason}
+                onChange={(e) => setDeactivateReason(e.target.value)}
+                rows={4}
+              ></textarea>
+              <span className="char-count">{deactivateReason.length}/500 characters</span>
+            </div>
+
+            <div className="deactivate-warning">
+              <i className="fas fa-exclamation-triangle"></i>
+              <p>This action will immediately prevent the user from logging in. You can reactivate the account later from the admin panel.</p>
+            </div>
+
+            <div className="deactivate-modal-actions">
+              <button className="btn-cancel" onClick={() => setShowDeactivateModal(false)}>
+                <i className="fas fa-times"></i> Cancel
+              </button>
+              <button 
+                className="btn-deactivate" 
+                onClick={confirmDeactivation}
+                disabled={!deactivateReason.trim()}
+              >
+                <i className="fas fa-user-slash"></i> Deactivate Account
+              </button>
+            </div>
+          </div>
+        </div>,
+        document.body
+      )}
+
+      {/* Activate Customer Modal */}
+      {showActivateModal && customerToActivate && createPortal(
+        <div className="modal-overlay" onClick={() => setShowActivateModal(false)}>
+          <div className="deactivate-modal activate-modal" onClick={e => e.stopPropagation()}>
+            <div className="deactivate-modal-header activate-header">
+              <div className="deactivate-icon activate-icon">
+                <i className="fas fa-user-check"></i>
+              </div>
+              <h3>Activate Account</h3>
+              <p>You are about to activate the following account:</p>
+            </div>
+            
+            <div className="deactivate-customer-info">
+              <div className="deactivate-avatar">
+                {customerToActivate.photoURL ? (
+                  <img src={customerToActivate.photoURL} alt={customerToActivate.name} />
+                ) : (
+                  <span>{customerToActivate.name?.charAt(0) || '?'}</span>
+                )}
+              </div>
+              <div className="deactivate-details">
+                <h4>{customerToActivate.name || 'Unknown User'}</h4>
+                <p>{customerToActivate.email}</p>
+              </div>
+            </div>
+
+            {customerToActivate.deactivationReason && (
+              <div className="previous-deactivation-info">
+                <label><i className="fas fa-exclamation-circle"></i> Previous Deactivation Reason</label>
+                <p>{customerToActivate.deactivationReason}</p>
+              </div>
+            )}
+
+            <div className="deactivate-reason-input activate-reason-input">
+              <label><i className="fas fa-comment-alt"></i> Reason for Activation <span className="required">*</span></label>
+              <textarea
+                placeholder="Please provide a reason for activating this account (e.g., Issue resolved, User verification completed, Appeal approved, etc.)"
+                value={activateReason}
+                onChange={(e) => setActivateReason(e.target.value)}
+                rows={4}
+              ></textarea>
+              <span className="char-count">{activateReason.length}/500 characters</span>
+            </div>
+
+            <div className="activate-info">
+              <i className="fas fa-info-circle"></i>
+              <p>This action will immediately restore the user's access. They will be able to log in and use the platform again.</p>
+            </div>
+
+            <div className="deactivate-modal-actions">
+              <button className="btn-cancel" onClick={() => setShowActivateModal(false)}>
+                <i className="fas fa-times"></i> Cancel
+              </button>
+              <button 
+                className="btn-activate" 
+                onClick={confirmActivation}
+                disabled={!activateReason.trim()}
+              >
+                <i className="fas fa-user-check"></i> Activate Account
+              </button>
             </div>
           </div>
         </div>,
