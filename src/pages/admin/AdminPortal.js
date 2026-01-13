@@ -206,15 +206,26 @@ const AdminPortal = () => {
   }, []);
 
   // Fetch Customers
+  // Admin/Management roles that should be excluded from customer list
+  const managementRoles = ['super-admin', 'admin', 'admin-customers', 'admin-partners', 'admin-bookings'];
+
   const fetchCustomers = async () => {
     try {
       const usersRef = collection(db, 'users');
       // Fetch ALL users from Firebase users table
       const snapshot = await getDocs(usersRef);
-      const customersList = snapshot.docs.map(doc => ({
+      const allUsers = snapshot.docs.map(doc => ({
         id: doc.id,
         ...doc.data()
       }));
+      
+      // Filter out management/admin users - only show actual customers
+      const customersList = allUsers.filter(user => {
+        const userRole = user.role || '';
+        // Exclude users who have management/admin roles
+        return !managementRoles.includes(userRole);
+      });
+      
       setCustomers(customersList);
       setFilteredCustomers(customersList);
       setStats(prev => ({ ...prev, totalCustomers: customersList.length }));
