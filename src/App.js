@@ -29,6 +29,9 @@ import TravelAgents from './pages/Partner/TravelAgents';
 import AgentSignup from './pages/Partner/AgentSignup';
 import PortalDashboard from './pages/Partner/PortalDashboard';
 import AdminPortal from './pages/admin/AdminPortal';
+import AdminLogin from './pages/admin/AdminLogin';
+import ManagementPortal from './pages/admin/ManagementPortal';
+import ManagementLogin from './pages/admin/ManagementLogin';
 import PartnerDashboard from './pages/Partner/PartnerDashboard';
 import SetPassword from './pages/Partner/SetPassword';
 import ForgotPassword from './pages/Partner/ForgotPassword';
@@ -57,14 +60,20 @@ const partnerRoutes = ['/travel-agents', '/agent-login', '/agent-signup', '/set-
 const noFooterRoutes = [
   '/partner-dashboard',
   '/portal-dashboard',
-  '/admin-portal'
+  '/admin-portal',
+  '/admin-login',
+  '/management-portal',
+  '/management-login'
 ];
 
 // Routes that should have NO navbar
 const noNavbarRoutes = [
   '/partner-dashboard',
   '/portal-dashboard',
-  '/admin-portal'
+  '/admin-portal',
+  '/admin-login',
+  '/management-portal',
+  '/management-login'
 ];
 
 // Navbar component that conditionally renders based on route
@@ -140,7 +149,10 @@ function App() {
         <Route path="/forgot-password" element={<ForgotPassword />} />
         <Route path="/set-password" element={<SetPassword />} />
         <Route path="/portal-dashboard" element={<PortalDashboard />} />
+        <Route path="/admin-login" element={<AdminLogin />} />
         <Route path="/admin-portal" element={<AdminPortal />} />
+        <Route path="/management-login" element={<ManagementLogin />} />
+        <Route path="/management-portal" element={<ManagementPortal />} />
         <Route path="/partner-dashboard" element={<PartnerDashboard />} />
         
         {/* Dashboard Routes */}

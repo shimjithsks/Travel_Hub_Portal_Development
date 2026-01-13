@@ -1,8 +1,10 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { createPortal } from 'react-dom';
 import { useLocation, useNavigate, Link } from 'react-router-dom';
 import { collection, getDocs, query, where, doc, updateDoc, orderBy, limit, getDoc } from 'firebase/firestore';
-import { db } from '../../firebase/firebase';
+import { signOut } from 'firebase/auth';
+import { db, auth } from '../../firebase/firebase';
+import { useAuth } from '../../context/AuthContext';
 import { getAllPartners, approvePartner, rejectPartner, deletePartner } from '../../services/partnerService';
 import { sendApprovalEmail, sendRejectionEmail } from '../../services/emailService';
 import '../../styles/adminPortal.css';
@@ -10,6 +12,7 @@ import '../../styles/adminPortal.css';
 const AdminPortal = () => {
   const location = useLocation();
   const navigate = useNavigate();
+  const { user, profile, loading: authLoading } = useAuth();
   
   // Get tab from URL query params
   const searchParams = new URLSearchParams(location.search);
@@ -18,6 +21,7 @@ const AdminPortal = () => {
   const [activeSection, setActiveSection] = useState(initialTab);
   const [loading, setLoading] = useState(true);
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [accessChecked, setAccessChecked] = useState(false);
   
   // Dashboard Stats
   const [stats, setStats] = useState({
@@ -65,13 +69,64 @@ const AdminPortal = () => {
   const [actionLoading, setActionLoading] = useState(false);
   const [notification, setNotification] = useState({ show: false, message: '', type: '' });
 
-  // Sidebar Tabs
-  const tabs = [
-    { id: 'overview', label: 'Dashboard', icon: 'fas fa-th-large' },
-    { id: 'customers', label: 'Customers', icon: 'fas fa-users' },
-    { id: 'partners', label: 'Partners', icon: 'fas fa-handshake' },
-    { id: 'bookings', label: 'Bookings', icon: 'fas fa-calendar-check' }
+  // Get user role
+  const userRole = profile?.role || '';
+  const isSuperAdmin = userRole === 'super-admin';
+  const isFullAdmin = userRole === 'admin';
+  
+  // Role-based access control
+  const canAccessCustomers = isSuperAdmin || isFullAdmin || userRole === 'admin-customers';
+  const canAccessPartners = isSuperAdmin || isFullAdmin || userRole === 'admin-partners';
+  const canAccessBookings = isSuperAdmin || isFullAdmin || userRole === 'admin-bookings';
+
+  // Sidebar Tabs - filtered based on role
+  const allTabs = [
+    { id: 'overview', label: 'Dashboard', icon: 'fas fa-th-large', roles: ['super-admin', 'admin', 'admin-customers', 'admin-partners', 'admin-bookings'] },
+    { id: 'customers', label: 'Customers', icon: 'fas fa-users', roles: ['super-admin', 'admin', 'admin-customers'] },
+    { id: 'partners', label: 'Partners', icon: 'fas fa-handshake', roles: ['super-admin', 'admin', 'admin-partners'] },
+    { id: 'bookings', label: 'Bookings', icon: 'fas fa-calendar-check', roles: ['super-admin', 'admin', 'admin-bookings'] }
   ];
+
+  const tabs = useMemo(() => {
+    return allTabs.filter(tab => tab.roles.includes(userRole));
+  }, [userRole]);
+
+  // Get role display info
+  const getRoleDisplayInfo = (role) => {
+    const roleMap = {
+      'super-admin': { label: 'Super Admin', color: '#dc2626', icon: 'fas fa-crown' },
+      'admin': { label: 'Admin', color: '#7c3aed', icon: 'fas fa-user-shield' },
+      'admin-customers': { label: 'Customer Admin', color: '#0891b2', icon: 'fas fa-users' },
+      'admin-partners': { label: 'Partner Admin', color: '#059669', icon: 'fas fa-handshake' },
+      'admin-bookings': { label: 'Booking Admin', color: '#d97706', icon: 'fas fa-calendar-check' }
+    };
+    return roleMap[role] || { label: role, color: '#64748b', icon: 'fas fa-user' };
+  };
+
+  const roleInfo = getRoleDisplayInfo(userRole);
+
+  // Check authentication
+  useEffect(() => {
+    if (authLoading) return;
+    
+    if (!user) {
+      navigate('/admin-login');
+      return;
+    }
+    
+    const role = profile?.role || '';
+    if (role !== 'super-admin' && !role.startsWith('admin')) {
+      navigate('/admin-login');
+      return;
+    }
+
+    if (profile?.status === 'inactive') {
+      navigate('/admin-login');
+      return;
+    }
+    
+    setAccessChecked(true);
+  }, [user, profile, authLoading, navigate]);
 
   // Update URL when tab changes
   useEffect(() => {
@@ -155,38 +210,6 @@ const AdminPortal = () => {
       setStats(prev => ({ ...prev, totalCustomers: customersList.length }));
     } catch (error) {
       console.error('Error fetching users:', error);
-    }
-  };
-
-  // Generate Registration IDs for existing users
-  const generateRegistrationIds = async () => {
-    const usersWithoutId = customers.filter(c => !c.registrationId);
-    if (usersWithoutId.length === 0) {
-      alert('All users already have registration IDs!');
-      return;
-    }
-
-    if (!window.confirm(`Generate registration IDs for ${usersWithoutId.length} user(s)?`)) {
-      return;
-    }
-
-    setLoading(true);
-    try {
-      let updated = 0;
-      for (const user of usersWithoutId) {
-        const registrationId = `TA${Date.now().toString(36).toUpperCase()}${Math.random().toString(36).substring(2, 6).toUpperCase()}`;
-        await updateDoc(doc(db, 'users', user.id), { registrationId });
-        updated++;
-        // Small delay to ensure unique timestamps
-        await new Promise(resolve => setTimeout(resolve, 50));
-      }
-      alert(`Successfully generated ${updated} registration ID(s)!`);
-      await fetchCustomers(); // Refresh the list
-    } catch (error) {
-      console.error('Error generating registration IDs:', error);
-      alert('Error generating registration IDs. Check console for details.');
-    } finally {
-      setLoading(false);
     }
   };
 
@@ -1015,7 +1038,7 @@ const AdminPortal = () => {
               <i className="fas fa-search"></i>
               <input
                 type="text"
-                placeholder="Search by name, email, phone, user ID..."
+                placeholder="Search by name, email, phone, customer ID..."
                 value={customerSearch}
                 onChange={(e) => setCustomerSearch(e.target.value)}
               />
@@ -1066,7 +1089,15 @@ const AdminPortal = () => {
                     <div className="customer-list-info">
                       <h4>{customer.name || 'Unknown User'}</h4>
                       <p>{customer.email}</p>
-                      <span className="customer-reg-id"><i className="fas fa-id-badge"></i> {customer.registrationId || 'N/A'}</span>
+                      {customer.registrationId ? (
+                        <span className="customer-reg-id has-id">
+                          <i className="fas fa-id-badge"></i> {customer.registrationId}
+                        </span>
+                      ) : (
+                        <span className="customer-reg-id no-id">
+                          <i className="fas fa-exclamation-circle"></i> No Customer ID
+                        </span>
+                      )}
                     </div>
                     <div className="customer-list-meta">
                       <span className="meta-item">
@@ -1320,15 +1351,42 @@ const AdminPortal = () => {
       case 'overview':
         return renderOverview();
       case 'customers':
-        return renderCustomers();
+        return canAccessCustomers ? renderCustomers() : renderAccessDenied('Customers');
       case 'partners':
-        return renderPartners();
+        return canAccessPartners ? renderPartners() : renderAccessDenied('Partners');
       case 'bookings':
-        return renderBookings();
+        return canAccessBookings ? renderBookings() : renderAccessDenied('Bookings');
       default:
         return renderOverview();
     }
   };
+
+  // Render Access Denied
+  const renderAccessDenied = (section) => (
+    <div className="access-denied-section">
+      <div className="access-denied-content">
+        <i className="fas fa-lock"></i>
+        <h2>Access Restricted</h2>
+        <p>You don't have permission to access the {section} section.</p>
+        <p>Contact your Super Admin to request access.</p>
+        <button onClick={() => setActiveSection('overview')} className="back-to-dashboard-btn">
+          <i className="fas fa-arrow-left"></i> Back to Dashboard
+        </button>
+      </div>
+    </div>
+  );
+
+  // Show loading while checking auth
+  if (authLoading || !accessChecked) {
+    return (
+      <div className="admin-portal">
+        <div className="admin-loading-screen">
+          <i className="fas fa-spinner fa-spin"></i>
+          <p>Loading...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="admin-portal">
@@ -1350,13 +1408,13 @@ const AdminPortal = () => {
         </div>
 
         <div className="admin-user-info">
-          <div className="admin-user-avatar">
-            <i className="fas fa-user-shield"></i>
+          <div className="admin-user-avatar" style={{ borderColor: roleInfo.color }}>
+            <i className={roleInfo.icon} style={{ color: roleInfo.color }}></i>
           </div>
-          <h3>Super Admin</h3>
-          <p className="admin-user-email">shimjith@travelaxis.com</p>
-          <span className="admin-role-badge">
-            <i className="fas fa-crown"></i> Full Access
+          <h3>{profile?.name || user?.displayName || 'Admin'}</h3>
+          <p className="admin-user-email">{profile?.email || user?.email || ''}</p>
+          <span className="admin-role-badge" style={{ background: roleInfo.color }}>
+            <i className={roleInfo.icon}></i> {roleInfo.label}
           </span>
         </div>
 
@@ -1369,7 +1427,7 @@ const AdminPortal = () => {
             >
               <i className={tab.icon}></i>
               <span>{tab.label}</span>
-              {tab.id === 'partners' && stats.pendingPartners > 0 && (
+              {tab.id === 'partners' && stats.pendingPartners > 0 && canAccessPartners && (
                 <span className="nav-badge">{stats.pendingPartners}</span>
               )}
             </button>
@@ -1377,7 +1435,16 @@ const AdminPortal = () => {
         </nav>
 
         <div className="admin-sidebar-footer">
-          <button className="admin-logout-btn" onClick={() => navigate('/')}>
+          {isSuperAdmin && (
+            <button className="admin-mgmt-btn" onClick={() => navigate('/management-portal')}>
+              <i className="fas fa-users-cog"></i>
+              <span>Manage Employees</span>
+            </button>
+          )}
+          <button className="admin-logout-btn" onClick={async () => {
+            await signOut(auth);
+            navigate('/admin-login');
+          }}>
             <i className="fas fa-sign-out-alt"></i>
             <span>Logout</span>
           </button>
@@ -1397,7 +1464,7 @@ const AdminPortal = () => {
             </button>
             <div className="admin-header-title">
               <h1>{tabs.find(t => t.id === activeSection)?.label || 'Dashboard'}</h1>
-              <p className="admin-welcome">Welcome back, Shimjith! Manage your portal here.</p>
+              <p className="admin-welcome">Welcome back, {profile?.name || user?.displayName || 'Admin'}! Manage your portal here.</p>
             </div>
           </div>
           <div className="admin-header-right">
