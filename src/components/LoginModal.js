@@ -236,9 +236,13 @@ export default function LoginModal({ isOpen, onClose }) {
         throw new Error('Phone number is required');
       }
 
+      // Generate unique registration ID (TA = Travel Axis)
+      const registrationId = `TA${Date.now().toString(36).toUpperCase()}${Math.random().toString(36).substring(2, 6).toUpperCase()}`;
+
       // Save complete profile to Firestore
       await setDoc(doc(db, 'users', googleUser.uid), {
         role: 'customer',
+        registrationId,
         name: profileData.fullName,
         email: profileData.email,
         phone: `${countryCode}${profileData.phone}`,
@@ -273,8 +277,12 @@ export default function LoginModal({ isOpen, onClose }) {
     // Save minimal profile and proceed
     if (googleUser) {
       try {
+        // Generate unique registration ID (TA = Travel Axis)
+        const registrationId = `TA${Date.now().toString(36).toUpperCase()}${Math.random().toString(36).substring(2, 6).toUpperCase()}`;
+
         await setDoc(doc(db, 'users', googleUser.uid), {
           role: 'customer',
+          registrationId,
           name: googleUser.displayName || '',
           email: googleUser.email || '',
           photoURL: googleUser.photoURL || '',
@@ -304,8 +312,12 @@ export default function LoginModal({ isOpen, onClose }) {
         await updateProfile(cred.user, { displayName: fullName });
       }
 
+      // Generate unique registration ID (TA = Travel Axis)
+      const registrationId = `TA${Date.now().toString(36).toUpperCase()}${Math.random().toString(36).substring(2, 6).toUpperCase()}`;
+
       await setDoc(doc(db, 'users', cred.user.uid), {
         role: 'customer',
+        registrationId,
         name: fullName,
         email: signupEmail,
         phone: `${countryCode}${phoneNumber}`,

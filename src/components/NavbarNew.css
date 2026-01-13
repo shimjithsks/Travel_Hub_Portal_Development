@@ -548,14 +548,14 @@
   position: absolute;
   top: 100%;
   left: 0;
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.98) 0%, rgba(248, 250, 252, 0.98) 100%);
+  background: linear-gradient(180deg, #1e293b 0%, #0f172a 100%);
   border-radius: 16px;
-  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.15), 0 8px 16px rgba(0, 0, 0, 0.08);
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.3), 0 8px 16px rgba(0, 0, 0, 0.2);
   padding: 0;
   min-width: 240px;
   margin-top: 12px;
   animation: dropdownFade 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  border: 1px solid rgba(226, 232, 240, 0.6);
+  border: 1px solid rgba(255, 255, 255, 0.1);
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
   overflow: hidden;
@@ -575,22 +575,22 @@
 .dropdown-header {
   display: flex;
   align-items: center;
-  gap: 10px;
-  padding: 14px 18px;
-  background: linear-gradient(135deg, rgba(37, 99, 235, 0.08) 0%, rgba(124, 58, 237, 0.08) 100%);
-  border-bottom: 1px solid rgba(37, 99, 235, 0.1);
+  gap: 8px;
+  padding: 12px 16px;
+  background: linear-gradient(135deg, #1e3a5f 0%, #1e293b 100%);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
   margin-bottom: 8px;
 }
 
 .dropdown-header i {
-  font-size: 18px;
-  color: #2563eb;
+  font-size: 16px;
+  color: #10b981;
 }
 
 .dropdown-header span {
-  font-size: 14px;
+  font-size: 13px;
   font-weight: 700;
-  color: #1e293b;
+  color: #10b981;
 }
 
 .dropdown-menu a {
@@ -598,7 +598,7 @@
   align-items: center;
   gap: 12px;
   padding: 12px 18px;
-  color: #475569;
+  color: #cbd5e1;
   text-decoration: none;
   transition: all 0.3s ease;
   font-size: 14px;
@@ -613,7 +613,7 @@
   top: 0;
   bottom: 0;
   width: 4px;
-  background: linear-gradient(135deg, #2563eb 0%, #7c3aed 100%);
+  background: linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%);
   opacity: 0;
   transition: opacity 0.3s ease;
   border-radius: 0 2px 2px 0;
@@ -624,20 +624,20 @@
 }
 
 .dropdown-menu a:hover {
-  background: linear-gradient(90deg, rgba(37, 99, 235, 0.08) 0%, transparent 100%);
-  color: #2563eb;
+  background: linear-gradient(90deg, rgba(59, 130, 246, 0.2) 0%, transparent 100%);
+  color: #60a5fa;
   padding-left: 22px;
 }
 
 .dropdown-menu a i {
   width: 22px;
   font-size: 15px;
-  color: #94a3b8;
+  color: #64748b;
   transition: all 0.3s ease;
 }
 
 .dropdown-menu a:hover i {
-  color: #2563eb;
+  color: #60a5fa;
   transform: scale(1.15);
 }
 
@@ -711,56 +711,118 @@
   transform: rotate(180deg);
 }
 
-/* Agents Button - Multi-Color Gradient Style */
-.agents-btn {
-  background: linear-gradient(135deg, #f97316 0%, #ec4899 35%, #8b5cf6 70%, #3b82f6 100%);
-  background-size: 200% 200%;
-  border: none;
-  color: white;
-  animation: gradientFlow 4s ease infinite;
+/* Agents Button - Multi-Color Gradient Style with Shimmer */
+.agents-btn,
+.header-btn.agents-btn,
+.nav-actions .header-btn.agents-btn {
+  background: linear-gradient(135deg, #f97316, #ec4899 35%, #8b5cf6 70%, #3b82f6) !important;
+  border: none !important;
+  color: white !important;
+  position: relative !important;
+  overflow: hidden !important;
 }
 
-@keyframes gradientFlow {
-  0% { background-position: 0% 50%; }
-  50% { background-position: 100% 50%; }
-  100% { background-position: 0% 50%; }
+.agents-btn::after,
+.header-btn.agents-btn::after,
+.nav-actions .header-btn.agents-btn::after {
+  content: '' !important;
+  position: absolute !important;
+  top: 0 !important;
+  left: -100% !important;
+  width: 100% !important;
+  height: 100% !important;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.5), transparent) !important;
+  animation: shimmerEffect 2s linear infinite !important;
 }
 
-.agents-btn i {
-  color: white;
+@keyframes shimmerEffect {
+  0% { left: -100%; }
+  100% { left: 100%; }
 }
 
-.agents-btn:hover {
-  background: linear-gradient(135deg, #ea580c 0%, #db2777 35%, #7c3aed 70%, #2563eb 100%);
-  background-size: 200% 200%;
-  border-color: transparent;
-  color: white;
+.agents-btn i,
+.header-btn.agents-btn i,
+.nav-actions .header-btn.agents-btn i {
+  color: white !important;
+  position: relative !important;
+  z-index: 1 !important;
+}
+
+.agents-btn span,
+.header-btn.agents-btn span,
+.nav-actions .header-btn.agents-btn span {
+  color: white !important;
+  position: relative !important;
+  z-index: 1 !important;
+}
+
+.agents-btn:hover,
+.header-btn.agents-btn:hover,
+.nav-actions .header-btn.agents-btn:hover {
+  background: linear-gradient(135deg, #ea580c, #db2777 35%, #7c3aed 70%, #2563eb) !important;
+  border-color: transparent !important;
+  color: white !important;
   box-shadow: 0 6px 24px rgba(236, 72, 153, 0.4), 0 4px 12px rgba(139, 92, 246, 0.3);
-  animation: gradientFlow 2s ease infinite;
 }
 
-.agents-btn:hover i {
-  color: white;
+.agents-btn:hover::after,
+.header-btn.agents-btn:hover::after,
+.nav-actions .header-btn.agents-btn:hover::after {
+  animation: shimmerEffect 1s linear infinite !important;
+}
+
+.agents-btn:hover i,
+.header-btn.agents-btn:hover i,
+.nav-actions .header-btn.agents-btn:hover i {
+  color: white !important;
 }
 
 /* Support/Help Button */
-.support-btn {
-  background: linear-gradient(135deg, rgba(16, 185, 129, 0.08) 0%, rgba(5, 150, 105, 0.08) 100%);
-  border-color: rgba(16, 185, 129, 0.2);
+.support-btn,
+.header-btn.support-btn,
+.nav-actions .header-btn.support-btn {
+  background: linear-gradient(135deg, rgba(16, 185, 129, 0.15) 0%, rgba(5, 150, 105, 0.12) 100%) !important;
+  border: 1.5px solid rgba(16, 185, 129, 0.3) !important;
+  color: #059669 !important;
 }
 
-.support-btn i:first-child {
-  color: #10b981;
+.support-btn i:first-child,
+.header-btn.support-btn i:first-child,
+.nav-actions .header-btn.support-btn i:first-child {
+  color: #10b981 !important;
 }
 
-.support-btn:hover {
-  border-color: #10b981;
-  color: #059669;
-  box-shadow: 0 6px 20px rgba(16, 185, 129, 0.2);
+.support-btn span,
+.header-btn.support-btn span,
+.nav-actions .header-btn.support-btn span {
+  color: #059669 !important;
 }
 
-.support-btn:hover i {
-  color: #059669;
+.support-btn .fa-chevron-down,
+.header-btn.support-btn .fa-chevron-down,
+.nav-actions .header-btn.support-btn .fa-chevron-down {
+  color: #10b981 !important;
+}
+
+.support-btn:hover,
+.header-btn.support-btn:hover,
+.nav-actions .header-btn.support-btn:hover {
+  background: linear-gradient(135deg, rgba(16, 185, 129, 0.22) 0%, rgba(5, 150, 105, 0.18) 100%) !important;
+  border-color: #10b981 !important;
+  color: #047857 !important;
+  box-shadow: 0 6px 20px rgba(16, 185, 129, 0.25);
+}
+
+.support-btn:hover i,
+.header-btn.support-btn:hover i,
+.nav-actions .header-btn.support-btn:hover i {
+  color: #047857 !important;
+}
+
+.support-btn:hover span,
+.header-btn.support-btn:hover span,
+.nav-actions .header-btn.support-btn:hover span {
+  color: #047857 !important;
 }
 
 .login-btn {
@@ -924,13 +986,14 @@
   .dropdown-menu {
     position: static;
     box-shadow: none;
-    background: #f7f9fc;
+    background: #1e293b;
     margin-top: 0;
     border-radius: 0;
   }
 
   .dropdown-menu a {
     padding: 12px 35px;
+    color: #cbd5e1;
   }
 
   .mega-menu {
@@ -944,7 +1007,21 @@
   }
 
   .nav-actions {
-    display: none;
+    display: flex;
+    gap: 8px;
+  }
+
+  .nav-actions .header-btn {
+    padding: 10px 18px;
+    font-size: 13px;
+  }
+
+  .nav-actions .header-btn span {
+    display: inline;
+  }
+
+  .nav-actions .header-btn i {
+    font-size: 14px;
   }
 }
 
@@ -971,6 +1048,22 @@
 
   .yatra-prime-badge,
   .yatra-business {
+    display: none;
+  }
+
+  .nav-actions .header-btn {
+    padding: 8px 12px;
+  }
+
+  .nav-actions .header-btn span {
+    display: none;
+  }
+
+  .nav-actions .header-btn i {
+    font-size: 16px;
+  }
+
+  .nav-actions .support-btn .fa-chevron-down {
     display: none;
   }
 }

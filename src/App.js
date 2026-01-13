@@ -28,6 +28,7 @@ import Register from './pages/Register';
 import TravelAgents from './pages/Partner/TravelAgents';
 import AgentSignup from './pages/Partner/AgentSignup';
 import PortalDashboard from './pages/Partner/PortalDashboard';
+import AdminPortal from './pages/admin/AdminPortal';
 import PartnerDashboard from './pages/Partner/PartnerDashboard';
 import SetPassword from './pages/Partner/SetPassword';
 import ForgotPassword from './pages/Partner/ForgotPassword';
@@ -50,16 +51,20 @@ import Offers from './pages/Offers';
 import './App.css';
 
 // Routes that should show PartnerNavbar and PartnerFooter
-const partnerRoutes = ['/travel-agents', '/agent-login', '/agent-signup', '/set-password', '/forgot-password', '/portal-dashboard'];
+const partnerRoutes = ['/travel-agents', '/agent-login', '/agent-signup', '/set-password', '/forgot-password'];
 
 // Routes that should have NO footer
 const noFooterRoutes = [
-  '/partner-dashboard'
+  '/partner-dashboard',
+  '/portal-dashboard',
+  '/admin-portal'
 ];
 
 // Routes that should have NO navbar
 const noNavbarRoutes = [
-  '/partner-dashboard'
+  '/partner-dashboard',
+  '/portal-dashboard',
+  '/admin-portal'
 ];
 
 // Navbar component that conditionally renders based on route
@@ -135,6 +140,7 @@ function App() {
         <Route path="/forgot-password" element={<ForgotPassword />} />
         <Route path="/set-password" element={<SetPassword />} />
         <Route path="/portal-dashboard" element={<PortalDashboard />} />
+        <Route path="/admin-portal" element={<AdminPortal />} />
         <Route path="/partner-dashboard" element={<PartnerDashboard />} />
         
         {/* Dashboard Routes */}

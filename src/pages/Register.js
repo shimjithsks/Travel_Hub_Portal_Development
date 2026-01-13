@@ -36,8 +36,12 @@ export default function Register() {
       const cred = await createUserWithEmailAndPassword(auth, email, password);
       if (name) await updateProfile(cred.user, { displayName: name });
 
+      // Generate unique registration ID (TA = Travel Axis)
+      const registrationId = `TA${Date.now().toString(36).toUpperCase()}${Math.random().toString(36).substring(2, 6).toUpperCase()}`;
+
       await setDoc(doc(db, 'users', cred.user.uid), {
         role,
+        registrationId,
         name: name || '',
         email,
         createdAt: serverTimestamp(),
