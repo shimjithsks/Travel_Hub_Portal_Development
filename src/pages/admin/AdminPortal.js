@@ -1128,144 +1128,1022 @@ const AdminPortal = () => {
     return <span className={`status-badge ${statusClasses[status] || ''}`}>{status?.toUpperCase()}</span>;
   };
 
-  // Render Dashboard Overview
-  const renderOverview = () => (
-    <div className="admin-overview">
-      <h2 className="section-title"><i className="fas fa-chart-line"></i> Dashboard Overview</h2>
-      
-      {/* Stats Cards */}
-      <div className="admin-stats-grid">
-        <div className="admin-stat-card customers" onClick={() => setActiveSection('customers')}>
-          <div className="stat-icon"><i className="fas fa-users"></i></div>
-          <div className="stat-info">
-            <h3>{stats.totalCustomers}</h3>
-            <p>Total Customers</p>
-          </div>
-          <div className="stat-arrow"><i className="fas fa-arrow-right"></i></div>
-        </div>
-        
-        <div className="admin-stat-card partners" onClick={() => setActiveSection('partners')}>
-          <div className="stat-icon"><i className="fas fa-handshake"></i></div>
-          <div className="stat-info">
-            <h3>{stats.totalPartners}</h3>
-            <p>Total Partners</p>
-          </div>
-          <div className="stat-arrow"><i className="fas fa-arrow-right"></i></div>
-        </div>
-        
-        <div className="admin-stat-card active" onClick={() => { setActiveSection('partners'); setPartnerStatusFilter('approved'); }}>
-          <div className="stat-icon"><i className="fas fa-check-circle"></i></div>
-          <div className="stat-info">
-            <h3>{stats.activePartners}</h3>
-            <p>Active Partners</p>
-          </div>
-          <div className="stat-arrow"><i className="fas fa-arrow-right"></i></div>
-        </div>
-        
-        <div className="admin-stat-card pending" onClick={() => { setActiveSection('partners'); setPartnerStatusFilter('pending'); }}>
-          <div className="stat-icon"><i className="fas fa-clock"></i></div>
-          <div className="stat-info">
-            <h3>{stats.pendingPartners}</h3>
-            <p>Pending Approval</p>
-          </div>
-          <div className="stat-arrow"><i className="fas fa-arrow-right"></i></div>
-        </div>
-        
-        <div className="admin-stat-card bookings" onClick={() => setActiveSection('bookings')}>
-          <div className="stat-icon"><i className="fas fa-calendar-check"></i></div>
-          <div className="stat-info">
-            <h3>{stats.totalBookings}</h3>
-            <p>Total Bookings</p>
-          </div>
-          <div className="stat-arrow"><i className="fas fa-arrow-right"></i></div>
-        </div>
-        
-        <div className="admin-stat-card revenue">
-          <div className="stat-icon"><i className="fas fa-rupee-sign"></i></div>
-          <div className="stat-info">
-            <h3>₹{stats.totalRevenue.toLocaleString()}</h3>
-            <p>Total Revenue</p>
-          </div>
-        </div>
-      </div>
+  // Render Dashboard Overview - Role-Based Modern Design
+  const renderOverview = () => {
+    // Calculate advanced analytics
+    const thirtyDaysAgo = new Date();
+    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+    const sevenDaysAgo = new Date();
+    sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+    
+    // Customer Analytics
+    const newCustomers30Days = customers.filter(c => {
+      const createdAt = c.createdAt?.toDate?.() || new Date(c.createdAt);
+      return createdAt > thirtyDaysAgo;
+    }).length;
+    
+    const newCustomers7Days = customers.filter(c => {
+      const createdAt = c.createdAt?.toDate?.() || new Date(c.createdAt);
+      return createdAt > sevenDaysAgo;
+    }).length;
 
-      {/* Quick Actions & Recent Activity */}
-      <div className="overview-grid">
-        {/* Quick Actions */}
-        <div className="overview-card quick-actions-card">
-          <h3><i className="fas fa-bolt"></i> Quick Actions</h3>
-          <div className="quick-actions-list">
-            <button onClick={() => { setActiveSection('partners'); setPartnerStatusFilter('pending'); }}>
-              <i className="fas fa-user-clock"></i>
-              <span>Review Pending Partners ({stats.pendingPartners})</span>
-            </button>
-            <button onClick={() => setActiveSection('customers')}>
-              <i className="fas fa-users"></i>
-              <span>Manage Customers</span>
-            </button>
-            <button onClick={() => setActiveSection('bookings')}>
-              <i className="fas fa-calendar-alt"></i>
-              <span>View All Bookings</span>
-            </button>
-            <button onClick={fetchAllData}>
-              <i className="fas fa-sync-alt"></i>
-              <span>Refresh Data</span>
-            </button>
-          </div>
-        </div>
+    const activeCustomers = customers.filter(c => c.status !== 'inactive').length;
+    
+    // Partner Analytics
+    const approvedPartners = partners.filter(p => p.status === 'approved').length;
+    const pendingPartners = partners.filter(p => p.status === 'pending').length;
+    const rejectedPartners = partners.filter(p => p.status === 'rejected').length;
+    
+    const newPartners30Days = partners.filter(p => {
+      const createdAt = p.createdAt?.toDate?.() || new Date(p.createdAt);
+      return createdAt > thirtyDaysAgo;
+    }).length;
+    
+    // Booking Analytics
+    const confirmedBookings = bookings.filter(b => b.status === 'confirmed').length;
+    const completedBookings = bookings.filter(b => b.status === 'completed').length;
+    const pendingBookingsCount = bookings.filter(b => b.status === 'pending').length;
+    const cancelledBookings = bookings.filter(b => b.status === 'cancelled').length;
+    
+    const vehicleBookings = bookings.filter(b => 
+      b.bookingType === 'vehicle' || b.bookingType === 'fleet' || b.bookingType === 'car'
+    ).length;
+    const holidayBookings = bookings.filter(b => 
+      b.bookingType === 'holiday' || b.bookingType === 'tour' || b.bookingType === 'package'
+    ).length;
+    const hotelBookings = bookings.filter(b => 
+      b.bookingType === 'hotel' || b.bookingType === 'accommodation'
+    ).length;
+    
+    const totalRevenue = bookings.reduce((sum, b) => sum + (b.totalAmount || b.amount || 0), 0);
+    const totalCommission = totalRevenue * 0.10;
+    
+    // Monthly data for chart
+    const getMonthlyData = () => {
+      const months = [];
+      const today = new Date();
+      for (let i = 5; i >= 0; i--) {
+        const monthStart = new Date(today.getFullYear(), today.getMonth() - i, 1);
+        const monthEnd = new Date(today.getFullYear(), today.getMonth() - i + 1, 0);
+        const monthName = monthStart.toLocaleDateString('en-US', { month: 'short' });
+        
+        const monthBookings = bookings.filter(b => {
+          const date = b.createdAt?.toDate?.() || new Date(b.createdAt || b.bookingDate);
+          return date >= monthStart && date <= monthEnd;
+        });
+        
+        const monthCustomers = customers.filter(c => {
+          const date = c.createdAt?.toDate?.() || new Date(c.createdAt);
+          return date >= monthStart && date <= monthEnd;
+        }).length;
+        
+        const monthPartners = partners.filter(p => {
+          const date = p.createdAt?.toDate?.() || new Date(p.createdAt);
+          return date >= monthStart && date <= monthEnd;
+        }).length;
+        
+        months.push({
+          month: monthName,
+          bookings: monthBookings.length,
+          revenue: monthBookings.reduce((sum, b) => sum + (b.totalAmount || b.amount || 0), 0),
+          customers: monthCustomers,
+          partners: monthPartners
+        });
+      }
+      return months;
+    };
+    
+    const monthlyData = getMonthlyData();
+    const maxMonthlyBookings = Math.max(...monthlyData.map(m => m.bookings), 1);
+    const maxMonthlyRevenue = Math.max(...monthlyData.map(m => m.revenue), 1);
+    
+    // Top performing partners
+    const partnerBookingCounts = {};
+    bookings.forEach(b => {
+      const partnerId = b.partnerId || b.operatorId;
+      if (partnerId) {
+        partnerBookingCounts[partnerId] = (partnerBookingCounts[partnerId] || 0) + 1;
+      }
+    });
+    
+    const topPartners = Object.entries(partnerBookingCounts)
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 5)
+      .map(([partnerId, count]) => {
+        const partner = partners.find(p => p.id === partnerId || p.partnerId === partnerId);
+        return { 
+          id: partnerId, 
+          name: partner?.companyName || partner?.businessName || 'Unknown Partner',
+          count,
+          revenue: bookings.filter(b => (b.partnerId || b.operatorId) === partnerId)
+            .reduce((sum, b) => sum + (b.totalAmount || b.amount || 0), 0)
+        };
+      });
 
-        {/* Recent Customers */}
-        <div className="overview-card recent-customers-card">
-          <h3><i className="fas fa-user-plus"></i> Recent Customers</h3>
-          <div className="recent-list">
-            {customers.slice(0, 5).map(customer => (
-              <div key={customer.id} className="recent-item" onClick={() => handleViewCustomer(customer)}>
-                <div className="recent-avatar">
-                  {customer.photoURL ? (
-                    <img src={customer.photoURL} alt={customer.name} />
-                  ) : (
-                    <span>{customer.name?.charAt(0) || customer.email?.charAt(0) || '?'}</span>
-                  )}
-                </div>
-                <div className="recent-info">
-                  <strong>{customer.name || 'Unknown'}</strong>
-                  <small>{customer.email}</small>
-                </div>
-                <small className="recent-date">{formatDate(customer.createdAt)}</small>
+    return (
+      <div className="admin-overview-modern">
+        {/* Welcome Header */}
+        <div className="overview-welcome-section">
+          <div className="welcome-content">
+            <div className="welcome-text">
+              <h1>Welcome back, {profile?.name || 'Admin'}!</h1>
+              <p>Here's what's happening with your platform today</p>
+            </div>
+            <div className="welcome-meta">
+              <div className="role-indicator" style={{ backgroundColor: roleInfo.color + '15', borderColor: roleInfo.color }}>
+                <i className={roleInfo.icon} style={{ color: roleInfo.color }}></i>
+                <span style={{ color: roleInfo.color }}>{roleInfo.label}</span>
               </div>
-            ))}
+              <div className="last-updated">
+                <i className="fas fa-clock"></i>
+                <span>Updated {new Date().toLocaleTimeString()}</span>
+              </div>
+            </div>
           </div>
+          <button className="refresh-overview-btn" onClick={fetchAllData} disabled={loading}>
+            <i className={`fas fa-sync-alt ${loading ? 'fa-spin' : ''}`}></i>
+            Refresh
+          </button>
         </div>
 
-        {/* Pending Partners */}
-        <div className="overview-card pending-partners-card">
-          <h3><i className="fas fa-hourglass-half"></i> Pending Partners</h3>
-          <div className="recent-list">
-            {partners.filter(p => p.status === 'pending').slice(0, 5).map(partner => (
-              <div key={partner.id} className="recent-item" onClick={() => handleViewPartner(partner)}>
-                <div className="recent-avatar partner">
-                  <i className="fas fa-building"></i>
+        {/* Key Performance Indicators - Role Based & Rearranged */}
+        <div className="overview-kpi-grid">
+          {/* For admin-customers: Customers first */}
+          {userRole === 'admin-customers' && (
+            <>
+              <div className="kpi-card customers-kpi primary-kpi" onClick={() => setActiveSection('customers')}>
+                <div className="kpi-icon-wrapper">
+                  <div className="kpi-icon customers">
+                    <i className="fas fa-users"></i>
+                  </div>
                 </div>
-                <div className="recent-info">
-                  <strong>{partner.companyName}</strong>
-                  <small>{partner.email}</small>
+                <div className="kpi-content">
+                  <span className="kpi-label">Total Customers</span>
+                  <h2 className="kpi-value">{customers.length.toLocaleString()}</h2>
+                  <div className="kpi-footer">
+                    <span className="kpi-substat">
+                      <i className="fas fa-user-plus"></i>
+                      +{newCustomers7Days} this week
+                    </span>
+                  </div>
                 </div>
-                <button className="review-btn" onClick={(e) => { e.stopPropagation(); handleViewPartner(partner); }}>
-                  Review
-                </button>
+                <div className="kpi-trend positive">
+                  <i className="fas fa-arrow-up"></i>
+                  <span>{newCustomers30Days}</span>
+                </div>
               </div>
-            ))}
-            {partners.filter(p => p.status === 'pending').length === 0 && (
-              <div className="empty-recent">
-                <i className="fas fa-check-circle"></i>
-                <p>No pending partners</p>
+              <div className="kpi-card revenue-kpi">
+                <div className="kpi-icon-wrapper">
+                  <div className="kpi-icon revenue">
+                    <i className="fas fa-rupee-sign"></i>
+                  </div>
+                </div>
+                <div className="kpi-content">
+                  <span className="kpi-label">Total Revenue</span>
+                  <h2 className="kpi-value">₹{totalRevenue.toLocaleString('en-IN')}</h2>
+                  <div className="kpi-footer">
+                    <span className="kpi-commission">
+                      <i className="fas fa-percentage"></i>
+                      ₹{totalCommission.toLocaleString('en-IN')} Commission
+                    </span>
+                  </div>
+                </div>
+              </div>
+            </>
+          )}
+
+          {/* For admin-partners: Partners first */}
+          {userRole === 'admin-partners' && (
+            <>
+              <div className="kpi-card partners-kpi primary-kpi" onClick={() => setActiveSection('partners')}>
+                <div className="kpi-icon-wrapper">
+                  <div className="kpi-icon partners">
+                    <i className="fas fa-handshake"></i>
+                  </div>
+                </div>
+                <div className="kpi-content">
+                  <span className="kpi-label">Total Partners</span>
+                  <h2 className="kpi-value">{partners.length.toLocaleString()}</h2>
+                  <div className="kpi-footer">
+                    <span className="kpi-substat approved">
+                      <i className="fas fa-check-circle"></i>
+                      {approvedPartners} Active
+                    </span>
+                    {pendingPartners > 0 && (
+                      <span className="kpi-substat pending">
+                        <i className="fas fa-clock"></i>
+                        {pendingPartners} Pending
+                      </span>
+                    )}
+                  </div>
+                </div>
+                {pendingPartners > 0 && (
+                  <div className="kpi-alert">
+                    <span>{pendingPartners}</span>
+                  </div>
+                )}
+              </div>
+              <div className="kpi-card revenue-kpi">
+                <div className="kpi-icon-wrapper">
+                  <div className="kpi-icon revenue">
+                    <i className="fas fa-rupee-sign"></i>
+                  </div>
+                </div>
+                <div className="kpi-content">
+                  <span className="kpi-label">Total Revenue</span>
+                  <h2 className="kpi-value">₹{totalRevenue.toLocaleString('en-IN')}</h2>
+                  <div className="kpi-footer">
+                    <span className="kpi-commission">
+                      <i className="fas fa-percentage"></i>
+                      ₹{totalCommission.toLocaleString('en-IN')} Commission
+                    </span>
+                  </div>
+                </div>
+              </div>
+            </>
+          )}
+
+          {/* For admin-bookings: Bookings first */}
+          {userRole === 'admin-bookings' && (
+            <>
+              <div className="kpi-card bookings-kpi primary-kpi" onClick={() => setActiveSection('bookings')}>
+                <div className="kpi-icon-wrapper">
+                  <div className="kpi-icon bookings">
+                    <i className="fas fa-calendar-check"></i>
+                  </div>
+                </div>
+                <div className="kpi-content">
+                  <span className="kpi-label">Total Bookings</span>
+                  <h2 className="kpi-value">{bookings.length.toLocaleString()}</h2>
+                  <div className="kpi-footer">
+                    <span className="kpi-substat confirmed">
+                      <i className="fas fa-check"></i>
+                      {confirmedBookings} Confirmed
+                    </span>
+                    <span className="kpi-substat completed">
+                      <i className="fas fa-flag-checkered"></i>
+                      {completedBookings} Completed
+                    </span>
+                  </div>
+                </div>
+                <div className="kpi-trend neutral">
+                  <i className="fas fa-chart-line"></i>
+                </div>
+              </div>
+              <div className="kpi-card revenue-kpi">
+                <div className="kpi-icon-wrapper">
+                  <div className="kpi-icon revenue">
+                    <i className="fas fa-rupee-sign"></i>
+                  </div>
+                </div>
+                <div className="kpi-content">
+                  <span className="kpi-label">Total Revenue</span>
+                  <h2 className="kpi-value">₹{totalRevenue.toLocaleString('en-IN')}</h2>
+                  <div className="kpi-footer">
+                    <span className="kpi-commission">
+                      <i className="fas fa-percentage"></i>
+                      ₹{totalCommission.toLocaleString('en-IN')} Commission
+                    </span>
+                  </div>
+                </div>
+              </div>
+            </>
+          )}
+
+          {/* For super-admin and admin: Show all KPIs */}
+          {(isSuperAdmin || isFullAdmin) && (
+            <>
+              <div className="kpi-card revenue-kpi">
+                <div className="kpi-icon-wrapper">
+                  <div className="kpi-icon revenue">
+                    <i className="fas fa-rupee-sign"></i>
+                  </div>
+                </div>
+                <div className="kpi-content">
+                  <span className="kpi-label">Total Revenue</span>
+                  <h2 className="kpi-value">₹{totalRevenue.toLocaleString('en-IN')}</h2>
+                  <div className="kpi-footer">
+                    <span className="kpi-commission">
+                      <i className="fas fa-percentage"></i>
+                      ₹{totalCommission.toLocaleString('en-IN')} Commission
+                    </span>
+                  </div>
+                </div>
+                <div className="kpi-trend positive">
+                  <i className="fas fa-arrow-up"></i>
+                  <span>12%</span>
+                </div>
+              </div>
+
+              <div className="kpi-card customers-kpi" onClick={() => setActiveSection('customers')}>
+                <div className="kpi-icon-wrapper">
+                  <div className="kpi-icon customers">
+                    <i className="fas fa-users"></i>
+                  </div>
+                </div>
+                <div className="kpi-content">
+                  <span className="kpi-label">Total Customers</span>
+                  <h2 className="kpi-value">{customers.length.toLocaleString()}</h2>
+                  <div className="kpi-footer">
+                    <span className="kpi-substat">
+                      <i className="fas fa-user-plus"></i>
+                      +{newCustomers7Days} this week
+                    </span>
+                  </div>
+                </div>
+                <div className="kpi-trend positive">
+                  <i className="fas fa-arrow-up"></i>
+                  <span>{newCustomers30Days}</span>
+                </div>
+              </div>
+
+              <div className="kpi-card partners-kpi" onClick={() => setActiveSection('partners')}>
+                <div className="kpi-icon-wrapper">
+                  <div className="kpi-icon partners">
+                    <i className="fas fa-handshake"></i>
+                  </div>
+                </div>
+                <div className="kpi-content">
+                  <span className="kpi-label">Total Partners</span>
+                  <h2 className="kpi-value">{partners.length.toLocaleString()}</h2>
+                  <div className="kpi-footer">
+                    <span className="kpi-substat approved">
+                      <i className="fas fa-check-circle"></i>
+                      {approvedPartners} Active
+                    </span>
+                    {pendingPartners > 0 && (
+                      <span className="kpi-substat pending">
+                        <i className="fas fa-clock"></i>
+                        {pendingPartners} Pending
+                      </span>
+                    )}
+                  </div>
+                </div>
+                {pendingPartners > 0 && (
+                  <div className="kpi-alert">
+                    <span>{pendingPartners}</span>
+                  </div>
+                )}
+              </div>
+
+              <div className="kpi-card bookings-kpi" onClick={() => setActiveSection('bookings')}>
+                <div className="kpi-icon-wrapper">
+                  <div className="kpi-icon bookings">
+                    <i className="fas fa-calendar-check"></i>
+                  </div>
+                </div>
+                <div className="kpi-content">
+                  <span className="kpi-label">Total Bookings</span>
+                  <h2 className="kpi-value">{bookings.length.toLocaleString()}</h2>
+                  <div className="kpi-footer">
+                    <span className="kpi-substat confirmed">
+                      <i className="fas fa-check"></i>
+                      {confirmedBookings} Confirmed
+                    </span>
+                    <span className="kpi-substat completed">
+                      <i className="fas fa-flag-checkered"></i>
+                      {completedBookings} Completed
+                    </span>
+                  </div>
+                </div>
+                <div className="kpi-trend neutral">
+                  <i className="fas fa-chart-line"></i>
+                </div>
+              </div>
+            </>
+          )}
+        </div>
+
+        {/* Main Analytics Grid - Role Based & Rearranged */}
+        <div className="overview-analytics-grid">
+          
+          {/* Left Column - Rearranged based on role */}
+          <div className="analytics-column left">
+            
+            {/* For admin-customers: Customer-focused chart first */}
+            {userRole === 'admin-customers' && (
+              <div className="analytics-card customer-growth-card">
+                <div className="card-header">
+                  <h3><i className="fas fa-user-plus"></i> Customer Growth</h3>
+                </div>
+                <div className="customer-growth-content">
+                  <div className="growth-stats">
+                    <div className="growth-stat">
+                      <div className="growth-number">{newCustomers30Days}</div>
+                      <div className="growth-label">New (30 days)</div>
+                    </div>
+                    <div className="growth-stat">
+                      <div className="growth-number">{newCustomers7Days}</div>
+                      <div className="growth-label">This Week</div>
+                    </div>
+                    <div className="growth-stat">
+                      <div className="growth-number">{activeCustomers}</div>
+                      <div className="growth-label">Active</div>
+                    </div>
+                  </div>
+                  <div className="growth-chart">
+                    {monthlyData.map((data, index) => (
+                      <div key={index} className="growth-bar-wrapper">
+                        <div 
+                          className="growth-bar" 
+                          style={{ height: `${(data.customers / Math.max(...monthlyData.map(m => m.customers), 1)) * 100}%` }}
+                        >
+                          <span className="growth-value">{data.customers}</span>
+                        </div>
+                        <span className="growth-month">{data.month}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* For admin-partners: Partner-focused section first */}
+            {userRole === 'admin-partners' && pendingPartners > 0 && (
+              <div className="analytics-card pending-card large">
+                <div className="card-header">
+                  <h3><i className="fas fa-hourglass-half"></i> Pending Partner Approvals</h3>
+                  <span className="pending-count">{pendingPartners}</span>
+                </div>
+                <div className="pending-list">
+                  {partners.filter(p => p.status === 'pending').slice(0, 6).map(partner => (
+                    <div key={partner.id} className="pending-item" onClick={() => handleViewPartner(partner)}>
+                      <div className="pending-avatar">
+                        <i className="fas fa-building"></i>
+                      </div>
+                      <div className="pending-info">
+                        <strong>{partner.companyName || partner.businessName}</strong>
+                        <small>{partner.email}</small>
+                      </div>
+                      <button className="review-action-btn">
+                        <i className="fas fa-eye"></i>
+                      </button>
+                    </div>
+                  ))}
+                </div>
+                {pendingPartners > 6 && (
+                  <button 
+                    className="view-all-btn"
+                    onClick={() => { setActiveSection('partners'); setPartnerStatusFilter('pending'); }}
+                  >
+                    View All ({pendingPartners})
+                  </button>
+                )}
+              </div>
+            )}
+
+            {/* For admin-bookings: Booking distribution first */}
+            {userRole === 'admin-bookings' && (
+              <div className="analytics-card distribution-card">
+                <div className="card-header">
+                  <h3><i className="fas fa-pie-chart"></i> Booking Distribution</h3>
+                </div>
+                <div className="distribution-grid">
+                  <div className="distribution-item vehicle">
+                    <div className="dist-icon">
+                      <i className="fas fa-car"></i>
+                    </div>
+                    <div className="dist-info">
+                      <h4>{vehicleBookings}</h4>
+                      <p>Vehicle Rentals</p>
+                    </div>
+                    <div className="dist-percentage">
+                      {bookings.length > 0 ? ((vehicleBookings / bookings.length) * 100).toFixed(0) : 0}%
+                    </div>
+                  </div>
+                  <div className="distribution-item holiday">
+                    <div className="dist-icon">
+                      <i className="fas fa-umbrella-beach"></i>
+                    </div>
+                    <div className="dist-info">
+                      <h4>{holidayBookings}</h4>
+                      <p>Holiday Packages</p>
+                    </div>
+                    <div className="dist-percentage">
+                      {bookings.length > 0 ? ((holidayBookings / bookings.length) * 100).toFixed(0) : 0}%
+                    </div>
+                  </div>
+                  <div className="distribution-item hotel">
+                    <div className="dist-icon">
+                      <i className="fas fa-hotel"></i>
+                    </div>
+                    <div className="dist-info">
+                      <h4>{hotelBookings}</h4>
+                      <p>Hotel Bookings</p>
+                    </div>
+                    <div className="dist-percentage">
+                      {bookings.length > 0 ? ((hotelBookings / bookings.length) * 100).toFixed(0) : 0}%
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Monthly Trend Chart - All roles (shown for super-admin/admin or as secondary for others) */}
+            {(isSuperAdmin || isFullAdmin || userRole === 'admin-bookings') && (
+              <div className="analytics-card trend-card">
+                <div className="card-header">
+                  <h3><i className="fas fa-chart-area"></i> Monthly Overview</h3>
+                  <div className="chart-legend">
+                    {canAccessBookings && <span className="legend-item bookings"><span className="dot"></span> Bookings</span>}
+                    {canAccessCustomers && <span className="legend-item customers"><span className="dot"></span> Customers</span>}
+                    {canAccessPartners && <span className="legend-item partners"><span className="dot"></span> Partners</span>}
+                  </div>
+                </div>
+                <div className="trend-chart">
+                  {monthlyData.map((data, index) => (
+                    <div key={index} className="chart-column">
+                      <div className="bars-container">
+                        {canAccessBookings && (
+                          <div 
+                            className="bar bookings-bar" 
+                            style={{ height: `${(data.bookings / maxMonthlyBookings) * 100}%` }}
+                            title={`${data.bookings} Bookings`}
+                          >
+                            <span className="bar-value">{data.bookings}</span>
+                          </div>
+                        )}
+                        {canAccessCustomers && (
+                          <div 
+                            className="bar customers-bar" 
+                            style={{ height: `${(data.customers / Math.max(...monthlyData.map(m => m.customers), 1)) * 100}%` }}
+                            title={`${data.customers} Customers`}
+                          >
+                            <span className="bar-value">{data.customers}</span>
+                          </div>
+                        )}
+                        {canAccessPartners && (
+                          <div 
+                            className="bar partners-bar" 
+                            style={{ height: `${(data.partners / Math.max(...monthlyData.map(m => m.partners), 1)) * 100}%` }}
+                            title={`${data.partners} Partners`}
+                          >
+                            <span className="bar-value">{data.partners}</span>
+                          </div>
+                        )}
+                      </div>
+                      <span className="month-label">{data.month}</span>
+                      {canAccessBookings && <span className="revenue-label">₹{(data.revenue / 1000).toFixed(0)}K</span>}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Booking Distribution - For super-admin/admin only (others see it above) */}
+            {(isSuperAdmin || isFullAdmin) && (
+              <div className="analytics-card distribution-card">
+                <div className="card-header">
+                  <h3><i className="fas fa-pie-chart"></i> Booking Distribution</h3>
+                </div>
+                <div className="distribution-grid">
+                  <div className="distribution-item vehicle">
+                    <div className="dist-icon">
+                      <i className="fas fa-car"></i>
+                    </div>
+                    <div className="dist-info">
+                      <h4>{vehicleBookings}</h4>
+                      <p>Vehicle Rentals</p>
+                    </div>
+                    <div className="dist-percentage">
+                      {bookings.length > 0 ? ((vehicleBookings / bookings.length) * 100).toFixed(0) : 0}%
+                    </div>
+                  </div>
+                  <div className="distribution-item holiday">
+                    <div className="dist-icon">
+                      <i className="fas fa-umbrella-beach"></i>
+                    </div>
+                    <div className="dist-info">
+                      <h4>{holidayBookings}</h4>
+                      <p>Holiday Packages</p>
+                    </div>
+                    <div className="dist-percentage">
+                      {bookings.length > 0 ? ((holidayBookings / bookings.length) * 100).toFixed(0) : 0}%
+                    </div>
+                  </div>
+                  <div className="distribution-item hotel">
+                    <div className="dist-icon">
+                      <i className="fas fa-hotel"></i>
+                    </div>
+                    <div className="dist-info">
+                      <h4>{hotelBookings}</h4>
+                      <p>Hotel Bookings</p>
+                    </div>
+                    <div className="dist-percentage">
+                      {bookings.length > 0 ? ((hotelBookings / bookings.length) * 100).toFixed(0) : 0}%
+                    </div>
+                  </div>
+                </div>
               </div>
             )}
           </div>
+
+          {/* Right Column - Rearranged based on role */}
+          <div className="analytics-column right">
+            
+            {/* Quick Actions Card - Rearranged based on role */}
+            <div className="analytics-card actions-card">
+              <div className="card-header">
+                <h3><i className="fas fa-bolt"></i> Quick Actions</h3>
+              </div>
+              <div className="quick-actions-grid">
+                {/* Role-specific primary action first */}
+                {userRole === 'admin-customers' && (
+                  <button 
+                    className="action-btn customers primary-action"
+                    onClick={() => setActiveSection('customers')}
+                  >
+                    <div className="action-icon">
+                      <i className="fas fa-users-cog"></i>
+                    </div>
+                    <span>Manage Customers</span>
+                  </button>
+                )}
+                {userRole === 'admin-partners' && pendingPartners > 0 && (
+                  <button 
+                    className="action-btn urgent primary-action"
+                    onClick={() => { setActiveSection('partners'); setPartnerStatusFilter('pending'); }}
+                  >
+                    <div className="action-icon">
+                      <i className="fas fa-user-clock"></i>
+                      <span className="badge">{pendingPartners}</span>
+                    </div>
+                    <span>Review Partners</span>
+                  </button>
+                )}
+                {userRole === 'admin-bookings' && (
+                  <button 
+                    className="action-btn bookings primary-action"
+                    onClick={() => setActiveSection('bookings')}
+                  >
+                    <div className="action-icon">
+                      <i className="fas fa-calendar-alt"></i>
+                    </div>
+                    <span>View Bookings</span>
+                  </button>
+                )}
+                
+                {/* For super-admin/admin: Show all actions */}
+                {(isSuperAdmin || isFullAdmin) && (
+                  <>
+                    {pendingPartners > 0 && (
+                      <button 
+                        className="action-btn urgent"
+                        onClick={() => { setActiveSection('partners'); setPartnerStatusFilter('pending'); }}
+                      >
+                        <div className="action-icon">
+                          <i className="fas fa-user-clock"></i>
+                          <span className="badge">{pendingPartners}</span>
+                        </div>
+                        <span>Review Partners</span>
+                      </button>
+                    )}
+                    <button 
+                      className="action-btn customers"
+                      onClick={() => setActiveSection('customers')}
+                    >
+                      <div className="action-icon">
+                        <i className="fas fa-users-cog"></i>
+                      </div>
+                      <span>Manage Customers</span>
+                    </button>
+                    <button 
+                      className="action-btn bookings"
+                      onClick={() => setActiveSection('bookings')}
+                    >
+                      <div className="action-icon">
+                        <i className="fas fa-calendar-alt"></i>
+                      </div>
+                      <span>View Bookings</span>
+                    </button>
+                    <button 
+                      className="action-btn partners"
+                      onClick={() => setActiveSection('partners')}
+                    >
+                      <div className="action-icon">
+                        <i className="fas fa-handshake"></i>
+                      </div>
+                      <span>Partner Management</span>
+                    </button>
+                  </>
+                )}
+
+                {/* Secondary actions for role-specific admins */}
+                {userRole === 'admin-partners' && (
+                  <button 
+                    className="action-btn partners"
+                    onClick={() => setActiveSection('partners')}
+                  >
+                    <div className="action-icon">
+                      <i className="fas fa-handshake"></i>
+                    </div>
+                    <span>All Partners</span>
+                  </button>
+                )}
+              </div>
+            </div>
+
+            {/* Pending Partners - For super-admin/admin (partners admin sees it in left column) */}
+            {(isSuperAdmin || isFullAdmin) && pendingPartners > 0 && (
+              <div className="analytics-card pending-card">
+                <div className="card-header">
+                  <h3><i className="fas fa-hourglass-half"></i> Pending Approvals</h3>
+                  <span className="pending-count">{pendingPartners}</span>
+                </div>
+                <div className="pending-list">
+                  {partners.filter(p => p.status === 'pending').slice(0, 4).map(partner => (
+                    <div key={partner.id} className="pending-item" onClick={() => handleViewPartner(partner)}>
+                      <div className="pending-avatar">
+                        <i className="fas fa-building"></i>
+                      </div>
+                      <div className="pending-info">
+                        <strong>{partner.companyName || partner.businessName}</strong>
+                        <small>{partner.email}</small>
+                      </div>
+                      <button className="review-action-btn">
+                        <i className="fas fa-eye"></i>
+                      </button>
+                    </div>
+                  ))}
+                </div>
+                {pendingPartners > 4 && (
+                  <button 
+                    className="view-all-btn"
+                    onClick={() => { setActiveSection('partners'); setPartnerStatusFilter('pending'); }}
+                  >
+                    View All ({pendingPartners})
+                  </button>
+                )}
+              </div>
+            )}
+
+            {/* Top Partners - For super-admin/admin/bookings */}
+            {(isSuperAdmin || isFullAdmin || userRole === 'admin-bookings') && topPartners.length > 0 && (
+              <div className="analytics-card top-partners-card">
+                <div className="card-header">
+                  <h3><i className="fas fa-trophy"></i> Top Partners</h3>
+                </div>
+                <div className="top-partners-list">
+                  {topPartners.map((partner, index) => (
+                    <div key={partner.id} className={`top-partner-item rank-${index + 1}`}>
+                      <div className="rank-badge">{index + 1}</div>
+                      <div className="partner-info">
+                        <strong>{partner.name}</strong>
+                        <small>{partner.count} bookings</small>
+                      </div>
+                      <div className="partner-revenue">
+                        ₹{partner.revenue.toLocaleString('en-IN')}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Partner Stats - For admin-partners */}
+            {userRole === 'admin-partners' && (
+              <div className="analytics-card partner-stats-overview">
+                <div className="card-header">
+                  <h3><i className="fas fa-chart-bar"></i> Partner Overview</h3>
+                </div>
+                <div className="partner-stats-grid">
+                  <div className="partner-stat-item approved">
+                    <div className="stat-icon"><i className="fas fa-check-circle"></i></div>
+                    <div className="stat-details">
+                      <h4>{approvedPartners}</h4>
+                      <p>Approved</p>
+                    </div>
+                  </div>
+                  <div className="partner-stat-item pending">
+                    <div className="stat-icon"><i className="fas fa-clock"></i></div>
+                    <div className="stat-details">
+                      <h4>{pendingPartners}</h4>
+                      <p>Pending</p>
+                    </div>
+                  </div>
+                  <div className="partner-stat-item rejected">
+                    <div className="stat-icon"><i className="fas fa-times-circle"></i></div>
+                    <div className="stat-details">
+                      <h4>{rejectedPartners}</h4>
+                      <p>Rejected</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Revenue Insights - All Roles */}
+            <div className="analytics-card revenue-insights-card">
+              <div className="card-header">
+                <h3><i className="fas fa-chart-pie"></i> Revenue Insights</h3>
+              </div>
+              <div className="revenue-insights-content">
+                <div className="revenue-summary">
+                  <div className="revenue-total">
+                    <span className="label">Total Earnings</span>
+                    <h2>₹{totalRevenue.toLocaleString('en-IN')}</h2>
+                  </div>
+                  <div className="revenue-commission">
+                    <span className="label">Commission (10%)</span>
+                    <h3>₹{totalCommission.toLocaleString('en-IN')}</h3>
+                  </div>
+                </div>
+                <div className="revenue-breakdown">
+                  <div className="breakdown-item">
+                    <div className="breakdown-bar vehicle" style={{ width: `${bookings.length > 0 ? (vehicleBookings / bookings.length) * 100 : 0}%` }}></div>
+                    <div className="breakdown-info">
+                      <span className="type"><i className="fas fa-car"></i> Vehicle</span>
+                      <span className="amount">₹{bookings.filter(b => b.bookingType === 'vehicle' || b.bookingType === 'fleet' || b.bookingType === 'car').reduce((sum, b) => sum + (b.totalAmount || b.amount || 0), 0).toLocaleString('en-IN')}</span>
+                    </div>
+                  </div>
+                  <div className="breakdown-item">
+                    <div className="breakdown-bar holiday" style={{ width: `${bookings.length > 0 ? (holidayBookings / bookings.length) * 100 : 0}%` }}></div>
+                    <div className="breakdown-info">
+                      <span className="type"><i className="fas fa-umbrella-beach"></i> Holiday</span>
+                      <span className="amount">₹{bookings.filter(b => b.bookingType === 'holiday' || b.bookingType === 'tour' || b.bookingType === 'package').reduce((sum, b) => sum + (b.totalAmount || b.amount || 0), 0).toLocaleString('en-IN')}</span>
+                    </div>
+                  </div>
+                  <div className="breakdown-item">
+                    <div className="breakdown-bar hotel" style={{ width: `${bookings.length > 0 ? (hotelBookings / bookings.length) * 100 : 0}%` }}></div>
+                    <div className="breakdown-info">
+                      <span className="type"><i className="fas fa-hotel"></i> Hotel</span>
+                      <span className="amount">₹{bookings.filter(b => b.bookingType === 'hotel' || b.bookingType === 'accommodation').reduce((sum, b) => sum + (b.totalAmount || b.amount || 0), 0).toLocaleString('en-IN')}</span>
+                    </div>
+                  </div>
+                </div>
+                <div className="revenue-footer">
+                  <div className="stat-mini">
+                    <i className="fas fa-receipt"></i>
+                    <span>{bookings.length} Total Bookings</span>
+                  </div>
+                  <div className="stat-mini">
+                    <i className="fas fa-calculator"></i>
+                    <span>Avg: ₹{bookings.length > 0 ? Math.round(totalRevenue / bookings.length).toLocaleString('en-IN') : 0}</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Status Summary Cards - Role Based & Rearranged */}
+        <div className="overview-status-row">
+          {/* For admin-customers: Customer stats first */}
+          {userRole === 'admin-customers' && (
+            <div className="status-summary-card customer-stats primary-status">
+              <h4><i className="fas fa-users"></i> Customer Stats</h4>
+              <div className="status-items">
+                <div className="status-item active">
+                  <span className="status-dot"></span>
+                  <span className="status-name">Active</span>
+                  <span className="status-count">{activeCustomers}</span>
+                </div>
+                <div className="status-item new">
+                  <span className="status-dot"></span>
+                  <span className="status-name">New (30 days)</span>
+                  <span className="status-count">{newCustomers30Days}</span>
+                </div>
+                <div className="status-item weekly">
+                  <span className="status-dot"></span>
+                  <span className="status-name">This Week</span>
+                  <span className="status-count">{newCustomers7Days}</span>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* For admin-partners: Partner status first */}
+          {userRole === 'admin-partners' && (
+            <div className="status-summary-card partner-status primary-status">
+              <h4><i className="fas fa-building"></i> Partner Status</h4>
+              <div className="status-items">
+                <div className="status-item approved">
+                  <span className="status-dot"></span>
+                  <span className="status-name">Approved</span>
+                  <span className="status-count">{approvedPartners}</span>
+                </div>
+                <div className="status-item pending">
+                  <span className="status-dot"></span>
+                  <span className="status-name">Pending</span>
+                  <span className="status-count">{pendingPartners}</span>
+                </div>
+                <div className="status-item rejected">
+                  <span className="status-dot"></span>
+                  <span className="status-name">Rejected</span>
+                  <span className="status-count">{rejectedPartners}</span>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* For admin-bookings: Booking status first */}
+          {userRole === 'admin-bookings' && (
+            <div className="status-summary-card booking-status primary-status">
+              <h4><i className="fas fa-clipboard-list"></i> Booking Status</h4>
+              <div className="status-items">
+                <div className="status-item confirmed">
+                  <span className="status-dot"></span>
+                  <span className="status-name">Confirmed</span>
+                  <span className="status-count">{confirmedBookings}</span>
+                </div>
+                <div className="status-item completed">
+                  <span className="status-dot"></span>
+                  <span className="status-name">Completed</span>
+                  <span className="status-count">{completedBookings}</span>
+                </div>
+                <div className="status-item pending">
+                  <span className="status-dot"></span>
+                  <span className="status-name">Pending</span>
+                  <span className="status-count">{pendingBookingsCount}</span>
+                </div>
+                <div className="status-item cancelled">
+                  <span className="status-dot"></span>
+                  <span className="status-name">Cancelled</span>
+                  <span className="status-count">{cancelledBookings}</span>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* For super-admin/admin: Show all in order */}
+          {(isSuperAdmin || isFullAdmin) && (
+            <>
+              <div className="status-summary-card booking-status">
+                <h4><i className="fas fa-clipboard-list"></i> Booking Status</h4>
+                <div className="status-items">
+                  <div className="status-item confirmed">
+                    <span className="status-dot"></span>
+                    <span className="status-name">Confirmed</span>
+                    <span className="status-count">{confirmedBookings}</span>
+                  </div>
+                  <div className="status-item completed">
+                    <span className="status-dot"></span>
+                    <span className="status-name">Completed</span>
+                    <span className="status-count">{completedBookings}</span>
+                  </div>
+                  <div className="status-item pending">
+                    <span className="status-dot"></span>
+                    <span className="status-name">Pending</span>
+                    <span className="status-count">{pendingBookingsCount}</span>
+                  </div>
+                  <div className="status-item cancelled">
+                    <span className="status-dot"></span>
+                    <span className="status-name">Cancelled</span>
+                    <span className="status-count">{cancelledBookings}</span>
+                  </div>
+                </div>
+              </div>
+
+              <div className="status-summary-card partner-status">
+                <h4><i className="fas fa-building"></i> Partner Status</h4>
+                <div className="status-items">
+                  <div className="status-item approved">
+                    <span className="status-dot"></span>
+                    <span className="status-name">Approved</span>
+                    <span className="status-count">{approvedPartners}</span>
+                  </div>
+                  <div className="status-item pending">
+                    <span className="status-dot"></span>
+                    <span className="status-name">Pending</span>
+                    <span className="status-count">{pendingPartners}</span>
+                  </div>
+                  <div className="status-item rejected">
+                    <span className="status-dot"></span>
+                    <span className="status-name">Rejected</span>
+                    <span className="status-count">{rejectedPartners}</span>
+                  </div>
+                </div>
+              </div>
+
+              <div className="status-summary-card customer-stats">
+                <h4><i className="fas fa-users"></i> Customer Stats</h4>
+                <div className="status-items">
+                  <div className="status-item active">
+                    <span className="status-dot"></span>
+                    <span className="status-name">Active</span>
+                    <span className="status-count">{activeCustomers}</span>
+                  </div>
+                  <div className="status-item new">
+                    <span className="status-dot"></span>
+                    <span className="status-name">New (30 days)</span>
+                    <span className="status-count">{newCustomers30Days}</span>
+                  </div>
+                  <div className="status-item weekly">
+                    <span className="status-dot"></span>
+                    <span className="status-name">This Week</span>
+                    <span className="status-count">{newCustomers7Days}</span>
+                  </div>
+                </div>
+              </div>
+            </>
+          )}
         </div>
       </div>
-    </div>
-  );
+    );
+  };
+  
+  // Old renderOverview backup - removed
+
 
   // Render Customers Tab
   const renderCustomers = () => {
