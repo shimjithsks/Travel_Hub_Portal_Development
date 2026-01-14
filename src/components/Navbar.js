@@ -15,6 +15,15 @@ export default function Navbar() {
   const userDropdownRef = useRef(null);
   const supportDropdownRef = useRef(null);
 
+  // Check if we should show login modal (redirected from protected route)
+  useEffect(() => {
+    if (location.state?.showLogin && !user) {
+      setShowLoginModal(true);
+      // Clear the state to prevent modal from showing again on refresh
+      window.history.replaceState({}, document.title);
+    }
+  }, [location.state, user]);
+
   // Handle logo click - smooth scroll if on home, navigate if not
   const handleLogoClick = (e) => {
     e.preventDefault();

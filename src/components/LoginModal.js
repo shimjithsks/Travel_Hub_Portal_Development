@@ -99,7 +99,14 @@ export default function LoginModal({ isOpen, onClose }) {
       }
       
       onClose();
-      navigate('/customer');
+      // Check if there's a saved redirect path from protected route access
+      const redirectPath = sessionStorage.getItem('redirectAfterLogin');
+      if (redirectPath) {
+        sessionStorage.removeItem('redirectAfterLogin');
+        navigate(redirectPath);
+      } else {
+        navigate('/customer');
+      }
     } catch (err) {
       if (err.code === 'auth/wrong-password' || err.code === 'auth/invalid-credential') {
         setError('Invalid email or password. Please try again or use Forgot Password.');
@@ -184,7 +191,14 @@ export default function LoginModal({ isOpen, onClose }) {
         if (existingData.phone && existingData.phone.length > 5) {
           // Profile is complete, proceed to dashboard
           onClose();
-          navigate('/customer');
+          // Check if there's a saved redirect path from protected route access
+          const redirectPath = sessionStorage.getItem('redirectAfterLogin');
+          if (redirectPath) {
+            sessionStorage.removeItem('redirectAfterLogin');
+            navigate(redirectPath);
+          } else {
+            navigate('/customer');
+          }
           return;
         }
       }
@@ -265,7 +279,14 @@ export default function LoginModal({ isOpen, onClose }) {
 
       setShowProfileCompletion(false);
       onClose();
-      navigate('/customer');
+      // Check if there's a saved redirect path from protected route access
+      const redirectPath = sessionStorage.getItem('redirectAfterLogin');
+      if (redirectPath) {
+        sessionStorage.removeItem('redirectAfterLogin');
+        navigate(redirectPath);
+      } else {
+        navigate('/customer');
+      }
     } catch (err) {
       setError(err?.message || 'Failed to save profile');
     } finally {
@@ -296,7 +317,14 @@ export default function LoginModal({ isOpen, onClose }) {
     }
     setShowProfileCompletion(false);
     onClose();
-    navigate('/customer');
+    // Check if there's a saved redirect path from protected route access
+    const redirectPath = sessionStorage.getItem('redirectAfterLogin');
+    if (redirectPath) {
+      sessionStorage.removeItem('redirectAfterLogin');
+      navigate(redirectPath);
+    } else {
+      navigate('/customer');
+    }
   };
 
   const handleSignUp = async (e) => {
@@ -327,7 +355,14 @@ export default function LoginModal({ isOpen, onClose }) {
       });
 
       onClose();
-      navigate('/customer');
+      // Check if there's a saved redirect path from protected route access
+      const redirectPath = sessionStorage.getItem('redirectAfterLogin');
+      if (redirectPath) {
+        sessionStorage.removeItem('redirectAfterLogin');
+        navigate(redirectPath);
+      } else {
+        navigate('/customer');
+      }
     } catch (err) {
       setError(err?.message || 'Sign up failed');
     } finally {
