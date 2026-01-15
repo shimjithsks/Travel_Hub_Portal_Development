@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { collection, query, where, getDocs, updateDoc, doc } from 'firebase/firestore';
 import { db } from '../../firebase/firebase';
+import LoadingSpinner from '../../components/LoadingSpinner';
 import '../../styles/myRefund.css';
 
 export default function MyRefund() {
@@ -87,14 +88,7 @@ export default function MyRefund() {
   };
 
   if (loading) {
-    return (
-      <div className="my-refund-container">
-        <div className="loading-spinner">
-          <div className="spinner"></div>
-          <p>Loading refund information...</p>
-        </div>
-      </div>
-    );
+    return <LoadingSpinner size="fullpage" text="Loading refund information..." overlay />;
   }
 
   return (

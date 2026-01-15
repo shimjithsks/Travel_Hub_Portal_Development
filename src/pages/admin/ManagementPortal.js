@@ -4,6 +4,7 @@ import { createUserWithEmailAndPassword, updateProfile, signOut } from 'firebase
 import { collection, getDocs, doc, setDoc, updateDoc, deleteDoc, serverTimestamp, query, where } from 'firebase/firestore';
 import { auth, db } from '../../firebase/firebase';
 import { useAuth } from '../../context/AuthContext';
+import LoadingSpinner from '../../components/LoadingSpinner';
 import '../../styles/managementPortal.css';
 
 const ManagementPortal = () => {
@@ -453,16 +454,7 @@ const ManagementPortal = () => {
 
   // Loading state
   if (loading || authLoading || !accessChecked) {
-    return (
-      <div className="management-portal">
-        <div className="mp-loading" style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-          <div style={{ textAlign: 'center' }}>
-            <i className="fas fa-spinner fa-spin" style={{ fontSize: '3rem', color: '#14b8a6' }}></i>
-            <p style={{ marginTop: '16px', color: '#64748b' }}>Loading...</p>
-          </div>
-        </div>
-      </div>
-    );
+    return <LoadingSpinner size="fullpage" text="Loading management portal..." overlay />;
   }
 
   // Only super-admin can access this page

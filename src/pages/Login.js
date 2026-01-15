@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { loginPartner } from '../services/partnerService';
+import LoadingSpinner from '../components/LoadingSpinner';
 import './Login.css';
 
 export default function Login() {
@@ -53,14 +54,7 @@ export default function Login() {
 
   // Show loading while checking session
   if (checkingSession) {
-    return (
-      <div className="login-page" style={{ justifyContent: 'center', alignItems: 'center' }}>
-        <div style={{ textAlign: 'center', color: '#64748b' }}>
-          <i className="fas fa-spinner fa-spin" style={{ fontSize: '2rem', marginBottom: '10px' }}></i>
-          <p>Loading...</p>
-        </div>
-      </div>
-    );
+    return <LoadingSpinner size="fullpage" text="Checking session..." />;
   }
 
   return (

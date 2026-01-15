@@ -1,6 +1,7 @@
 import React, { useEffect } from 'react';
 import { Navigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
+import LoadingSpinner from '../LoadingSpinner';
 
 export default function RequireRole({ role, children }) {
   const { loading, user, role: currentRole } = useAuth();
@@ -14,27 +15,14 @@ export default function RequireRole({ role, children }) {
     }
   }, [loading, user, location]);
 
-  if (loading) return null;
+  if (loading) return <LoadingSpinner size="fullpage" text="Authenticating..." />;
   
   // Redirect to home if not logged in - the login modal will handle authentication
   if (!user) return <Navigate to="/" replace state={{ showLogin: true, from: location.pathname + location.search }} />;
   
-  // If user exists but role is not loaded yet, show loading or wait
+  // If user exists but role is not loaded yet, show loading
   if (!currentRole) {
-    // Check if still loading profile - give it a moment
-    return (
-      <div style={{ 
-        display: 'flex', 
-        justifyContent: 'center', 
-        alignItems: 'center', 
-        minHeight: '50vh',
-        flexDirection: 'column',
-        gap: '1rem'
-      }}>
-        <i className="fas fa-spinner fa-spin" style={{ fontSize: '2rem', color: '#1CA8CB' }}></i>
-        <p style={{ color: '#64748b' }}>Loading your profile...</p>
-      </div>
-    );
+    return <LoadingSpinner size="large" text="Loading your profile..." />;
   }
   
   if (currentRole !== role) return <Navigate to="/dashboard" replace />;

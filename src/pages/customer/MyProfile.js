@@ -4,6 +4,7 @@ import { doc, updateDoc, setDoc, getDoc, serverTimestamp } from 'firebase/firest
 import { db, auth } from '../../firebase/firebase';
 import { updateProfile, updateEmail, updatePassword, EmailAuthProvider, reauthenticateWithCredential, sendPasswordResetEmail } from 'firebase/auth';
 import { sendCustomerPasswordResetEmail, sendCustomerPasswordChangedEmail } from '../../services/emailService';
+import LoadingSpinner from '../../components/LoadingSpinner';
 import '../../styles/myProfile.css';
 
 export default function MyProfile() {
@@ -326,14 +327,7 @@ export default function MyProfile() {
 
   // Show loading state while fetching profile
   if (fetchingProfile) {
-    return (
-      <div className="my-profile-container">
-        <div className="profile-loading">
-          <div className="loading-spinner"></div>
-          <p>Loading your profile...</p>
-        </div>
-      </div>
-    );
+    return <LoadingSpinner size="fullpage" text="Loading your profile..." overlay />;
   }
 
   return (

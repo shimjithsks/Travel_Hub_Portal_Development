@@ -1,6 +1,7 @@
 import React, { useEffect } from 'react';
 import { Navigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
+import LoadingSpinner from '../LoadingSpinner';
 
 export default function RequireAuth({ children }) {
   const { user, loading } = useAuth();
@@ -13,7 +14,7 @@ export default function RequireAuth({ children }) {
     }
   }, [loading, user, location]);
 
-  if (loading) return null;
+  if (loading) return <LoadingSpinner size="fullpage" text="Authenticating..." />;
   // Redirect to home if not logged in - the login modal will handle authentication
   if (!user) return <Navigate to="/" replace state={{ showLogin: true, from: location.pathname + location.search }} />;
   return children;

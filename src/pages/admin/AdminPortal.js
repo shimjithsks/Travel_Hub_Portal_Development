@@ -7,6 +7,7 @@ import { db, auth } from '../../firebase/firebase';
 import { useAuth } from '../../context/AuthContext';
 import { getAllPartners, approvePartner, rejectPartner, deletePartner } from '../../services/partnerService';
 import { sendApprovalEmail, sendRejectionEmail } from '../../services/emailService';
+import LoadingSpinner from '../../components/LoadingSpinner';
 import '../../styles/adminPortal.css';
 
 const AdminPortal = () => {
@@ -3440,14 +3441,7 @@ const AdminPortal = () => {
 
   // Show loading while checking auth
   if (authLoading || !accessChecked) {
-    return (
-      <div className="admin-portal">
-        <div className="admin-loading-screen">
-          <i className="fas fa-spinner fa-spin"></i>
-          <p>Loading...</p>
-        </div>
-      </div>
-    );
+    return <LoadingSpinner size="fullpage" text="Loading admin portal..." overlay />;
   }
 
   return (

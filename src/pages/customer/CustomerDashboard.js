@@ -6,6 +6,7 @@ import { db } from '../../firebase/firebase';
 import { updateProfile, updatePassword, EmailAuthProvider, reauthenticateWithCredential, sendPasswordResetEmail } from 'firebase/auth';
 import { auth } from '../../firebase/firebase';
 import { sendCustomerPasswordResetEmail, sendCustomerPasswordChangedEmail } from '../../services/emailService';
+import LoadingSpinner from '../../components/LoadingSpinner';
 import '../../styles/customerDashboard.css';
 
 export default function CustomerDashboard() {
@@ -75,6 +76,20 @@ export default function CustomerDashboard() {
   const [refundReason, setRefundReason] = useState('');
   const [refundAmount, setRefundAmount] = useState(0);
   
+  // Vehicle Support Modal states
+  const [showCancelVehicleModal, setShowCancelVehicleModal] = useState(false);
+  const [showModifyVehicleModal, setShowModifyVehicleModal] = useState(false);
+  const [showDriverContactModal, setShowDriverContactModal] = useState(false);
+  const [showVehicleRefundModal, setShowVehicleRefundModal] = useState(false);
+  const [vehicleBookingId, setVehicleBookingId] = useState('');
+  const [vehicleCancelReason, setVehicleCancelReason] = useState('');
+  const [vehicleModifyData, setVehicleModifyData] = useState({
+    pickupLocation: '',
+    pickupDate: '',
+    pickupTime: '',
+    vehicleType: ''
+  });
+  
   // Mobile sidebar
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
@@ -88,7 +103,8 @@ export default function CustomerDashboard() {
     { id: 'track-refund', label: 'Track Refund', icon: 'fas fa-search-dollar' },
     { id: 'complete-booking', label: 'Complete Booking', icon: 'fas fa-clipboard-check' },
     { id: 'make-payment', label: 'Make Payment', icon: 'fas fa-credit-card' },
-    { id: 'holiday-booking', label: 'Holiday Booking', icon: 'fas fa-umbrella-beach' }
+    { id: 'holiday-booking', label: 'Holiday Booking', icon: 'fas fa-umbrella-beach' },
+    { id: 'vehicle-support', label: 'Vehicle Support', icon: 'fas fa-car-side' }
   ];
 
   // Update URL when tab changes
@@ -397,10 +413,7 @@ export default function CustomerDashboard() {
   if (loading) {
     return (
       <div className="customer-dashboard">
-        <div className="dashboard-loading">
-          <div className="loading-spinner"></div>
-          <p>Loading your dashboard...</p>
-        </div>
+        <LoadingSpinner size="large" text="Loading your dashboard..." />
       </div>
     );
   }
@@ -425,6 +438,8 @@ export default function CustomerDashboard() {
         return renderMakePayment();
       case 'holiday-booking':
         return renderHolidayBooking();
+      case 'vehicle-support':
+        return renderVehicleSupport();
       default:
         return renderOverview();
     }
@@ -1040,6 +1055,191 @@ export default function CustomerDashboard() {
     </div>
   );
 
+  // Vehicle Booking Support Tab
+  const renderVehicleSupport = () => (
+    <div className="vehicle-support-content">
+      <div className="content-header">
+        <h2><i className="fas fa-car-side"></i> Vehicle Booking Support</h2>
+        <p>Get help with your vehicle booking issues</p>
+      </div>
+
+      <div className="support-grid">
+        {/* Track Vehicle Booking */}
+        <div className="form-card vehicle-support">
+          <div className="form-card-icon vehicle">
+            <i className="fas fa-search-location"></i>
+          </div>
+          <h3>Track Your Vehicle Booking</h3>
+          <form onSubmit={handleMakePayment}>
+            <div className="form-group">
+              <label><i className="fas fa-ticket-alt"></i> Vehicle Booking ID *</label>
+              <input
+                type="text"
+                value={bookingRef}
+                onChange={(e) => setBookingRef(e.target.value)}
+                placeholder="Enter your vehicle booking ID"
+                required
+              />
+            </div>
+            <div className="form-group">
+              <label><i className="fas fa-envelope"></i> Registered Email *</label>
+              <input
+                type="email"
+                value={bookingEmail}
+                onChange={(e) => setBookingEmail(e.target.value)}
+                placeholder="Enter your registered email"
+                required
+              />
+            </div>
+            <button type="submit" className="submit-btn vehicle">
+              <i className="fas fa-search"></i> Track Booking
+            </button>
+          </form>
+        </div>
+
+        {/* Report Issue */}
+        <div className="form-card vehicle-issue">
+          <div className="form-card-icon issue">
+            <i className="fas fa-exclamation-triangle"></i>
+          </div>
+          <h3>Report an Issue</h3>
+          <form onSubmit={handleMakePayment}>
+            <div className="form-group">
+              <label><i className="fas fa-ticket-alt"></i> Vehicle Booking ID *</label>
+              <input
+                type="text"
+                placeholder="Enter your vehicle booking ID"
+                required
+              />
+            </div>
+            <div className="form-group">
+              <label><i className="fas fa-list"></i> Issue Type *</label>
+              <select required>
+                <option value="">Select issue type</option>
+                <option value="driver">Driver Related Issue</option>
+                <option value="vehicle">Vehicle Condition Issue</option>
+                <option value="delay">Delay / No Show</option>
+                <option value="route">Route / Navigation Issue</option>
+                <option value="payment">Payment / Billing Issue</option>
+                <option value="cancel">Cancellation Request</option>
+                <option value="modify">Modify Booking</option>
+                <option value="other">Other Issue</option>
+              </select>
+            </div>
+            <div className="form-group">
+              <label><i className="fas fa-comment-alt"></i> Describe Your Issue *</label>
+              <textarea
+                placeholder="Please describe your issue in detail..."
+                rows={4}
+                required
+              />
+            </div>
+            <div className="form-group">
+              <label><i className="fas fa-phone"></i> Contact Number *</label>
+              <input
+                type="tel"
+                placeholder="Enter your contact number"
+                required
+              />
+            </div>
+            <button type="submit" className="submit-btn issue">
+              <i className="fas fa-paper-plane"></i> Submit Issue
+            </button>
+          </form>
+        </div>
+      </div>
+
+      {/* Quick Help Options */}
+      <div className="quick-help-section">
+        <h3><i className="fas fa-hands-helping"></i> Quick Help</h3>
+        <div className="quick-help-cards">
+          <div className="quick-help-card">
+            <div className="help-icon cancel">
+              <i className="fas fa-ban"></i>
+            </div>
+            <h4>Cancel Booking</h4>
+            <p>Need to cancel? Get a refund based on our cancellation policy</p>
+            <button className="help-btn" onClick={() => setShowCancelVehicleModal(true)}>Cancel Booking</button>
+          </div>
+          <div className="quick-help-card">
+            <div className="help-icon modify">
+              <i className="fas fa-edit"></i>
+            </div>
+            <h4>Modify Booking</h4>
+            <p>Change pickup time, location or vehicle type</p>
+            <button className="help-btn" onClick={() => setShowModifyVehicleModal(true)}>Modify Details</button>
+          </div>
+          <div className="quick-help-card">
+            <div className="help-icon driver">
+              <i className="fas fa-user-tie"></i>
+            </div>
+            <h4>Contact Driver</h4>
+            <p>Get driver details and contact information</p>
+            <button className="help-btn" onClick={() => setShowDriverContactModal(true)}>Get Details</button>
+          </div>
+          <div className="quick-help-card">
+            <div className="help-icon refund">
+              <i className="fas fa-money-bill-wave"></i>
+            </div>
+            <h4>Request Refund</h4>
+            <p>Eligible for refund? Submit your request here</p>
+            <button className="help-btn" onClick={() => setShowVehicleRefundModal(true)}>Request Refund</button>
+          </div>
+        </div>
+      </div>
+
+      {/* FAQ Section */}
+      <div className="vehicle-faq-section">
+        <h3><i className="fas fa-question-circle"></i> Frequently Asked Questions</h3>
+        <div className="faq-list">
+          <div className="faq-item">
+            <div className="faq-question">
+              <i className="fas fa-chevron-right"></i>
+              <span>How do I cancel my vehicle booking?</span>
+            </div>
+            <p className="faq-answer">You can cancel your booking up to 2 hours before pickup. Go to Track Booking, enter your booking ID, and click on Cancel. Refund will be processed within 5-7 business days.</p>
+          </div>
+          <div className="faq-item">
+            <div className="faq-question">
+              <i className="fas fa-chevron-right"></i>
+              <span>What if my driver doesn't arrive on time?</span>
+            </div>
+            <p className="faq-answer">If your driver is delayed by more than 15 minutes, please report the issue using the form above. You may be eligible for a discount or full refund.</p>
+          </div>
+          <div className="faq-item">
+            <div className="faq-question">
+              <i className="fas fa-chevron-right"></i>
+              <span>Can I change my pickup location?</span>
+            </div>
+            <p className="faq-answer">Yes, you can modify your pickup location up to 1 hour before the scheduled pickup time. Use the Modify Booking option above.</p>
+          </div>
+          <div className="faq-item">
+            <div className="faq-question">
+              <i className="fas fa-chevron-right"></i>
+              <span>How do I contact my driver?</span>
+            </div>
+            <p className="faq-answer">Driver details including contact number will be shared 30 minutes before pickup. You can also track your booking to get live driver location.</p>
+          </div>
+        </div>
+      </div>
+
+      {/* Contact Support */}
+      <div className="contact-support-box">
+        <div className="support-icon">
+          <i className="fas fa-headset"></i>
+        </div>
+        <div className="support-info">
+          <h4>Need More Help?</h4>
+          <p>Our support team is available 24/7 to assist you</p>
+          <div className="support-contacts">
+            <span><i className="fas fa-phone"></i> +91 1800-XXX-XXXX</span>
+            <span><i className="fas fa-envelope"></i> vehicle.support@travelaxis.com</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+
   return (
     <div className="customer-dashboard">
       {/* Header */}
@@ -1247,6 +1447,307 @@ export default function CustomerDashboard() {
             <button className="modal-submit-btn refund" onClick={handleRefundRequest}>
               <i className="fas fa-paper-plane"></i> Submit Refund Request
             </button>
+          </div>
+        </div>
+      )}
+
+      {/* Cancel Vehicle Booking Modal */}
+      {showCancelVehicleModal && (
+        <div className="modal-overlay" onClick={() => setShowCancelVehicleModal(false)}>
+          <div className="modal-content vehicle-modal" onClick={e => e.stopPropagation()}>
+            <button className="modal-close" onClick={() => setShowCancelVehicleModal(false)}>
+              <i className="fas fa-times"></i>
+            </button>
+            <div className="modal-header-icon cancel">
+              <i className="fas fa-ban"></i>
+            </div>
+            <h3>Cancel Vehicle Booking</h3>
+            <p className="modal-subtitle">Please provide your booking details to proceed with cancellation</p>
+            
+            <form onSubmit={(e) => { e.preventDefault(); alert('Cancellation request submitted successfully!'); setShowCancelVehicleModal(false); }}>
+              <div className="form-group">
+                <label><i className="fas fa-ticket-alt"></i> Vehicle Booking ID *</label>
+                <input
+                  type="text"
+                  value={vehicleBookingId}
+                  onChange={(e) => setVehicleBookingId(e.target.value)}
+                  placeholder="Enter your vehicle booking ID"
+                  required
+                />
+              </div>
+              <div className="form-group">
+                <label><i className="fas fa-envelope"></i> Registered Email *</label>
+                <input
+                  type="email"
+                  placeholder="Enter your registered email"
+                  required
+                />
+              </div>
+              <div className="form-group">
+                <label><i className="fas fa-comment-alt"></i> Reason for Cancellation *</label>
+                <select 
+                  value={vehicleCancelReason}
+                  onChange={(e) => setVehicleCancelReason(e.target.value)}
+                  required
+                >
+                  <option value="">Select a reason</option>
+                  <option value="change-plans">Change in travel plans</option>
+                  <option value="found-alternative">Found alternative transport</option>
+                  <option value="emergency">Personal emergency</option>
+                  <option value="weather">Weather conditions</option>
+                  <option value="price">Price concerns</option>
+                  <option value="other">Other reason</option>
+                </select>
+              </div>
+              <div className="form-group">
+                <label><i className="fas fa-edit"></i> Additional Comments (Optional)</label>
+                <textarea
+                  placeholder="Any additional details..."
+                  rows={3}
+                />
+              </div>
+              <div className="cancellation-policy-box">
+                <h4><i className="fas fa-info-circle"></i> Cancellation Policy</h4>
+                <ul>
+                  <li><i className="fas fa-check"></i> Free cancellation up to 24 hours before pickup</li>
+                  <li><i className="fas fa-check"></i> 50% refund for cancellation within 24 hours</li>
+                  <li><i className="fas fa-times"></i> No refund for cancellation within 2 hours</li>
+                </ul>
+              </div>
+              <button type="submit" className="modal-submit-btn cancel-btn">
+                <i className="fas fa-ban"></i> Cancel Booking
+              </button>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Modify Vehicle Booking Modal */}
+      {showModifyVehicleModal && (
+        <div className="modal-overlay" onClick={() => setShowModifyVehicleModal(false)}>
+          <div className="modal-content vehicle-modal" onClick={e => e.stopPropagation()}>
+            <button className="modal-close" onClick={() => setShowModifyVehicleModal(false)}>
+              <i className="fas fa-times"></i>
+            </button>
+            <div className="modal-header-icon modify">
+              <i className="fas fa-edit"></i>
+            </div>
+            <h3>Modify Vehicle Booking</h3>
+            <p className="modal-subtitle">Update your booking details</p>
+            
+            <form onSubmit={(e) => { e.preventDefault(); alert('Modification request submitted successfully!'); setShowModifyVehicleModal(false); }}>
+              <div className="form-group">
+                <label><i className="fas fa-ticket-alt"></i> Vehicle Booking ID *</label>
+                <input
+                  type="text"
+                  placeholder="Enter your vehicle booking ID"
+                  required
+                />
+              </div>
+              <div className="form-group">
+                <label><i className="fas fa-map-marker-alt"></i> New Pickup Location</label>
+                <input
+                  type="text"
+                  value={vehicleModifyData.pickupLocation}
+                  onChange={(e) => setVehicleModifyData({...vehicleModifyData, pickupLocation: e.target.value})}
+                  placeholder="Enter new pickup location (if changing)"
+                />
+              </div>
+              <div className="form-row">
+                <div className="form-group">
+                  <label><i className="fas fa-calendar"></i> New Pickup Date</label>
+                  <input
+                    type="date"
+                    value={vehicleModifyData.pickupDate}
+                    onChange={(e) => setVehicleModifyData({...vehicleModifyData, pickupDate: e.target.value})}
+                  />
+                </div>
+                <div className="form-group">
+                  <label><i className="fas fa-clock"></i> New Pickup Time</label>
+                  <input
+                    type="time"
+                    value={vehicleModifyData.pickupTime}
+                    onChange={(e) => setVehicleModifyData({...vehicleModifyData, pickupTime: e.target.value})}
+                  />
+                </div>
+              </div>
+              <div className="form-group">
+                <label><i className="fas fa-car"></i> Change Vehicle Type</label>
+                <select
+                  value={vehicleModifyData.vehicleType}
+                  onChange={(e) => setVehicleModifyData({...vehicleModifyData, vehicleType: e.target.value})}
+                >
+                  <option value="">Keep current vehicle</option>
+                  <option value="sedan">Sedan (4 seater)</option>
+                  <option value="suv">SUV (6 seater)</option>
+                  <option value="luxury">Luxury Car</option>
+                  <option value="tempo">Tempo Traveller (12-17 seater)</option>
+                  <option value="minibus">Mini Bus (20-35 seater)</option>
+                </select>
+              </div>
+              <div className="form-group">
+                <label><i className="fas fa-comment-alt"></i> Additional Notes</label>
+                <textarea
+                  placeholder="Any special requests or instructions..."
+                  rows={3}
+                />
+              </div>
+              <div className="modify-info-box">
+                <p><i className="fas fa-info-circle"></i> Modifications are subject to availability. Price difference (if any) will be communicated before confirmation.</p>
+              </div>
+              <button type="submit" className="modal-submit-btn modify-btn">
+                <i className="fas fa-save"></i> Submit Modification
+              </button>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Contact Driver Modal */}
+      {showDriverContactModal && (
+        <div className="modal-overlay" onClick={() => setShowDriverContactModal(false)}>
+          <div className="modal-content vehicle-modal" onClick={e => e.stopPropagation()}>
+            <button className="modal-close" onClick={() => setShowDriverContactModal(false)}>
+              <i className="fas fa-times"></i>
+            </button>
+            <div className="modal-header-icon driver">
+              <i className="fas fa-user-tie"></i>
+            </div>
+            <h3>Contact Driver</h3>
+            <p className="modal-subtitle">Get your driver's contact details</p>
+            
+            <form onSubmit={(e) => { e.preventDefault(); alert('Driver details will be sent to your registered email and phone!'); setShowDriverContactModal(false); }}>
+              <div className="form-group">
+                <label><i className="fas fa-ticket-alt"></i> Vehicle Booking ID *</label>
+                <input
+                  type="text"
+                  placeholder="Enter your vehicle booking ID"
+                  required
+                />
+              </div>
+              <div className="form-group">
+                <label><i className="fas fa-phone"></i> Your Mobile Number *</label>
+                <input
+                  type="tel"
+                  placeholder="Enter your mobile number"
+                  required
+                />
+              </div>
+              <div className="driver-info-preview">
+                <div className="driver-avatar">
+                  <i className="fas fa-user"></i>
+                </div>
+                <div className="driver-details-placeholder">
+                  <p>Enter your booking ID to view driver details</p>
+                  <span>Driver information is available 30 minutes before pickup</span>
+                </div>
+              </div>
+              <div className="driver-help-options">
+                <h4>Need Help With?</h4>
+                <div className="help-option-chips">
+                  <span className="help-chip"><i className="fas fa-map-marker-alt"></i> Share Live Location</span>
+                  <span className="help-chip"><i className="fas fa-clock"></i> Driver Running Late</span>
+                  <span className="help-chip"><i className="fas fa-car"></i> Wrong Vehicle</span>
+                  <span className="help-chip"><i className="fas fa-route"></i> Change Route</span>
+                </div>
+              </div>
+              <button type="submit" className="modal-submit-btn driver-btn">
+                <i className="fas fa-search"></i> Get Driver Details
+              </button>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Vehicle Refund Request Modal */}
+      {showVehicleRefundModal && (
+        <div className="modal-overlay" onClick={() => setShowVehicleRefundModal(false)}>
+          <div className="modal-content vehicle-modal" onClick={e => e.stopPropagation()}>
+            <button className="modal-close" onClick={() => setShowVehicleRefundModal(false)}>
+              <i className="fas fa-times"></i>
+            </button>
+            <div className="modal-header-icon refund">
+              <i className="fas fa-money-bill-wave"></i>
+            </div>
+            <h3>Request Refund</h3>
+            <p className="modal-subtitle">Submit your refund request for vehicle booking</p>
+            
+            <form onSubmit={(e) => { e.preventDefault(); alert('Refund request submitted successfully! We will process it within 5-7 business days.'); setShowVehicleRefundModal(false); }}>
+              <div className="form-group">
+                <label><i className="fas fa-ticket-alt"></i> Vehicle Booking ID *</label>
+                <input
+                  type="text"
+                  placeholder="Enter your vehicle booking ID"
+                  required
+                />
+              </div>
+              <div className="form-group">
+                <label><i className="fas fa-envelope"></i> Registered Email *</label>
+                <input
+                  type="email"
+                  placeholder="Enter your registered email"
+                  required
+                />
+              </div>
+              <div className="form-group">
+                <label><i className="fas fa-list"></i> Reason for Refund *</label>
+                <select required>
+                  <option value="">Select a reason</option>
+                  <option value="cancelled">Booking was cancelled</option>
+                  <option value="no-show">Driver didn't show up</option>
+                  <option value="service-issue">Poor service quality</option>
+                  <option value="overcharged">Overcharged/Wrong billing</option>
+                  <option value="vehicle-issue">Vehicle condition issue</option>
+                  <option value="other">Other reason</option>
+                </select>
+              </div>
+              <div className="form-group">
+                <label><i className="fas fa-rupee-sign"></i> Refund Amount Expected (₹)</label>
+                <input
+                  type="number"
+                  placeholder="Enter amount (optional)"
+                />
+              </div>
+              <div className="form-group">
+                <label><i className="fas fa-comment-alt"></i> Describe Your Issue *</label>
+                <textarea
+                  placeholder="Please provide details about your refund request..."
+                  rows={4}
+                  required
+                />
+              </div>
+              <div className="form-group">
+                <label><i className="fas fa-university"></i> Bank Account Details (for refund)</label>
+                <input
+                  type="text"
+                  placeholder="Account number / UPI ID"
+                />
+              </div>
+              <div className="refund-timeline-box">
+                <h4><i className="fas fa-clock"></i> Refund Timeline</h4>
+                <div className="timeline-steps">
+                  <div className="timeline-step">
+                    <span className="step-number">1</span>
+                    <span>Request Submitted</span>
+                  </div>
+                  <div className="timeline-step">
+                    <span className="step-number">2</span>
+                    <span>Under Review (1-2 days)</span>
+                  </div>
+                  <div className="timeline-step">
+                    <span className="step-number">3</span>
+                    <span>Approved & Processed</span>
+                  </div>
+                  <div className="timeline-step">
+                    <span className="step-number">4</span>
+                    <span>Credited (5-7 days)</span>
+                  </div>
+                </div>
+              </div>
+              <button type="submit" className="modal-submit-btn refund-btn">
+                <i className="fas fa-paper-plane"></i> Submit Refund Request
+              </button>
+            </form>
           </div>
         </div>
       )}

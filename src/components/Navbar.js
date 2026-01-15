@@ -147,13 +147,190 @@ export default function Navbar() {
                 <i className={`fas ${isOpen ? 'fa-times' : 'fa-bars'}`}></i>
               </div>
 
+              {/* Mobile menu overlay */}
+              {isOpen && (
+                <div 
+                  className="mobile-overlay" 
+                  onClick={() => setIsOpen(false)}
+                  style={{
+                    position: 'fixed',
+                    top: 0,
+                    left: 0,
+                    right: 0,
+                    bottom: 0,
+                    background: 'rgba(0,0,0,0.5)',
+                    zIndex: 99998
+                  }}
+                />
+              )}
+
               <nav className={`main-navigation ${isOpen ? 'active' : ''}`}>
+                {/* Close button at top right corner */}
+                <button 
+                  className="mobile-close-btn"
+                  onClick={() => setIsOpen(false)}
+                  style={{
+                    position: 'absolute',
+                    top: '10px',
+                    right: '10px',
+                    background: 'linear-gradient(135deg, #fee2e2 0%, #fecaca 100%)',
+                    border: '1px solid #fca5a5',
+                    fontSize: '16px',
+                    cursor: 'pointer',
+                    color: '#dc2626',
+                    padding: '8px',
+                    borderRadius: '10px',
+                    width: '36px',
+                    height: '36px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    transition: 'all 0.2s ease',
+                    boxShadow: '0 2px 8px rgba(220, 38, 38, 0.15)',
+                    zIndex: 10
+                  }}
+                >
+                  <i className="fas fa-times"></i>
+                </button>
+
+                {/* Menu header */}
+                <div className="mobile-menu-header" style={{
+                  padding: '12px 16px',
+                  borderBottom: '1px solid #e2e8f0',
+                  background: 'linear-gradient(135deg, #f8fafc 0%, #ffffff 100%)',
+                  marginBottom: '0'
+                }}>
+                  <span style={{ 
+                    fontWeight: 700, 
+                    fontSize: '16px', 
+                    color: '#1e293b',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '8px'
+                  }}>
+                    <i className="fas fa-bars" style={{ color: '#10b981', fontSize: '14px' }}></i>
+                    Menu
+                  </span>
+                </div>
+
                 {user ? (
                   <Link to="/customer?tab=overview" className="trips-link" onClick={() => setIsOpen(false)}>
                     <i className="fas fa-compass"></i>
                     <span>My Journeys</span>
                   </Link>
                 ) : null}
+
+                {/* Mobile menu additional links */}
+                <div className="mobile-menu-links" style={{ padding: 0, margin: 0 }}>
+                  <Link 
+                    to="/travel-agents" 
+                    onClick={() => setIsOpen(false)}
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '12px',
+                      padding: '14px 24px',
+                      color: '#2d3748',
+                      textDecoration: 'none',
+                      fontSize: '15px',
+                      fontWeight: 500,
+                      borderBottom: '1px solid #f1f5f9'
+                    }}
+                  >
+                    <i className="fas fa-handshake" style={{ color: '#f97316', width: '20px' }}></i>
+                    Become a Partner
+                  </Link>
+                  <Link 
+                    to="/contact" 
+                    onClick={() => setIsOpen(false)}
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '12px',
+                      padding: '14px 24px',
+                      color: '#2d3748',
+                      textDecoration: 'none',
+                      fontSize: '15px',
+                      fontWeight: 500,
+                      borderBottom: '1px solid #f1f5f9'
+                    }}
+                  >
+                    <i className="fas fa-headset" style={{ color: '#2563eb', width: '20px' }}></i>
+                    Contact Support
+                  </Link>
+                  <Link 
+                    to="/about" 
+                    onClick={() => setIsOpen(false)}
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '12px',
+                      padding: '14px 24px',
+                      color: '#2d3748',
+                      textDecoration: 'none',
+                      fontSize: '15px',
+                      fontWeight: 500,
+                      borderBottom: '1px solid #f1f5f9'
+                    }}
+                  >
+                    <i className="fas fa-info-circle" style={{ color: '#7c3aed', width: '20px' }}></i>
+                    About Us
+                  </Link>
+                  <Link 
+                    to="/tour" 
+                    onClick={() => setIsOpen(false)}
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '12px',
+                      padding: '14px 24px',
+                      color: '#2d3748',
+                      textDecoration: 'none',
+                      fontSize: '15px',
+                      fontWeight: 500,
+                      borderBottom: '1px solid #f1f5f9'
+                    }}
+                  >
+                    <i className="fas fa-map-marked-alt" style={{ color: '#10b981', width: '20px' }}></i>
+                    Tours
+                  </Link>
+                  <Link 
+                    to="/destination" 
+                    onClick={() => setIsOpen(false)}
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '12px',
+                      padding: '14px 24px',
+                      color: '#2d3748',
+                      textDecoration: 'none',
+                      fontSize: '15px',
+                      fontWeight: 500,
+                      borderBottom: '1px solid #f1f5f9'
+                    }}
+                  >
+                    <i className="fas fa-globe-americas" style={{ color: '#06b6d4', width: '20px' }}></i>
+                    Destinations
+                  </Link>
+                  <Link 
+                    to="/offers" 
+                    onClick={() => setIsOpen(false)}
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '12px',
+                      padding: '14px 24px',
+                      color: '#2d3748',
+                      textDecoration: 'none',
+                      fontSize: '15px',
+                      fontWeight: 500,
+                      borderBottom: '1px solid #f1f5f9'
+                    }}
+                  >
+                    <i className="fas fa-tags" style={{ color: '#ec4899', width: '20px' }}></i>
+                    Offers
+                  </Link>
+                </div>
               </nav>
 
               <div className="nav-actions">
@@ -190,7 +367,10 @@ export default function Navbar() {
                         <i className="fas fa-credit-card"></i> Make Payment
                       </Link>
                       <Link to="/customer?tab=holiday-booking" onClick={() => setShowDropdown(null)}>
-                        <i className="fas fa-palm-tree"></i> Holiday Bookings
+                        <i className="fas fa-umbrella-beach"></i> Holiday Bookings
+                      </Link>
+                      <Link to="/customer?tab=vehicle-support" onClick={() => setShowDropdown(null)}>
+                        <i className="fas fa-car-side"></i> Vehicle Booking Support
                       </Link>
                     </div>
                   )}

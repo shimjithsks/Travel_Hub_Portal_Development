@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { collection, query, where, getDocs } from 'firebase/firestore';
 import { db } from '../../firebase/firebase';
+import LoadingSpinner from '../../components/LoadingSpinner';
 import '../../styles/myBookings.css';
 
 export default function MyBookings() {
@@ -57,14 +58,7 @@ export default function MyBookings() {
   };
 
   if (loading) {
-    return (
-      <div className="my-bookings-container">
-        <div className="loading-spinner">
-          <div className="spinner"></div>
-          <p>Loading your bookings...</p>
-        </div>
-      </div>
-    );
+    return <LoadingSpinner size="fullpage" text="Loading your bookings..." overlay />;
   }
 
   return (

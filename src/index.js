@@ -10,7 +10,7 @@ import 'bootstrap/dist/css/bootstrap.min.css';
 import 'bootstrap/dist/js/bootstrap.bundle.min.js';
 
 // App version - increment this to clear cached data on updates
-const APP_VERSION = '1.0.4';
+const APP_VERSION = '1.1.0';
 
 // Clear old cached data if version changed
 const storedVersion = localStorage.getItem('appVersion');

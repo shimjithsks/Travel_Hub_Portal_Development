@@ -6,6 +6,7 @@ import {
   getPartnerCommissionStats,
   updatePartnerProfile 
 } from '../../services/partnerService';
+import LoadingSpinner from '../../components/LoadingSpinner';
 import '../../styles/partnerDashboard.css';
 
 const PartnerDashboard = () => {
@@ -116,14 +117,7 @@ const PartnerDashboard = () => {
   };
 
   if (loading) {
-    return (
-      <div className="partner-dashboard-loading">
-        <div className="loader-container">
-          <i className="fas fa-spinner fa-spin"></i>
-          <p>Loading your dashboard...</p>
-        </div>
-      </div>
-    );
+    return <LoadingSpinner size="fullpage" text="Loading your dashboard..." overlay />;
   }
 
   if (!partner) {

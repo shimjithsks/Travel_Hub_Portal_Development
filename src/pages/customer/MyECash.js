@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { doc, getDoc, setDoc, updateDoc, increment } from 'firebase/firestore';
 import { db } from '../../firebase/firebase';
+import LoadingSpinner from '../../components/LoadingSpinner';
 import '../../styles/myECash.css';
 
 export default function MyECash() {
@@ -96,14 +97,7 @@ export default function MyECash() {
   };
 
   if (loading) {
-    return (
-      <div className="my-ecash-container">
-        <div className="loading-spinner">
-          <div className="spinner"></div>
-          <p>Loading your eCash wallet...</p>
-        </div>
-      </div>
-    );
+    return <LoadingSpinner size="fullpage" text="Loading your eCash wallet..." overlay />;
   }
 
   return (

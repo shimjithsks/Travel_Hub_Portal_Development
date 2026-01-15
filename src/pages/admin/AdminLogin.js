@@ -4,6 +4,7 @@ import { signInWithEmailAndPassword } from 'firebase/auth';
 import { doc, getDoc, collection, getDocs } from 'firebase/firestore';
 import { auth, db } from '../../firebase/firebase';
 import { useAuth } from '../../context/AuthContext';
+import LoadingSpinner from '../../components/LoadingSpinner';
 import '../../styles/managementLogin.css';
 
 export default function AdminLogin() {
@@ -100,14 +101,7 @@ export default function AdminLogin() {
 
   // Show loading while checking setup
   if (checkingSetup || authLoading) {
-    return (
-      <div className="mgmt-login-page">
-        <div className="mgmt-login-loading">
-          <i className="fas fa-spinner fa-spin"></i>
-          <p>Loading...</p>
-        </div>
-      </div>
-    );
+    return <LoadingSpinner size="fullpage" text="Loading admin portal..." overlay />;
   }
 
   // Redirect to setup if no super admin exists
