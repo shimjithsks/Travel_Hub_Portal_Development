@@ -502,29 +502,44 @@ const ManagementPortal = () => {
   };
 
   const handleToggleStatus = async (employee) => {
+    // Prevent self-deactivation
+    if (employee.id === user?.uid) {
+      showNotification('You cannot deactivate your own account', 'error');
+      return;
+    }
+
     // Prevent deactivating primary super admin
     if (employee.isPrimarySuperAdmin) {
-      showNotification('Primary Super Admin status cannot be changed', 'error');
+      showNotification('Primary Super Admin account cannot be deactivated', 'error');
       return;
     }
 
     // Prevent non-primary from changing super admin status
     if (employee.role === 'super-admin' && !profile?.isPrimarySuperAdmin) {
-      showNotification('Only Primary Super Admin can change Super Admin status', 'error');
+      showNotification('Only Primary Super Admin can deactivate Super Admin accounts', 'error');
       return;
     }
 
-    const newStatus = employee.status === 'active' ? 'inactive' : 'active';
+    // Delegated admin cannot deactivate super admin
+    if (employee.role === 'super-admin' && profile?.role === 'delegated-super-admin') {
+      showNotification('Delegated Admin cannot deactivate Super Admin accounts', 'error');
+      return;
+    }
+
+    const isActivating = employee.status !== 'active';
+    const newStatus = isActivating ? 'active' : 'inactive';
+    const actionText = isActivating ? 'activated' : 'deactivated';
+
     try {
       await updateDoc(doc(db, 'users', employee.id), {
         status: newStatus,
         updatedAt: serverTimestamp()
       });
-      showNotification(`${employee.name} is now ${newStatus}`, 'success');
+      showNotification(`${employee.name} has been ${actionText} successfully`, 'success');
       fetchEmployees();
     } catch (error) {
       console.error('Error updating status:', error);
-      showNotification('Failed to update status', 'error');
+      showNotification(`Failed to ${isActivating ? 'activate' : 'deactivate'} ${employee.name}. Please try again.`, 'error');
     }
   };
 
@@ -1165,11 +1180,15 @@ const ManagementPortal = () => {
                           <i className="fas fa-lock"></i>
                         </button>
                       )}
-                      {!isPrimary && canEdit && (
+                      {/* Deactivate/Activate Button - Hide for: own profile, primary super admin, super admin (if current user is delegated admin) */}
+                      {!isPrimary && 
+                       !isCurrentUser && 
+                       canEdit && 
+                       !(employee.role === 'super-admin' && profile?.role === 'delegated-super-admin') && (
                         <button 
                           className={`action-btn ${employee.status === 'active' ? 'deactivate' : 'activate'}`} 
                           onClick={() => handleToggleStatus(employee)}
-                          title={employee.status === 'active' ? 'Deactivate' : 'Activate'}
+                          title={employee.status === 'active' ? 'Deactivate Account' : 'Activate Account'}
                         >
                           <i className={`fas ${employee.status === 'active' ? 'fa-ban' : 'fa-check'}`}></i>
                         </button>
