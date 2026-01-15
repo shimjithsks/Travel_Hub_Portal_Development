@@ -38,6 +38,7 @@ const ManagementPortal = () => {
   // Role options
   const roleOptions = [
     { value: 'super-admin', label: 'Super Admin', description: 'Full access to all features', color: '#dc2626' },
+    { value: 'delegated-super-admin', label: 'Delegated Super Admin', description: 'Manage employees with restrictions', color: '#ea580c' },
     { value: 'admin', label: 'Admin', description: 'Access to all admin features', color: '#7c3aed' },
     { value: 'admin-custom', label: 'Custom Admin', description: 'Select specific access permissions', color: '#0891b2' }
   ];
@@ -112,7 +113,7 @@ const ManagementPortal = () => {
       const snapshot = await getDocs(usersRef);
       const employeesList = snapshot.docs
         .map(doc => ({ id: doc.id, ...doc.data() }))
-        .filter(user => user.role && user.role.startsWith('admin') || user.role === 'super-admin');
+        .filter(user => user.role && (user.role.startsWith('admin') || user.role === 'super-admin' || user.role === 'delegated-super-admin'));
       setEmployees(employeesList);
     } catch (error) {
       console.error('Error fetching employees:', error);
@@ -220,6 +221,18 @@ const ManagementPortal = () => {
     e.preventDefault();
     if (!selectedEmployee) return;
 
+    // Prevent modifying primary super admin by non-primary super admins
+    if (selectedEmployee.isPrimarySuperAdmin && !profile?.isPrimarySuperAdmin) {
+      setFormError('You cannot modify the Primary Super Admin');
+      return;
+    }
+
+    // Prevent changing primary super admin's role
+    if (selectedEmployee.isPrimarySuperAdmin && formData.role !== 'super-admin') {
+      setFormError('Primary Super Admin role cannot be changed');
+      return;
+    }
+
     // Validate custom admin has at least one access permission
     if (formData.role === 'admin-custom' && (!formData.adminAccess || formData.adminAccess.length === 0)) {
       setFormError('Please select at least one access permission for Custom Admin');
@@ -228,7 +241,8 @@ const ManagementPortal = () => {
 
     setSubmitting(true);
     try {
-      await updateDoc(doc(db, 'users', selectedEmployee.id), {
+      // Build update data
+      const updateData = {
         name: formData.name,
         phone: formData.phone || '',
         role: formData.role,
@@ -236,7 +250,14 @@ const ManagementPortal = () => {
         adminAccess: formData.role === 'admin-custom' ? formData.adminAccess : [],
         updatedAt: serverTimestamp(),
         updatedBy: user.uid
-      });
+      };
+
+      // Preserve isPrimarySuperAdmin flag if it exists
+      if (selectedEmployee.isPrimarySuperAdmin) {
+        updateData.isPrimarySuperAdmin = true;
+      }
+
+      await updateDoc(doc(db, 'users', selectedEmployee.id), updateData);
 
       showNotification(`Employee ${formData.name} updated successfully!`, 'success');
       setShowEditModal(false);
@@ -251,6 +272,24 @@ const ManagementPortal = () => {
   };
 
   const handleDeleteEmployee = async (employee) => {
+    // Prevent deletion of any super admin
+    if (employee.role === 'super-admin') {
+      showNotification('Super Admins cannot be removed from the system', 'error');
+      return;
+    }
+
+    // Prevent deletion of primary super admin (extra safety)
+    if (employee.isPrimarySuperAdmin) {
+      showNotification('Primary Super Admin cannot be removed', 'error');
+      return;
+    }
+
+    // Check if current user is trying to delete themselves
+    if (employee.id === user.uid) {
+      showNotification('You cannot remove yourself from the system', 'error');
+      return;
+    }
+
     if (!window.confirm(`Are you sure you want to remove ${employee.name} from the system?`)) {
       return;
     }
@@ -260,6 +299,7 @@ const ManagementPortal = () => {
       await updateDoc(doc(db, 'users', employee.id), {
         role: 'customer',
         isEmployee: false,
+        adminAccess: [],
         removedAt: serverTimestamp(),
         removedBy: user.uid
       });
@@ -273,6 +313,18 @@ const ManagementPortal = () => {
   };
 
   const handleToggleStatus = async (employee) => {
+    // Prevent deactivating primary super admin
+    if (employee.isPrimarySuperAdmin) {
+      showNotification('Primary Super Admin status cannot be changed', 'error');
+      return;
+    }
+
+    // Prevent non-primary from changing super admin status
+    if (employee.role === 'super-admin' && !profile?.isPrimarySuperAdmin) {
+      showNotification('Only Primary Super Admin can change Super Admin status', 'error');
+      return;
+    }
+
     const newStatus = employee.status === 'active' ? 'inactive' : 'active';
     try {
       await updateDoc(doc(db, 'users', employee.id), {
@@ -288,6 +340,12 @@ const ManagementPortal = () => {
   };
 
   const openEditModal = (employee) => {
+    // Prevent editing primary super admin by non-primary super admins
+    if (employee.isPrimarySuperAdmin && !profile?.isPrimarySuperAdmin) {
+      showNotification('You cannot edit the Primary Super Admin', 'error');
+      return;
+    }
+
     setSelectedEmployee(employee);
     setFormData({
       name: employee.name || '',
@@ -300,6 +358,55 @@ const ManagementPortal = () => {
       adminAccess: employee.adminAccess || []
     });
     setShowEditModal(true);
+  };
+
+  // Helper function to check if current user can manage an employee
+  const canManageEmployee = (employee) => {
+    // Primary super admin can manage everyone
+    if (profile?.isPrimarySuperAdmin) return true;
+    
+    // Non-primary cannot manage primary super admin
+    if (employee.isPrimarySuperAdmin) return false;
+    
+    // Cannot manage real super admins (only primary can)
+    if (employee.role === 'super-admin' && !profile?.isPrimarySuperAdmin) return false;
+    
+    // Super admins and delegated super admins can manage others (except primary and other super admins)
+    if (profile?.role === 'super-admin' || profile?.role === 'delegated-super-admin') return true;
+    
+    return false;
+  };
+
+  // Helper function to check if employee can be deleted
+  const canDeleteEmployee = (employee) => {
+    // Cannot delete any super admin or delegated super admin
+    if (employee.role === 'super-admin' || employee.role === 'delegated-super-admin') return false;
+    
+    // Cannot delete yourself
+    if (employee.id === user?.uid) return false;
+    
+    // Only super admins and delegated super admins can delete regular admins
+    if (profile?.role !== 'super-admin' && profile?.role !== 'delegated-super-admin') return false;
+    
+    return true;
+  };
+
+  // Helper function to check if current user can assign a specific role
+  const canAssignRole = (roleValue) => {
+    // Primary super admin can assign any role
+    if (profile?.isPrimarySuperAdmin) return true;
+    
+    // Super admins (non-primary) can assign all except super-admin
+    if (profile?.role === 'super-admin') {
+      return roleValue !== 'super-admin';
+    }
+    
+    // Delegated super admins can only assign admin and admin-custom
+    if (profile?.role === 'delegated-super-admin') {
+      return roleValue === 'admin' || roleValue === 'admin-custom';
+    }
+    
+    return false;
   };
 
   const resetForm = () => {
@@ -358,13 +465,14 @@ const ManagementPortal = () => {
       // Generate employee ID
       const employeeId = `EMP${Date.now().toString(36).toUpperCase()}${Math.random().toString(36).substring(2, 4).toUpperCase()}`;
 
-      // Create user document in Firestore as super-admin
+      // Create user document in Firestore as super-admin (Primary - cannot be deleted or modified by others)
       await setDoc(doc(db, 'users', cred.user.uid), {
         employeeId,
         name: formData.name,
         email: formData.email,
         phone: formData.phone || '',
         role: 'super-admin',
+        isPrimarySuperAdmin: true, // Mark as the original/primary super admin
         department: 'Management',
         isEmployee: true,
         createdAt: serverTimestamp(),
@@ -505,14 +613,14 @@ const ManagementPortal = () => {
     return <LoadingSpinner size="fullpage" text="Loading management portal..." overlay />;
   }
 
-  // Only super-admin can access this page
-  if (profile?.role !== 'super-admin') {
+  // Only super-admin and delegated-super-admin can access this page
+  if (profile?.role !== 'super-admin' && profile?.role !== 'delegated-super-admin') {
     return (
       <div className="management-portal">
         <div className="access-denied">
           <i className="fas fa-lock"></i>
           <h2>Access Denied</h2>
-          <p>Only Super Admins can access the Management Portal.</p>
+          <p>Only Super Admins and Delegated Super Admins can access the Management Portal.</p>
           <button onClick={() => navigate('/admin-portal')}>Go to Admin Portal</button>
         </div>
       </div>
@@ -630,14 +738,24 @@ const ManagementPortal = () => {
             ) : (
               employees.map(employee => {
                 const roleInfo = getRoleInfo(employee.role);
+                const isPrimary = employee.isPrimarySuperAdmin;
+                const canEdit = canManageEmployee(employee);
+                const canDelete = canDeleteEmployee(employee);
+                const isCurrentUser = employee.id === user?.uid;
+                
                 return (
-                  <div key={employee.id} className={`mp-employee-card ${employee.status === 'inactive' ? 'inactive' : ''}`}>
+                  <div key={employee.id} className={`mp-employee-card ${employee.status === 'inactive' ? 'inactive' : ''} ${isPrimary ? 'primary-admin' : ''}`}>
                     <div className="employee-header">
                       <div className="employee-avatar" style={{ background: roleInfo.color }}>
                         {employee.name?.charAt(0) || '?'}
+                        {isPrimary && <span className="primary-crown"><i className="fas fa-crown"></i></span>}
                       </div>
                       <div className="employee-basic">
-                        <h3>{employee.name}</h3>
+                        <h3>
+                          {employee.name}
+                          {isPrimary && <span className="primary-badge">Primary</span>}
+                          {isCurrentUser && <span className="you-badge">You</span>}
+                        </h3>
                         <span className="employee-id">{employee.employeeId || 'N/A'}</span>
                       </div>
                       <span className="status-badge" data-status={employee.status || 'active'}>
@@ -690,20 +808,33 @@ const ManagementPortal = () => {
                     )}
 
                     <div className="employee-actions">
-                      <button className="action-btn edit" onClick={() => openEditModal(employee)} title="Edit">
-                        <i className="fas fa-edit"></i>
-                      </button>
-                      <button 
-                        className={`action-btn ${employee.status === 'active' ? 'deactivate' : 'activate'}`} 
-                        onClick={() => handleToggleStatus(employee)}
-                        title={employee.status === 'active' ? 'Deactivate' : 'Activate'}
-                      >
-                        <i className={`fas ${employee.status === 'active' ? 'fa-ban' : 'fa-check'}`}></i>
-                      </button>
-                      {profile?.role === 'super-admin' && employee.role !== 'super-admin' && (
+                      {canEdit ? (
+                        <button className="action-btn edit" onClick={() => openEditModal(employee)} title="Edit">
+                          <i className="fas fa-edit"></i>
+                        </button>
+                      ) : (
+                        <button className="action-btn edit disabled" title="Cannot edit" disabled>
+                          <i className="fas fa-lock"></i>
+                        </button>
+                      )}
+                      {!isPrimary && canEdit && (
+                        <button 
+                          className={`action-btn ${employee.status === 'active' ? 'deactivate' : 'activate'}`} 
+                          onClick={() => handleToggleStatus(employee)}
+                          title={employee.status === 'active' ? 'Deactivate' : 'Activate'}
+                        >
+                          <i className={`fas ${employee.status === 'active' ? 'fa-ban' : 'fa-check'}`}></i>
+                        </button>
+                      )}
+                      {canDelete && (
                         <button className="action-btn delete" onClick={() => handleDeleteEmployee(employee)} title="Remove">
                           <i className="fas fa-trash"></i>
                         </button>
+                      )}
+                      {isPrimary && !profile?.isPrimarySuperAdmin && (
+                        <span className="protected-badge" title="Protected Account">
+                          <i className="fas fa-shield-alt"></i> Protected
+                        </span>
                       )}
                     </div>
                   </div>
@@ -722,7 +853,7 @@ const ManagementPortal = () => {
             {roleOptions.map(role => (
               <div key={role.value} className="permission-card" style={{ borderColor: role.color }}>
                 <div className="permission-header" style={{ background: role.color }}>
-                  <i className={`fas ${role.value === 'super-admin' ? 'fa-crown' : 'fa-user-shield'}`}></i>
+                  <i className={`fas ${role.value === 'super-admin' ? 'fa-crown' : role.value === 'delegated-super-admin' ? 'fa-user-cog' : 'fa-user-shield'}`}></i>
                   <h3>{role.label}</h3>
                 </div>
                 <div className="permission-body">
@@ -731,11 +862,21 @@ const ManagementPortal = () => {
                     {role.value === 'super-admin' && (
                       <>
                         <li><i className="fas fa-check"></i> All Dashboard Access</li>
-                        <li><i className="fas fa-check"></i> Manage Employees</li>
+                        <li><i className="fas fa-check"></i> Manage All Employees</li>
+                        <li><i className="fas fa-check"></i> Assign Any Role</li>
                         <li><i className="fas fa-check"></i> Manage Customers</li>
                         <li><i className="fas fa-check"></i> Manage Partners</li>
-                        <li><i className="fas fa-check"></i> Manage Bookings</li>
                         <li><i className="fas fa-check"></i> System Settings</li>
+                      </>
+                    )}
+                    {role.value === 'delegated-super-admin' && (
+                      <>
+                        <li><i className="fas fa-check"></i> Dashboard Access</li>
+                        <li><i className="fas fa-check"></i> Add/Edit Employees</li>
+                        <li><i className="fas fa-check"></i> Remove Regular Admins</li>
+                        <li><i className="fas fa-times"></i> Cannot Modify Super Admins</li>
+                        <li><i className="fas fa-times"></i> Cannot Assign Super Admin Role</li>
+                        <li><i className="fas fa-shield-alt"></i> Restricted Access</li>
                       </>
                     )}
                     {role.value === 'admin' && (
@@ -776,6 +917,14 @@ const ManagementPortal = () => {
             <form onSubmit={handleCreateEmployee}>
               <div className="mp-modal-body">
                 {formError && <div className="mp-form-error"><i className="fas fa-exclamation-circle"></i> {formError}</div>}
+                
+                {/* Show restriction notice for delegated super admin */}
+                {profile?.role === 'delegated-super-admin' && (
+                  <div className="mp-restriction-notice">
+                    <i className="fas fa-info-circle"></i>
+                    <span>As a Delegated Super Admin, you can only create Admin and Custom Admin roles.</span>
+                  </div>
+                )}
                 
                 <div className="mp-form-row">
                   <div className="mp-form-group">
@@ -853,7 +1002,7 @@ const ManagementPortal = () => {
                 <div className="mp-form-group">
                   <label>Role *</label>
                   <div className="role-select-grid">
-                    {roleOptions.map(role => (
+                    {roleOptions.filter(role => canAssignRole(role.value)).map(role => (
                       <label 
                         key={role.value} 
                         className={`role-option ${formData.role === role.value ? 'selected' : ''}`}
@@ -995,10 +1144,10 @@ const ManagementPortal = () => {
                 <div className="mp-form-group">
                   <label>Role *</label>
                   <div className="role-select-grid">
-                    {roleOptions.map(role => (
+                    {roleOptions.filter(role => canAssignRole(role.value)).map(role => (
                       <label 
                         key={role.value} 
-                        className={`role-option ${formData.role === role.value ? 'selected' : ''}`}
+                        className={`role-option ${formData.role === role.value ? 'selected' : ''} ${!canAssignRole(role.value) ? 'disabled-role' : ''}`}
                         style={{ '--role-color': role.color }}
                       >
                         <input
@@ -1007,6 +1156,7 @@ const ManagementPortal = () => {
                           value={role.value}
                           checked={formData.role === role.value}
                           onChange={handleInputChange}
+                          disabled={!canAssignRole(role.value)}
                         />
                         <div className="role-option-content">
                           <span className="role-name">{role.label}</span>

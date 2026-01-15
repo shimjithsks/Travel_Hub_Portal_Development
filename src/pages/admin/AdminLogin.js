@@ -69,7 +69,11 @@ export default function AdminLogin() {
       const userData = userDoc.data();
       const role = userData.role || '';
 
-      if (role !== 'super-admin' && !role.startsWith('admin')) {
+      // Check for valid admin roles including delegated-super-admin
+      const validRoles = ['super-admin', 'delegated-super-admin'];
+      const isValidAdmin = validRoles.includes(role) || role.startsWith('admin');
+
+      if (!isValidAdmin) {
         setError('Access denied. This portal is for admin users only.');
         await auth.signOut();
         setSubmitting(false);
