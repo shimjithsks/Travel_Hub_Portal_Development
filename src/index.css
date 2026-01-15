@@ -42,6 +42,19 @@ code {
     monospace;
 }
 
+/* Ensure all form inputs preserve case sensitivity - no forced uppercase */
+input,
+input[type="text"],
+input[type="email"],
+input[type="password"],
+input[type="tel"],
+input[type="number"],
+input[type="search"],
+textarea,
+select {
+  text-transform: none !important;
+}
+
 /* Ensure password inputs preserve case sensitivity */
 input[type="password"],
 input[type="text"][autocomplete="new-password"],

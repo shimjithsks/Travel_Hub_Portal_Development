@@ -48,8 +48,11 @@ export const registerPartner = async (partnerData, files = {}) => {
   }
 
   try {
+    // Normalize email to lowercase for case-insensitive comparison
+    const normalizedEmail = partnerData.email.toLowerCase().trim();
+    
     // Check if email already exists
-    const existingPartner = await getPartnerByEmail(partnerData.email);
+    const existingPartner = await getPartnerByEmail(normalizedEmail);
     if (existingPartner) {
       throw new Error('A partner with this email is already registered. Please use a different email or login to your existing account.');
     }
@@ -99,7 +102,7 @@ export const registerPartner = async (partnerData, files = {}) => {
       title: partnerData.title,
       contactFirstName: partnerData.contactFirstName,
       contactLastName: partnerData.contactLastName,
-      email: partnerData.email,
+      email: partnerData.email.toLowerCase().trim(),
       mobile: partnerData.mobile,
       landline: partnerData.landline || '',
       
@@ -187,7 +190,9 @@ export const getPartnerByEmail = async (email) => {
   if (!db) return null;
   
   try {
-    const q = query(collection(db, PARTNERS_COLLECTION), where('email', '==', email));
+    // Normalize email to lowercase for case-insensitive search
+    const normalizedEmail = email.toLowerCase().trim();
+    const q = query(collection(db, PARTNERS_COLLECTION), where('email', '==', normalizedEmail));
     const querySnapshot = await getDocs(q);
     
     if (!querySnapshot.empty) {

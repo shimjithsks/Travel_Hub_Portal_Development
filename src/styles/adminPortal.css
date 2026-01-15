@@ -4321,12 +4321,13 @@
   border-radius: 20px;
   width: 95%;
   max-width: 1100px;
-  max-height: 92vh;
+  max-height: 90vh;
   overflow: hidden;
   display: flex;
   flex-direction: column;
   animation: modalSlide 0.4s cubic-bezier(0.16, 1, 0.3, 1);
   box-shadow: 0 25px 50px rgba(0, 0, 0, 0.15);
+  padding: 0;
 }
 
 .partner-modal-header {
@@ -4448,6 +4449,7 @@
   overflow-y: auto;
   flex: 1;
   background: white;
+  max-height: calc(90vh - 220px);
 }
 
 .tab-content {
@@ -5249,12 +5251,14 @@
 
 /* Partner Modal Footer - Light Theme */
 .partner-modal-footer {
-  padding: 20px 24px;
+  padding: 24px;
   background: #f8fafc;
   border-top: 1px solid #e2e8f0;
   display: flex;
-  gap: 10px;
+  gap: 12px;
   flex-wrap: wrap;
+  flex-shrink: 0;
+  align-items: center;
 }
 
 .action-buttons-group {
@@ -5269,10 +5273,21 @@
   font-size: 14px;
   font-weight: 600;
   cursor: pointer;
-  display: flex;
+  display: inline-flex;
+  flex-direction: row !important;
   align-items: center;
+  justify-content: center;
   gap: 8px;
   transition: all 0.3s;
+  line-height: 1;
+}
+
+.action-btn i {
+  font-size: 14px;
+  line-height: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .action-btn:disabled {
@@ -5819,6 +5834,7 @@
 
   .partner-modal-footer {
     flex-direction: column;
+    padding: 20px;
   }
 
   .action-btn.close {
@@ -10009,7 +10025,7 @@
   max-width: 800px;
   width: 100%;
   max-height: 90vh;
-  overflow-y: auto;
+  overflow: hidden;
   position: relative;
   animation: slideUp 0.3s ease;
   box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
@@ -10054,6 +10070,9 @@
 /* Complaint Detail Modal */
 .complaint-detail-modal {
   padding: 0;
+  max-height: 90vh;
+  display: flex;
+  flex-direction: column;
 }
 
 .complaint-modal-header {
@@ -10064,6 +10083,7 @@
   background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
   border-radius: 24px 24px 0 0;
   border-bottom: 1px solid #e2e8f0;
+  flex-shrink: 0;
 }
 
 .complaint-type-icon {
@@ -10110,6 +10130,9 @@
 /* Complaint Modal Body */
 .complaint-modal-body {
   padding: 32px;
+  overflow-y: auto;
+  flex: 1;
+  max-height: calc(90vh - 150px);
 }
 
 .complaint-info-section,

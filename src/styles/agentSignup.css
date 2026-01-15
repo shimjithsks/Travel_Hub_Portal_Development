@@ -196,6 +196,7 @@
   max-width: 100%;
   box-sizing: border-box;
   color: #0f172a;
+  text-transform: none !important;
 }
 
 .form-group input::placeholder {
