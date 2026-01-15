@@ -57,7 +57,45 @@ export default function LoginModal({ isOpen, onClose }) {
 
     try {
       // Try normal login first
-      await signInWithEmailAndPassword(auth, emailOrPhone, password);
+      const cred = await signInWithEmailAndPassword(auth, emailOrPhone, password);
+      
+      // Check if user is a management/employee user (not allowed to login to customer portal)
+      const userDocRef = doc(db, 'users', cred.user.uid);
+      const userDocSnap = await getDoc(userDocRef);
+      
+      if (userDocSnap.exists()) {
+        const userData = userDocSnap.data();
+        const role = userData.role || '';
+        
+        // List of management/employee roles that cannot login to customer portal
+        const restrictedRoles = [
+          'super-admin', 
+          'delegated-super-admin', 
+          'admin', 
+          'admin-customers', 
+          'admin-partners', 
+          'admin-bookings',
+          'employee'
+        ];
+        
+        // Check if role is restricted or starts with 'admin'
+        const isRestrictedUser = restrictedRoles.includes(role) || role.startsWith('admin');
+        
+        if (isRestrictedUser) {
+          await auth.signOut();
+          setError('This account is registered as an employee/admin. Please use the Admin Portal to login.');
+          setSubmitting(false);
+          return;
+        }
+        
+        // Check if account is inactive
+        if (userData.status === 'inactive') {
+          await auth.signOut();
+          setError('Your account has been deactivated. Please contact support.');
+          setSubmitting(false);
+          return;
+        }
+      }
       
       // After successful login, check if password was recently reset
       try {
@@ -187,6 +225,37 @@ export default function LoginModal({ isOpen, onClose }) {
       
       if (userDoc.exists()) {
         const existingData = userDoc.data();
+        const role = existingData.role || '';
+        
+        // List of management/employee roles that cannot login to customer portal
+        const restrictedRoles = [
+          'super-admin', 
+          'delegated-super-admin', 
+          'admin', 
+          'admin-customers', 
+          'admin-partners', 
+          'admin-bookings',
+          'employee'
+        ];
+        
+        // Check if role is restricted or starts with 'admin'
+        const isRestrictedUser = restrictedRoles.includes(role) || role.startsWith('admin');
+        
+        if (isRestrictedUser) {
+          await auth.signOut();
+          setError('This account is registered as an employee/admin. Please use the Admin Portal to login.');
+          setSubmitting(false);
+          return;
+        }
+        
+        // Check if account is inactive
+        if (existingData.status === 'inactive') {
+          await auth.signOut();
+          setError('Your account has been deactivated. Please contact support.');
+          setSubmitting(false);
+          return;
+        }
+        
         // Check if profile is complete (has phone number at minimum)
         if (existingData.phone && existingData.phone.length > 5) {
           // Profile is complete, proceed to dashboard
