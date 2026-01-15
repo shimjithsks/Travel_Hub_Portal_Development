@@ -29,7 +29,8 @@ const ManagementPortal = () => {
     confirmPassword: '',
     phone: '',
     role: 'admin',
-    department: ''
+    department: '',
+    adminAccess: []
   });
   const [formError, setFormError] = useState('');
   const [submitting, setSubmitting] = useState(false);
@@ -38,9 +39,21 @@ const ManagementPortal = () => {
   const roleOptions = [
     { value: 'super-admin', label: 'Super Admin', description: 'Full access to all features', color: '#dc2626' },
     { value: 'admin', label: 'Admin', description: 'Access to all admin features', color: '#7c3aed' },
-    { value: 'admin-customers', label: 'Admin - Customers', description: 'Access only to customer management', color: '#0891b2' },
-    { value: 'admin-partners', label: 'Admin - Partners', description: 'Access only to partner management', color: '#059669' },
-    { value: 'admin-bookings', label: 'Admin - Bookings', description: 'Access only to booking management', color: '#d97706' }
+    { value: 'admin-custom', label: 'Custom Admin', description: 'Select specific access permissions', color: '#0891b2' }
+  ];
+
+  // Admin access options (checkboxes for custom admin)
+  const adminAccessOptions = [
+    { id: 'customers', label: 'Customer Management', icon: 'fa-users', description: 'View & manage customers' },
+    { id: 'partners', label: 'Partner Management', icon: 'fa-handshake', description: 'View & manage partners' },
+    { id: 'bookings', label: 'Booking Management', icon: 'fa-calendar-check', description: 'View & manage bookings' },
+    { id: 'complaints', label: 'Complaints Management', icon: 'fa-headset', description: 'Handle customer complaints' },
+    { id: 'holidays', label: 'Holiday Management', icon: 'fa-umbrella-beach', description: 'Manage holiday packages' },
+    { id: 'vehicles', label: 'Vehicle Management', icon: 'fa-car', description: 'Manage fleet & vehicles' },
+    { id: 'refunds', label: 'Refund Management', icon: 'fa-undo-alt', description: 'Process refund requests' },
+    { id: 'reports', label: 'Reports & Analytics', icon: 'fa-chart-bar', description: 'Access reports & analytics' },
+    { id: 'payments', label: 'Payment Management', icon: 'fa-credit-card', description: 'View & manage payments' },
+    { id: 'content', label: 'Content Management', icon: 'fa-edit', description: 'Manage website content' }
   ];
 
   // Check if any super admin exists
@@ -124,6 +137,26 @@ const ManagementPortal = () => {
     setFormError('');
   };
 
+  const handleAccessChange = (accessId) => {
+    setFormData(prev => {
+      const currentAccess = prev.adminAccess || [];
+      if (currentAccess.includes(accessId)) {
+        return { ...prev, adminAccess: currentAccess.filter(id => id !== accessId) };
+      } else {
+        return { ...prev, adminAccess: [...currentAccess, accessId] };
+      }
+    });
+  };
+
+  const handleSelectAllAccess = () => {
+    const allAccessIds = adminAccessOptions.map(opt => opt.id);
+    setFormData(prev => ({ ...prev, adminAccess: allAccessIds }));
+  };
+
+  const handleClearAllAccess = () => {
+    setFormData(prev => ({ ...prev, adminAccess: [] }));
+  };
+
   const handleCreateEmployee = async (e) => {
     e.preventDefault();
     setFormError('');
@@ -139,6 +172,11 @@ const ManagementPortal = () => {
     }
     if (formData.password.length < 6) {
       setFormError('Password must be at least 6 characters');
+      return;
+    }
+    // Validate custom admin has at least one access permission
+    if (formData.role === 'admin-custom' && (!formData.adminAccess || formData.adminAccess.length === 0)) {
+      setFormError('Please select at least one access permission for Custom Admin');
       return;
     }
 
@@ -159,6 +197,7 @@ const ManagementPortal = () => {
         phone: formData.phone || '',
         role: formData.role,
         department: formData.department || '',
+        adminAccess: formData.role === 'admin-custom' ? formData.adminAccess : [],
         isEmployee: true,
         createdAt: serverTimestamp(),
         createdBy: user.uid,
@@ -181,6 +220,12 @@ const ManagementPortal = () => {
     e.preventDefault();
     if (!selectedEmployee) return;
 
+    // Validate custom admin has at least one access permission
+    if (formData.role === 'admin-custom' && (!formData.adminAccess || formData.adminAccess.length === 0)) {
+      setFormError('Please select at least one access permission for Custom Admin');
+      return;
+    }
+
     setSubmitting(true);
     try {
       await updateDoc(doc(db, 'users', selectedEmployee.id), {
@@ -188,6 +233,7 @@ const ManagementPortal = () => {
         phone: formData.phone || '',
         role: formData.role,
         department: formData.department || '',
+        adminAccess: formData.role === 'admin-custom' ? formData.adminAccess : [],
         updatedAt: serverTimestamp(),
         updatedBy: user.uid
       });
@@ -250,7 +296,8 @@ const ManagementPortal = () => {
       confirmPassword: '',
       phone: employee.phone || '',
       role: employee.role || 'admin',
-      department: employee.department || ''
+      department: employee.department || '',
+      adminAccess: employee.adminAccess || []
     });
     setShowEditModal(true);
   };
@@ -263,7 +310,8 @@ const ManagementPortal = () => {
       confirmPassword: '',
       phone: '',
       role: 'admin',
-      department: ''
+      department: '',
+      adminAccess: []
     });
     setFormError('');
     setSelectedEmployee(null);
@@ -623,6 +671,24 @@ const ManagementPortal = () => {
                       </span>
                     </div>
 
+                    {/* Show access permissions for custom admin */}
+                    {employee.role === 'admin-custom' && employee.adminAccess?.length > 0 && (
+                      <div className="employee-access-tags">
+                        {employee.adminAccess.slice(0, 4).map(accessId => {
+                          const accessOption = adminAccessOptions.find(opt => opt.id === accessId);
+                          return accessOption ? (
+                            <span key={accessId} className="access-tag" title={accessOption.description}>
+                              <i className={`fas ${accessOption.icon}`}></i>
+                              {accessOption.label}
+                            </span>
+                          ) : null;
+                        })}
+                        {employee.adminAccess.length > 4 && (
+                          <span className="access-tag more">+{employee.adminAccess.length - 4} more</span>
+                        )}
+                      </div>
+                    )}
+
                     <div className="employee-actions">
                       <button className="action-btn edit" onClick={() => openEditModal(employee)} title="Edit">
                         <i className="fas fa-edit"></i>
@@ -681,28 +747,12 @@ const ManagementPortal = () => {
                         <li><i className="fas fa-times"></i> Cannot Manage Employees</li>
                       </>
                     )}
-                    {role.value === 'admin-customers' && (
+                    {role.value === 'admin-custom' && (
                       <>
-                        <li><i className="fas fa-check"></i> View Dashboard</li>
-                        <li><i className="fas fa-check"></i> Manage Customers</li>
-                        <li><i className="fas fa-times"></i> No Partner Access</li>
-                        <li><i className="fas fa-times"></i> No Booking Access</li>
-                      </>
-                    )}
-                    {role.value === 'admin-partners' && (
-                      <>
-                        <li><i className="fas fa-check"></i> View Dashboard</li>
-                        <li><i className="fas fa-check"></i> Manage Partners</li>
-                        <li><i className="fas fa-times"></i> No Customer Access</li>
-                        <li><i className="fas fa-times"></i> No Booking Access</li>
-                      </>
-                    )}
-                    {role.value === 'admin-bookings' && (
-                      <>
-                        <li><i className="fas fa-check"></i> View Dashboard</li>
-                        <li><i className="fas fa-check"></i> Manage Bookings</li>
-                        <li><i className="fas fa-times"></i> No Customer Access</li>
-                        <li><i className="fas fa-times"></i> No Partner Access</li>
+                        <li><i className="fas fa-check"></i> Customizable Access</li>
+                        <li><i className="fas fa-check"></i> Select Specific Modules</li>
+                        <li><i className="fas fa-cog"></i> Granular Permissions</li>
+                        <li><i className="fas fa-times"></i> Cannot Manage Employees</li>
                       </>
                     )}
                   </ul>
@@ -824,6 +874,49 @@ const ManagementPortal = () => {
                     ))}
                   </div>
                 </div>
+
+                {/* Admin Access Checkboxes - shown only for Custom Admin */}
+                {formData.role === 'admin-custom' && (
+                  <div className="mp-form-group admin-access-section">
+                    <div className="admin-access-header">
+                      <label><i className="fas fa-key"></i> Select Admin Access Permissions</label>
+                      <div className="access-quick-actions">
+                        <button type="button" className="quick-action-btn" onClick={handleSelectAllAccess}>
+                          <i className="fas fa-check-double"></i> Select All
+                        </button>
+                        <button type="button" className="quick-action-btn clear" onClick={handleClearAllAccess}>
+                          <i className="fas fa-times"></i> Clear All
+                        </button>
+                      </div>
+                    </div>
+                    <div className="admin-access-grid">
+                      {adminAccessOptions.map(option => (
+                        <label 
+                          key={option.id} 
+                          className={`access-option ${formData.adminAccess?.includes(option.id) ? 'selected' : ''}`}
+                        >
+                          <input
+                            type="checkbox"
+                            checked={formData.adminAccess?.includes(option.id) || false}
+                            onChange={() => handleAccessChange(option.id)}
+                          />
+                          <div className="access-option-content">
+                            <i className={`fas ${option.icon}`}></i>
+                            <span className="access-label">{option.label}</span>
+                            <span className="access-desc">{option.description}</span>
+                          </div>
+                          <span className="access-check"><i className="fas fa-check"></i></span>
+                        </label>
+                      ))}
+                    </div>
+                    {formData.adminAccess?.length === 0 && (
+                      <div className="access-warning">
+                        <i className="fas fa-exclamation-triangle"></i>
+                        Please select at least one access permission
+                      </div>
+                    )}
+                  </div>
+                )}
               </div>
               <div className="mp-modal-footer">
                 <button type="button" className="btn-cancel" onClick={() => setShowCreateModal(false)}>
@@ -923,6 +1016,49 @@ const ManagementPortal = () => {
                     ))}
                   </div>
                 </div>
+
+                {/* Admin Access Checkboxes - shown only for Custom Admin */}
+                {formData.role === 'admin-custom' && (
+                  <div className="mp-form-group admin-access-section">
+                    <div className="admin-access-header">
+                      <label><i className="fas fa-key"></i> Select Admin Access Permissions</label>
+                      <div className="access-quick-actions">
+                        <button type="button" className="quick-action-btn" onClick={handleSelectAllAccess}>
+                          <i className="fas fa-check-double"></i> Select All
+                        </button>
+                        <button type="button" className="quick-action-btn clear" onClick={handleClearAllAccess}>
+                          <i className="fas fa-times"></i> Clear All
+                        </button>
+                      </div>
+                    </div>
+                    <div className="admin-access-grid">
+                      {adminAccessOptions.map(option => (
+                        <label 
+                          key={option.id} 
+                          className={`access-option ${formData.adminAccess?.includes(option.id) ? 'selected' : ''}`}
+                        >
+                          <input
+                            type="checkbox"
+                            checked={formData.adminAccess?.includes(option.id) || false}
+                            onChange={() => handleAccessChange(option.id)}
+                          />
+                          <div className="access-option-content">
+                            <i className={`fas ${option.icon}`}></i>
+                            <span className="access-label">{option.label}</span>
+                            <span className="access-desc">{option.description}</span>
+                          </div>
+                          <span className="access-check"><i className="fas fa-check"></i></span>
+                        </label>
+                      ))}
+                    </div>
+                    {formData.adminAccess?.length === 0 && (
+                      <div className="access-warning">
+                        <i className="fas fa-exclamation-triangle"></i>
+                        Please select at least one access permission
+                      </div>
+                    )}
+                  </div>
+                )}
               </div>
               <div className="mp-modal-footer">
                 <button type="button" className="btn-cancel" onClick={() => setShowEditModal(false)}>
