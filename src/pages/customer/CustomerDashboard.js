@@ -763,108 +763,247 @@ export default function CustomerDashboard() {
   // Overview Tab
   const renderOverview = () => (
     <div className="overview-content">
-      <div className="welcome-banner">
-        <div className="welcome-text">
-          <h2>Welcome back, {profile?.name || user?.displayName || 'Traveler'}! 👋</h2>
-          <p>Ready for your next adventure? Explore destinations and book your dream trip.</p>
-        </div>
-        <div className="welcome-illustration">
-          <i className="fas fa-plane-departure"></i>
-        </div>
-      </div>
-
-      <div className="stats-grid">
-        <div className="stat-card" onClick={() => setActiveTab('journeys')}>
-          <div className="stat-icon journeys">
-            <i className="fas fa-suitcase-rolling"></i>
-          </div>
-          <div className="stat-info">
-            <h3>{bookings.length}</h3>
-            <p>Total Journeys</p>
-          </div>
-        </div>
-        <div className="stat-card" onClick={() => setActiveTab('ecash')}>
-          <div className="stat-icon ecash">
-            <i className="fas fa-wallet"></i>
-          </div>
-          <div className="stat-info">
-            <h3>₹{ecashBalance.toLocaleString()}</h3>
-            <p>eCash Balance</p>
-          </div>
-        </div>
-        <div className="stat-card" onClick={() => setActiveTab('refund')}>
-          <div className="stat-icon refund">
-            <i className="fas fa-undo-alt"></i>
-          </div>
-          <div className="stat-info">
-            <h3>{refundBookings.filter(b => b.status === 'refund-requested').length}</h3>
-            <p>Pending Refunds</p>
-          </div>
-        </div>
-        <div className="stat-card" onClick={() => setActiveTab('profile')}>
-          <div className="stat-icon profile">
-            <i className="fas fa-user-circle"></i>
-          </div>
-          <div className="stat-info">
-            <h3>Profile</h3>
-            <p>Manage Account</p>
-          </div>
-        </div>
-      </div>
-
-      <div className="overview-sections">
-        <div className="section-card recent-bookings">
-          <div className="section-header">
-            <h3><i className="fas fa-history"></i> Recent Bookings</h3>
-            <button className="view-all-btn" onClick={() => setActiveTab('journeys')}>View All</button>
-          </div>
-          {bookings.length > 0 ? (
-            <div className="bookings-list">
-              {bookings.slice(0, 3).map(booking => (
-                <div key={booking.id} className="booking-item">
-                  <div className="booking-icon">
-                    <i className="fas fa-map-marker-alt"></i>
-                  </div>
-                  <div className="booking-details">
-                    <h4>{booking.destination || booking.packageName || 'Trip'}</h4>
-                    <p>{booking.travelDate || 'Date not set'}</p>
-                  </div>
-                  {getStatusBadge(booking.status)}
-                </div>
-              ))}
+      {/* Welcome Section */}
+      <div className="welcome-section">
+        <div className="welcome-card">
+          <div className="welcome-left">
+            <div className="greeting-badge">
+              <i className="fas fa-sun"></i>
+              <span>{new Date().getHours() < 12 ? 'Good Morning' : new Date().getHours() < 17 ? 'Good Afternoon' : 'Good Evening'}</span>
             </div>
-          ) : (
-            <div className="empty-state">
-              <i className="fas fa-suitcase"></i>
-              <p>No bookings yet. Start exploring!</p>
-              <button className="explore-btn" onClick={() => navigate('/tour')}>
+            <h1 className="welcome-name">{profile?.name || user?.displayName || 'Traveler'} 👋</h1>
+            <p className="welcome-subtitle">Ready for your next adventure? Let's make it memorable!</p>
+            <div className="welcome-actions">
+              <button className="btn-explore" onClick={() => navigate('/tours')}>
                 <i className="fas fa-compass"></i> Explore Tours
               </button>
+              <button className="btn-secondary" onClick={() => setActiveTab('profile')}>
+                <i className="fas fa-user-edit"></i> My Profile
+              </button>
             </div>
-          )}
+          </div>
+          <div className="welcome-right">
+            <div className="welcome-illustration-new">
+              <div className="floating-icon icon-1"><i className="fas fa-plane"></i></div>
+              <div className="floating-icon icon-2"><i className="fas fa-map-marker-alt"></i></div>
+              <div className="floating-icon icon-3"><i className="fas fa-suitcase"></i></div>
+              <div className="main-icon"><i className="fas fa-globe-americas"></i></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Quick Stats Row */}
+      <div className="quick-stats-row">
+        <div className="quick-stat-item" onClick={() => setActiveTab('journeys')}>
+          <div className="qs-icon journeys"><i className="fas fa-route"></i></div>
+          <div className="qs-content">
+            <span className="qs-value">{bookings.length}</span>
+            <span className="qs-label">Total Trips</span>
+          </div>
+          <i className="fas fa-chevron-right qs-arrow"></i>
+        </div>
+        <div className="quick-stat-item" onClick={() => setActiveTab('ecash')}>
+          <div className="qs-icon ecash"><i className="fas fa-wallet"></i></div>
+          <div className="qs-content">
+            <span className="qs-value">₹{ecashBalance.toLocaleString()}</span>
+            <span className="qs-label">eCash Balance</span>
+          </div>
+          <i className="fas fa-chevron-right qs-arrow"></i>
+        </div>
+        <div className="quick-stat-item" onClick={() => setActiveTab('refund')}>
+          <div className="qs-icon refund"><i className="fas fa-clock"></i></div>
+          <div className="qs-content">
+            <span className="qs-value">{refundBookings.filter(b => b.status === 'refund-requested').length}</span>
+            <span className="qs-label">Pending Refunds</span>
+          </div>
+          <i className="fas fa-chevron-right qs-arrow"></i>
+        </div>
+        <div className="quick-stat-item" onClick={() => setActiveTab('vehicle-support')}>
+          <div className="qs-icon support"><i className="fas fa-headset"></i></div>
+          <div className="qs-content">
+            <span className="qs-value">{myComplaints.filter(c => c.status !== 'resolved').length}</span>
+            <span className="qs-label">Open Tickets</span>
+          </div>
+          <i className="fas fa-chevron-right qs-arrow"></i>
+        </div>
+      </div>
+
+      {/* Main Content Grid */}
+      <div className="overview-main-grid">
+        {/* Left Column */}
+        <div className="overview-left-column">
+          {/* Recent Bookings Card */}
+          <div className="overview-card recent-bookings-card">
+            <div className="card-header">
+              <div className="header-left">
+                <i className="fas fa-history"></i>
+                <h3>Recent Bookings</h3>
+              </div>
+              <button className="view-all-link" onClick={() => setActiveTab('journeys')}>
+                View All <i className="fas fa-arrow-right"></i>
+              </button>
+            </div>
+            <div className="card-body">
+              {bookings.length > 0 ? (
+                <div className="recent-bookings-list">
+                  {bookings.slice(0, 4).map((booking, index) => (
+                    <div key={booking.id} className="recent-booking-item">
+                      <div className="rb-number">{String(index + 1).padStart(2, '0')}</div>
+                      <div className="rb-icon">
+                        <i className={booking.type === 'hotel' ? 'fas fa-hotel' : booking.type === 'vehicle' ? 'fas fa-car' : 'fas fa-plane'}></i>
+                      </div>
+                      <div className="rb-details">
+                        <h4>{booking.destination || booking.packageName || 'Trip'}</h4>
+                        <p><i className="fas fa-calendar-alt"></i> {booking.travelDate || 'Date not set'}</p>
+                      </div>
+                      <div className="rb-right">
+                        <span className="rb-amount">₹{(booking.totalAmount || 0).toLocaleString()}</span>
+                        {getStatusBadge(booking.status)}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="empty-bookings">
+                  <div className="empty-icon">
+                    <i className="fas fa-suitcase-rolling"></i>
+                  </div>
+                  <h4>No Bookings Yet</h4>
+                  <p>Start your journey by exploring our amazing tour packages!</p>
+                  <button className="btn-start-explore" onClick={() => navigate('/tours')}>
+                    <i className="fas fa-search"></i> Find Tours
+                  </button>
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Support Section */}
+          <div className="overview-card support-overview-card">
+            <div className="card-header">
+              <div className="header-left">
+                <i className="fas fa-life-ring"></i>
+                <h3>Need Help?</h3>
+              </div>
+            </div>
+            <div className="card-body">
+              <div className="support-options-grid">
+                <div className="support-option" onClick={() => setActiveTab('vehicle-support')}>
+                  <div className="so-icon vehicle"><i className="fas fa-car-side"></i></div>
+                  <span>Vehicle Support</span>
+                </div>
+                <div className="support-option" onClick={() => setActiveTab('holiday-support')}>
+                  <div className="so-icon holiday"><i className="fas fa-umbrella-beach"></i></div>
+                  <span>Holiday Support</span>
+                </div>
+                <div className="support-option" onClick={() => setActiveTab('refund-support')}>
+                  <div className="so-icon refund"><i className="fas fa-hand-holding-usd"></i></div>
+                  <span>Refund Support</span>
+                </div>
+                <div className="support-option" onClick={() => setActiveTab('track-refund')}>
+                  <div className="so-icon track"><i className="fas fa-search-dollar"></i></div>
+                  <span>Track Refund</span>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
 
-        <div className="section-card quick-actions">
-          <div className="section-header">
-            <h3><i className="fas fa-bolt"></i> Quick Actions</h3>
+        {/* Right Column */}
+        <div className="overview-right-column">
+          {/* Quick Actions Card */}
+          <div className="overview-card quick-actions-card">
+            <div className="card-header">
+              <div className="header-left">
+                <i className="fas fa-bolt"></i>
+                <h3>Quick Actions</h3>
+              </div>
+            </div>
+            <div className="card-body">
+              <div className="quick-actions-list">
+                <button className="qa-item" onClick={() => setActiveTab('complete-booking')}>
+                  <div className="qa-icon complete"><i className="fas fa-clipboard-check"></i></div>
+                  <div className="qa-text">
+                    <span className="qa-title">Complete Booking</span>
+                    <span className="qa-desc">Finish your pending booking</span>
+                  </div>
+                  <i className="fas fa-chevron-right"></i>
+                </button>
+                <button className="qa-item" onClick={() => setActiveTab('make-payment')}>
+                  <div className="qa-icon payment"><i className="fas fa-credit-card"></i></div>
+                  <div className="qa-text">
+                    <span className="qa-title">Make Payment</span>
+                    <span className="qa-desc">Pay for your bookings</span>
+                  </div>
+                  <i className="fas fa-chevron-right"></i>
+                </button>
+                <button className="qa-item" onClick={() => navigate('/tours')}>
+                  <div className="qa-icon explore"><i className="fas fa-map-marked-alt"></i></div>
+                  <div className="qa-text">
+                    <span className="qa-title">Book New Trip</span>
+                    <span className="qa-desc">Explore destinations</span>
+                  </div>
+                  <i className="fas fa-chevron-right"></i>
+                </button>
+                <button className="qa-item" onClick={() => setActiveTab('ecash')}>
+                  <div className="qa-icon wallet"><i className="fas fa-plus-circle"></i></div>
+                  <div className="qa-text">
+                    <span className="qa-title">Add eCash</span>
+                    <span className="qa-desc">Top up your wallet</span>
+                  </div>
+                  <i className="fas fa-chevron-right"></i>
+                </button>
+              </div>
+            </div>
           </div>
-          <div className="actions-grid">
-            <button className="action-btn" onClick={() => setActiveTab('complete-booking')}>
-              <i className="fas fa-clipboard-check"></i>
-              <span>Complete Booking</span>
-            </button>
-            <button className="action-btn" onClick={() => setActiveTab('make-payment')}>
-              <i className="fas fa-credit-card"></i>
-              <span>Make Payment</span>
-            </button>
-            <button className="action-btn" onClick={() => setActiveTab('holiday-booking')}>
-              <i className="fas fa-umbrella-beach"></i>
-              <span>Holiday Package</span>
-            </button>
-            <button className="action-btn" onClick={() => setActiveTab('track-refund')}>
-              <i className="fas fa-search-dollar"></i>
-              <span>Track Refund</span>
-            </button>
+
+          {/* Account Overview Card */}
+          <div className="overview-card account-overview-card">
+            <div className="card-header">
+              <div className="header-left">
+                <i className="fas fa-user-circle"></i>
+                <h3>Account Overview</h3>
+              </div>
+              <button className="view-all-link" onClick={() => setActiveTab('profile')}>
+                Edit <i className="fas fa-pen"></i>
+              </button>
+            </div>
+            <div className="card-body">
+              <div className="account-profile-section">
+                <div className="account-avatar">
+                  {profile?.photoURL || formData?.photoURL ? (
+                    <img src={profile?.photoURL || formData?.photoURL} alt="Profile" />
+                  ) : (
+                    <div className="avatar-placeholder">
+                      <i className="fas fa-user"></i>
+                    </div>
+                  )}
+                  <div className="avatar-badge">
+                    <i className="fas fa-check"></i>
+                  </div>
+                </div>
+                <div className="account-info">
+                  <h4>{profile?.name || user?.displayName || 'User'}</h4>
+                  <p><i className="fas fa-envelope"></i> {user?.email || 'Not set'}</p>
+                  <p><i className="fas fa-phone"></i> {profile?.phone || formData?.phone || 'Not set'}</p>
+                </div>
+              </div>
+              <div className="account-stats-mini">
+                <div className="asm-item">
+                  <span className="asm-value">{bookings.filter(b => b.status === 'completed').length}</span>
+                  <span className="asm-label">Completed</span>
+                </div>
+                <div className="asm-item">
+                  <span className="asm-value">{bookings.filter(b => b.status === 'confirmed').length}</span>
+                  <span className="asm-label">Upcoming</span>
+                </div>
+                <div className="asm-item">
+                  <span className="asm-value">₹{ecashBalance.toLocaleString()}</span>
+                  <span className="asm-label">eCash</span>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       </div>
