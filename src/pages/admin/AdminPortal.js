@@ -126,21 +126,22 @@ const AdminPortal = () => {
   // Get user role
   const userRole = profile?.role || '';
   const isSuperAdmin = userRole === 'super-admin';
+  const isDelegatedAdmin = userRole === 'delegated-super-admin';
   const isFullAdmin = userRole === 'admin';
   
-  // Role-based access control
-  const canAccessCustomers = isSuperAdmin || isFullAdmin || userRole === 'admin-customers';
-  const canAccessPartners = isSuperAdmin || isFullAdmin || userRole === 'admin-partners';
-  const canAccessBookings = isSuperAdmin || isFullAdmin || userRole === 'admin-bookings';
-  const canAccessComplaints = isSuperAdmin || isFullAdmin || userRole === 'admin-customers' || userRole === 'admin-partners';
+  // Role-based access control - Super Admin and Delegated Admin have full access
+  const canAccessCustomers = isSuperAdmin || isDelegatedAdmin || isFullAdmin || userRole === 'admin-customers';
+  const canAccessPartners = isSuperAdmin || isDelegatedAdmin || isFullAdmin || userRole === 'admin-partners';
+  const canAccessBookings = isSuperAdmin || isDelegatedAdmin || isFullAdmin || userRole === 'admin-bookings';
+  const canAccessComplaints = isSuperAdmin || isDelegatedAdmin || isFullAdmin || userRole === 'admin-customers' || userRole === 'admin-partners';
 
-  // Sidebar Tabs - filtered based on role
+  // Sidebar Tabs - filtered based on role (Super Admin and Delegated Admin see all)
   const allTabs = [
-    { id: 'overview', label: 'Dashboard', icon: 'fas fa-th-large', roles: ['super-admin', 'admin', 'admin-customers', 'admin-partners', 'admin-bookings'] },
-    { id: 'customers', label: 'Customers', icon: 'fas fa-users', roles: ['super-admin', 'admin', 'admin-customers'] },
-    { id: 'partners', label: 'Partners', icon: 'fas fa-handshake', roles: ['super-admin', 'admin', 'admin-partners'] },
-    { id: 'bookings', label: 'Bookings', icon: 'fas fa-calendar-check', roles: ['super-admin', 'admin', 'admin-bookings'] },
-    { id: 'complaints', label: 'Complaints', icon: 'fas fa-exclamation-triangle', roles: ['super-admin', 'admin', 'admin-customers', 'admin-partners'] }
+    { id: 'overview', label: 'Dashboard', icon: 'fas fa-th-large', roles: ['super-admin', 'delegated-super-admin', 'admin', 'admin-customers', 'admin-partners', 'admin-bookings'] },
+    { id: 'customers', label: 'Customers', icon: 'fas fa-users', roles: ['super-admin', 'delegated-super-admin', 'admin', 'admin-customers'] },
+    { id: 'partners', label: 'Partners', icon: 'fas fa-handshake', roles: ['super-admin', 'delegated-super-admin', 'admin', 'admin-partners'] },
+    { id: 'bookings', label: 'Bookings', icon: 'fas fa-calendar-check', roles: ['super-admin', 'delegated-super-admin', 'admin', 'admin-bookings'] },
+    { id: 'complaints', label: 'Complaints', icon: 'fas fa-exclamation-triangle', roles: ['super-admin', 'delegated-super-admin', 'admin', 'admin-customers', 'admin-partners'] }
   ];
 
   const tabs = useMemo(() => {
@@ -151,6 +152,7 @@ const AdminPortal = () => {
   const getRoleDisplayInfo = (role) => {
     const roleMap = {
       'super-admin': { label: 'Super Admin', color: '#dc2626', icon: 'fas fa-crown' },
+      'delegated-super-admin': { label: 'Delegated Admin', color: '#ea580c', icon: 'fas fa-user-tie' },
       'admin': { label: 'Admin', color: '#7c3aed', icon: 'fas fa-user-shield' },
       'admin-customers': { label: 'Customer Admin', color: '#0891b2', icon: 'fas fa-users' },
       'admin-partners': { label: 'Partner Admin', color: '#059669', icon: 'fas fa-handshake' },
@@ -171,7 +173,11 @@ const AdminPortal = () => {
     }
     
     const role = profile?.role || '';
-    if (role !== 'super-admin' && !role.startsWith('admin')) {
+    
+    // Allow super-admin, delegated-super-admin, and all admin-* roles
+    const isValidRole = role === 'super-admin' || role === 'delegated-super-admin' || role.startsWith('admin');
+    
+    if (!isValidRole) {
       navigate('/admin-login');
       return;
     }
@@ -402,7 +408,7 @@ const AdminPortal = () => {
 
   // Fetch Customers
   // Admin/Management roles that should be excluded from customer list
-  const managementRoles = ['super-admin', 'admin', 'admin-customers', 'admin-partners', 'admin-bookings'];
+  const managementRoles = ['super-admin', 'delegated-super-admin', 'admin', 'admin-customers', 'admin-partners', 'admin-bookings', 'employee'];
 
   const fetchCustomers = async () => {
     try {
@@ -1424,10 +1430,6 @@ const AdminPortal = () => {
               </div>
             </div>
           </div>
-          <button className="refresh-overview-btn" onClick={fetchAllData} disabled={loading}>
-            <i className={`fas fa-sync-alt ${loading ? 'fa-spin' : ''}`}></i>
-            Refresh
-          </button>
         </div>
 
         {/* Key Performance Indicators - Role Based & Rearranged */}
@@ -1574,8 +1576,8 @@ const AdminPortal = () => {
             </>
           )}
 
-          {/* For super-admin and admin: Show all KPIs */}
-          {(isSuperAdmin || isFullAdmin) && (
+          {/* For super-admin, delegated-admin, and admin: Show all KPIs */}
+          {(isSuperAdmin || isDelegatedAdmin || isFullAdmin) && (
             <>
               <div className="kpi-card revenue-kpi">
                 <div className="kpi-icon-wrapper">
@@ -1803,8 +1805,8 @@ const AdminPortal = () => {
               </div>
             )}
 
-            {/* Monthly Trend Chart - All roles (shown for super-admin/admin or as secondary for others) */}
-            {(isSuperAdmin || isFullAdmin || userRole === 'admin-bookings') && (
+            {/* Monthly Trend Chart - All roles (shown for super-admin/delegated-admin/admin or as secondary for others) */}
+            {(isSuperAdmin || isDelegatedAdmin || isFullAdmin || userRole === 'admin-bookings') && (
               <div className="analytics-card trend-card">
                 <div className="card-header">
                   <h3><i className="fas fa-chart-area"></i> Monthly Overview</h3>
@@ -1854,8 +1856,8 @@ const AdminPortal = () => {
               </div>
             )}
 
-            {/* Booking Distribution - For super-admin/admin only (others see it above) */}
-            {(isSuperAdmin || isFullAdmin) && (
+            {/* Booking Distribution - For super-admin/delegated-admin/admin only (others see it above) */}
+            {(isSuperAdmin || isDelegatedAdmin || isFullAdmin) && (
               <div className="analytics-card distribution-card">
                 <div className="card-header">
                   <h3><i className="fas fa-pie-chart"></i> Booking Distribution</h3>
@@ -1947,8 +1949,8 @@ const AdminPortal = () => {
                   </button>
                 )}
                 
-                {/* For super-admin/admin: Show all actions */}
-                {(isSuperAdmin || isFullAdmin) && (
+                {/* For super-admin/delegated-admin/admin: Show all actions */}
+                {(isSuperAdmin || isDelegatedAdmin || isFullAdmin) && (
                   <>
                     {pendingPartners > 0 && (
                       <button 
@@ -1989,6 +1991,15 @@ const AdminPortal = () => {
                       </div>
                       <span>Partner Management</span>
                     </button>
+                    <button 
+                      className="action-btn complaints"
+                      onClick={() => setActiveSection('complaints')}
+                    >
+                      <div className="action-icon">
+                        <i className="fas fa-exclamation-triangle"></i>
+                      </div>
+                      <span>Complaints</span>
+                    </button>
                   </>
                 )}
 
@@ -2007,8 +2018,8 @@ const AdminPortal = () => {
               </div>
             </div>
 
-            {/* Pending Partners - For super-admin/admin (partners admin sees it in left column) */}
-            {(isSuperAdmin || isFullAdmin) && pendingPartners > 0 && (
+            {/* Pending Partners - For super-admin/delegated-admin/admin (partners admin sees it in left column) */}
+            {(isSuperAdmin || isDelegatedAdmin || isFullAdmin) && pendingPartners > 0 && (
               <div className="analytics-card pending-card">
                 <div className="card-header">
                   <h3><i className="fas fa-hourglass-half"></i> Pending Approvals</h3>
@@ -2041,8 +2052,8 @@ const AdminPortal = () => {
               </div>
             )}
 
-            {/* Top Partners - For super-admin/admin/bookings */}
-            {(isSuperAdmin || isFullAdmin || userRole === 'admin-bookings') && topPartners.length > 0 && (
+            {/* Top Partners - For super-admin/delegated-admin/admin/bookings */}
+            {(isSuperAdmin || isDelegatedAdmin || isFullAdmin || userRole === 'admin-bookings') && topPartners.length > 0 && (
               <div className="analytics-card top-partners-card">
                 <div className="card-header">
                   <h3><i className="fas fa-trophy"></i> Top Partners</h3>
@@ -2229,8 +2240,8 @@ const AdminPortal = () => {
             </div>
           )}
 
-          {/* For super-admin/admin: Show all in order */}
-          {(isSuperAdmin || isFullAdmin) && (
+          {/* For super-admin/delegated-admin/admin: Show all in order */}
+          {(isSuperAdmin || isDelegatedAdmin || isFullAdmin) && (
             <>
               <div className="status-summary-card booking-status">
                 <h4><i className="fas fa-clipboard-list"></i> Booking Status</h4>
@@ -2637,9 +2648,6 @@ const AdminPortal = () => {
             <div className="header-left">
               <h3><i className="fas fa-list-ul"></i> All Registered Customers</h3>
               <span className="customer-count-badge">{customers.length} total</span>
-              <button className="refresh-btn-small" onClick={fetchCustomers} disabled={loading} title="Refresh list">
-                <i className={`fas fa-sync-alt ${loading ? 'fa-spin' : ''}`}></i>
-              </button>
             </div>
             <div className="customer-search-box">
               <i className="fas fa-search"></i>
@@ -2783,9 +2791,6 @@ const AdminPortal = () => {
                     <i className="fas fa-list"></i> Partners
                   </button>
                 </div>
-                <button className="refresh-btn" onClick={fetchPartners} disabled={loading}>
-                  <i className="fas fa-sync-alt"></i> Refresh
-                </button>
               </div>
             </div>
 
@@ -3090,9 +3095,6 @@ const AdminPortal = () => {
                   <i className="fas fa-list"></i> Partners
                 </button>
               </div>
-              <button className="refresh-btn" onClick={fetchPartners} disabled={loading}>
-                <i className="fas fa-sync-alt"></i> Refresh
-              </button>
             </div>
           </div>
 
@@ -4198,7 +4200,7 @@ const AdminPortal = () => {
         </nav>
 
         <div className="admin-sidebar-footer">
-          {isSuperAdmin && (
+          {(isSuperAdmin || isDelegatedAdmin) && (
             <button className="admin-mgmt-btn" onClick={() => navigate('/management-portal')}>
               <i className="fas fa-users-cog"></i>
               <span>Manage Employees</span>

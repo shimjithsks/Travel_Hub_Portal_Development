@@ -42,7 +42,8 @@ export default function AdminLogin() {
     
     if (user && profile) {
       const role = profile.role || '';
-      if (role === 'super-admin' || role.startsWith('admin')) {
+      // All admin roles (including super-admin and delegated-super-admin) go to Admin Portal
+      if (role === 'super-admin' || role === 'delegated-super-admin' || role.startsWith('admin')) {
         navigate('/admin-portal', { replace: true });
       }
     }
@@ -69,11 +70,10 @@ export default function AdminLogin() {
       const userData = userDoc.data();
       const role = userData.role || '';
 
-      // Check for valid admin roles including delegated-super-admin
-      const validRoles = ['super-admin', 'delegated-super-admin'];
-      const isValidAdmin = validRoles.includes(role) || role.startsWith('admin');
+      // Check for valid admin roles (super-admin, delegated-super-admin, and admin-*)
+      const isValidRole = role === 'super-admin' || role === 'delegated-super-admin' || role.startsWith('admin');
 
-      if (!isValidAdmin) {
+      if (!isValidRole) {
         setError('Access denied. This portal is for admin users only.');
         await auth.signOut();
         setSubmitting(false);
@@ -87,7 +87,7 @@ export default function AdminLogin() {
         return;
       }
 
-      // Successful login - redirect to admin portal
+      // All valid admin roles go to Admin Portal
       navigate('/admin-portal', { replace: true });
     } catch (err) {
       console.error('Login error:', err);
