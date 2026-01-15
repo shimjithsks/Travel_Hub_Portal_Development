@@ -135,16 +135,25 @@ export default function CustomerDashboard() {
   // Mobile sidebar
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
-  // Tabs configuration
+  // Tabs configuration - Organized by priority
   const tabs = [
+    // Main Dashboard
     { id: 'overview', label: 'Overview', icon: 'fas fa-th-large' },
-    { id: 'profile', label: 'My Profile', icon: 'fas fa-user-circle' },
+    
+    // Primary Features
     { id: 'journeys', label: 'My Journeys', icon: 'fas fa-suitcase-rolling' },
-    { id: 'refund', label: 'My Refund', icon: 'fas fa-undo-alt' },
+    { id: 'profile', label: 'My Profile', icon: 'fas fa-user-circle' },
     { id: 'ecash', label: 'My eCash', icon: 'fas fa-wallet' },
-    { id: 'track-refund', label: 'Track Refund', icon: 'fas fa-search-dollar' },
+    
+    // Booking & Payments
     { id: 'complete-booking', label: 'Complete Booking', icon: 'fas fa-clipboard-check' },
     { id: 'make-payment', label: 'Make Payment', icon: 'fas fa-credit-card' },
+    
+    // Refunds
+    { id: 'track-refund', label: 'Track Refund', icon: 'fas fa-search-dollar' },
+    { id: 'refund', label: 'My Refund', icon: 'fas fa-undo-alt' },
+    
+    // Support Center
     { id: 'holiday-support', label: 'Holiday Support', icon: 'fas fa-umbrella-beach' },
     { id: 'vehicle-support', label: 'Vehicle Support', icon: 'fas fa-car-side' },
     { id: 'refund-support', label: 'Refund Support', icon: 'fas fa-hand-holding-usd' }
