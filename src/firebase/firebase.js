@@ -1,4 +1,4 @@
-import { initializeApp } from 'firebase/app';
+import { initializeApp, getApps, deleteApp } from 'firebase/app';
 import { getAuth } from 'firebase/auth';
 import { getFirestore } from 'firebase/firestore';
 import { getStorage } from 'firebase/storage';
@@ -46,3 +46,20 @@ const app = canInitFirebase ? initializeApp(effectiveConfig) : null;
 export const auth = app ? getAuth(app) : null;
 export const db = app ? getFirestore(app) : null;
 export const storage = app ? getStorage(app) : null;
+
+// Export config and function to create secondary app for user creation
+export { firebaseConfig };
+
+// Create a secondary Firebase app instance for creating users without affecting current session
+export const createSecondaryApp = () => {
+  if (!hasFirebaseEnv) return null;
+  
+  // Check if secondary app already exists and delete it
+  const existingApps = getApps();
+  const existingSecondary = existingApps.find(app => app.name === 'secondary');
+  if (existingSecondary) {
+    deleteApp(existingSecondary);
+  }
+  
+  return initializeApp(firebaseConfig, 'secondary');
+};

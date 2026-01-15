@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useEffect, useMemo, useState, useCallback } from 'react';
 import { onAuthStateChanged, signOut as firebaseSignOut } from 'firebase/auth';
-import { doc, getDoc } from 'firebase/firestore';
+import { doc, getDoc, onSnapshot } from 'firebase/firestore';
 import { auth, db, isFirebaseConfigured } from '../firebase/firebase';
 
 const AuthContext = createContext(null);
@@ -27,6 +27,35 @@ export function AuthProvider({ children }) {
     setProfile(prev => prev ? { ...prev, ...updates } : updates);
   }, []);
 
+  // Real-time listener for profile changes (to detect deactivation)
+  useEffect(() => {
+    if (!user || !db) return;
+
+    const profileRef = doc(db, 'users', user.uid);
+    const unsubscribeProfile = onSnapshot(profileRef, async (snap) => {
+      if (snap.exists()) {
+        const profileData = snap.data();
+        
+        // Check if account is deactivated or status is inactive
+        if (profileData.accountStatus === 'inactive' || profileData.status === 'inactive') {
+          // Sign out the user immediately
+          await firebaseSignOut(auth);
+          setUser(null);
+          setProfile(null);
+          // Show alert
+          alert('Your account has been deactivated. You have been logged out.');
+          return;
+        }
+        
+        setProfile(profileData);
+      }
+    }, (error) => {
+      console.error('Error listening to profile changes:', error);
+    });
+
+    return () => unsubscribeProfile();
+  }, [user]);
+
   useEffect(() => {
     if (!isFirebaseConfigured || !auth || !db) {
       setUser(null);
@@ -51,7 +80,7 @@ export function AuthProvider({ children }) {
           const profileData = snap.data();
           
           // Check if account is deactivated
-          if (profileData.accountStatus === 'inactive') {
+          if (profileData.accountStatus === 'inactive' || profileData.status === 'inactive') {
             // Sign out the user immediately
             await firebaseSignOut(auth);
             setUser(null);

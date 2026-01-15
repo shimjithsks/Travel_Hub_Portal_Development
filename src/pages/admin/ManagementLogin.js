@@ -25,10 +25,16 @@ export default function ManagementLogin() {
       try {
         const usersRef = collection(db, 'users');
         const snapshot = await getDocs(usersRef);
+        console.log('ManagementLogin - Total users:', snapshot.docs.length);
         const superAdmins = snapshot.docs.filter(doc => doc.data().role === 'super-admin');
+        console.log('ManagementLogin - Super admins found:', superAdmins.length);
         setNoSuperAdmin(superAdmins.length === 0);
       } catch (error) {
         console.error('Error checking super admin:', error);
+        // If permission denied, assume super admin exists (user needs to login)
+        if (error.code === 'permission-denied') {
+          setNoSuperAdmin(false);
+        }
       } finally {
         setCheckingSetup(false);
       }
