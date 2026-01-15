@@ -107,6 +107,18 @@ const AdminPortal = () => {
   const [selectedPartnerBookings, setSelectedPartnerBookings] = useState([]);
   const [selectedPartnerCustomers, setSelectedPartnerCustomers] = useState([]);
 
+  // Complaints State
+  const [complaints, setComplaints] = useState([]);
+  const [filteredComplaints, setFilteredComplaints] = useState([]);
+  const [complaintSearch, setComplaintSearch] = useState('');
+  const [complaintStatusFilter, setComplaintStatusFilter] = useState('all');
+  const [complaintTypeFilter, setComplaintTypeFilter] = useState('all');
+  const [complaintSourceFilter, setComplaintSourceFilter] = useState('all');
+  const [selectedComplaint, setSelectedComplaint] = useState(null);
+  const [showComplaintModal, setShowComplaintModal] = useState(false);
+  const [complaintResponse, setComplaintResponse] = useState('');
+  const [complaintViewMode, setComplaintViewMode] = useState('dashboard');
+
   // Action States
   const [actionLoading, setActionLoading] = useState(false);
   const [notification, setNotification] = useState({ show: false, message: '', type: '' });
@@ -120,13 +132,15 @@ const AdminPortal = () => {
   const canAccessCustomers = isSuperAdmin || isFullAdmin || userRole === 'admin-customers';
   const canAccessPartners = isSuperAdmin || isFullAdmin || userRole === 'admin-partners';
   const canAccessBookings = isSuperAdmin || isFullAdmin || userRole === 'admin-bookings';
+  const canAccessComplaints = isSuperAdmin || isFullAdmin || userRole === 'admin-customers' || userRole === 'admin-partners';
 
   // Sidebar Tabs - filtered based on role
   const allTabs = [
     { id: 'overview', label: 'Dashboard', icon: 'fas fa-th-large', roles: ['super-admin', 'admin', 'admin-customers', 'admin-partners', 'admin-bookings'] },
     { id: 'customers', label: 'Customers', icon: 'fas fa-users', roles: ['super-admin', 'admin', 'admin-customers'] },
     { id: 'partners', label: 'Partners', icon: 'fas fa-handshake', roles: ['super-admin', 'admin', 'admin-partners'] },
-    { id: 'bookings', label: 'Bookings', icon: 'fas fa-calendar-check', roles: ['super-admin', 'admin', 'admin-bookings'] }
+    { id: 'bookings', label: 'Bookings', icon: 'fas fa-calendar-check', roles: ['super-admin', 'admin', 'admin-bookings'] },
+    { id: 'complaints', label: 'Complaints', icon: 'fas fa-exclamation-triangle', roles: ['super-admin', 'admin', 'admin-customers', 'admin-partners'] }
   ];
 
   const tabs = useMemo(() => {
@@ -223,7 +237,8 @@ const AdminPortal = () => {
         fetchCustomers(),
         fetchPartners(),
         fetchBookings(),
-        fetchRecentActivities()
+        fetchRecentActivities(),
+        fetchComplaints()
       ]);
     } catch (error) {
       console.error('Error fetching data:', error);
@@ -236,6 +251,154 @@ const AdminPortal = () => {
   useEffect(() => {
     fetchAllData();
   }, []);
+
+  // Fetch Complaints
+  const fetchComplaints = async () => {
+    try {
+      // Try to fetch from Firestore complaints collection
+      const complaintsRef = collection(db, 'complaints');
+      const snapshot = await getDocs(complaintsRef);
+      
+      const complaintsData = snapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data()
+      }));
+      setComplaints(complaintsData);
+      setFilteredComplaints(complaintsData);
+    } catch (error) {
+      console.error('Error fetching complaints:', error);
+      setComplaints([]);
+      setFilteredComplaints([]);
+    }
+  };
+
+  // Filter complaints
+  useEffect(() => {
+    let filtered = [...complaints];
+    
+    // Search filter
+    if (complaintSearch) {
+      const search = complaintSearch.toLowerCase();
+      filtered = filtered.filter(c => 
+        c.subject?.toLowerCase().includes(search) ||
+        c.customerName?.toLowerCase().includes(search) ||
+        c.partnerName?.toLowerCase().includes(search) ||
+        c.id?.toLowerCase().includes(search) ||
+        c.bookingId?.toLowerCase().includes(search)
+      );
+    }
+    
+    // Status filter
+    if (complaintStatusFilter !== 'all') {
+      filtered = filtered.filter(c => c.status === complaintStatusFilter);
+    }
+    
+    // Type filter (customer/partner)
+    if (complaintSourceFilter !== 'all') {
+      filtered = filtered.filter(c => c.type === complaintSourceFilter);
+    }
+    
+    // Category filter
+    if (complaintTypeFilter !== 'all') {
+      filtered = filtered.filter(c => c.category === complaintTypeFilter);
+    }
+    
+    setFilteredComplaints(filtered);
+  }, [complaints, complaintSearch, complaintStatusFilter, complaintSourceFilter, complaintTypeFilter]);
+
+  // Handle complaint response
+  const handleComplaintResponse = async () => {
+    if (!complaintResponse.trim()) {
+      showNotification('Please enter a response', 'error');
+      return;
+    }
+
+    setActionLoading(true);
+    try {
+      const newResponse = {
+        message: complaintResponse,
+        respondedBy: profile?.name || 'Admin',
+        respondedAt: new Date().toISOString()
+      };
+
+      // Update in Firestore
+      const complaintRef = doc(db, 'complaints', selectedComplaint.id);
+      await updateDoc(complaintRef, {
+        responses: [...(selectedComplaint.responses || []), newResponse],
+        status: 'in-progress',
+        updatedAt: new Date().toISOString()
+      });
+
+      // Update local state
+      const updatedComplaints = complaints.map(c => {
+        if (c.id === selectedComplaint.id) {
+          return {
+            ...c,
+            responses: [...(c.responses || []), newResponse],
+            status: 'in-progress'
+          };
+        }
+        return c;
+      });
+      
+      setComplaints(updatedComplaints);
+      setSelectedComplaint(prev => ({
+        ...prev,
+        responses: [...(prev.responses || []), newResponse],
+        status: 'in-progress'
+      }));
+      setComplaintResponse('');
+      showNotification('Response added successfully. Customer/Partner will be notified.', 'success');
+    } catch (error) {
+      console.error('Error adding response:', error);
+      showNotification('Failed to add response', 'error');
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
+  // Resolve complaint
+  const handleResolveComplaint = async (complaint) => {
+    setActionLoading(true);
+    try {
+      const resolvedAt = new Date().toISOString();
+
+      // Update in Firestore
+      const complaintRef = doc(db, 'complaints', complaint.id);
+      await updateDoc(complaintRef, {
+        status: 'resolved',
+        resolvedAt: resolvedAt,
+        updatedAt: resolvedAt
+      });
+
+      // Update local state
+      const updatedComplaints = complaints.map(c => {
+        if (c.id === complaint.id) {
+          return {
+            ...c,
+            status: 'resolved',
+            resolvedAt: resolvedAt
+          };
+        }
+        return c;
+      });
+      
+      setComplaints(updatedComplaints);
+      if (selectedComplaint?.id === complaint.id) {
+        setSelectedComplaint(prev => ({
+          ...prev,
+          status: 'resolved',
+          resolvedAt: resolvedAt
+        }));
+      }
+      showNotification('Complaint marked as resolved. Customer/Partner will be notified.', 'success');
+    } catch (error) {
+      console.error('Error resolving complaint:', error);
+      showNotification('Failed to resolve complaint', 'error');
+    } finally {
+      setActionLoading(false);
+    }
+  };
 
   // Fetch Customers
   // Admin/Management roles that should be excluded from customer list
@@ -3408,6 +3571,548 @@ const AdminPortal = () => {
     </div>
   );
 
+  // Render Complaints Section
+  const renderComplaints = () => {
+    // Calculate complaint stats
+    const openComplaints = complaints.filter(c => c.status === 'open').length;
+    const inProgressComplaints = complaints.filter(c => c.status === 'in-progress').length;
+    const resolvedComplaints = complaints.filter(c => c.status === 'resolved').length;
+    const customerComplaints = complaints.filter(c => c.type === 'customer');
+    const partnerComplaints = complaints.filter(c => c.type === 'partner');
+    
+    // Customer complaint categories
+    const bookingComplaints = customerComplaints.filter(c => c.category === 'booking').length;
+    const refundComplaints = customerComplaints.filter(c => c.category === 'refund').length;
+    const vehicleComplaints = customerComplaints.filter(c => c.category === 'vehicle').length;
+    const holidayComplaints = customerComplaints.filter(c => c.category === 'holiday').length;
+    
+    // Partner complaint categories
+    const paymentComplaints = partnerComplaints.filter(c => c.category === 'payment').length;
+    const technicalComplaints = partnerComplaints.filter(c => c.category === 'technical').length;
+    const partnerBookingComplaints = partnerComplaints.filter(c => c.category === 'booking').length;
+    
+    // High priority complaints
+    const highPriorityOpen = complaints.filter(c => c.priority === 'high' && c.status === 'open').length;
+
+    const getComplaintStatusBadge = (status) => {
+      const statusConfig = {
+        'open': { class: 'status-open', label: 'Open', icon: 'fas fa-exclamation-circle' },
+        'in-progress': { class: 'status-in-progress', label: 'In Progress', icon: 'fas fa-clock' },
+        'resolved': { class: 'status-resolved', label: 'Resolved', icon: 'fas fa-check-circle' }
+      };
+      const config = statusConfig[status] || statusConfig['open'];
+      return <span className={`complaint-status-badge ${config.class}`}><i className={config.icon}></i> {config.label}</span>;
+    };
+
+    const getPriorityBadge = (priority) => {
+      const priorityConfig = {
+        'high': { class: 'priority-high', label: 'High' },
+        'medium': { class: 'priority-medium', label: 'Medium' },
+        'low': { class: 'priority-low', label: 'Low' }
+      };
+      const config = priorityConfig[priority] || priorityConfig['medium'];
+      return <span className={`priority-badge ${config.class}`}>{config.label}</span>;
+    };
+
+    const getCategoryIcon = (category) => {
+      const icons = {
+        'booking': 'fas fa-calendar-check',
+        'refund': 'fas fa-undo-alt',
+        'vehicle': 'fas fa-car',
+        'payment': 'fas fa-credit-card',
+        'technical': 'fas fa-cog'
+      };
+      return icons[category] || 'fas fa-exclamation-circle';
+    };
+
+    const formatDate = (dateString) => {
+      const date = new Date(dateString);
+      return date.toLocaleDateString('en-IN', { 
+        day: 'numeric', 
+        month: 'short', 
+        year: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit'
+      });
+    };
+
+    const getTimeAgo = (dateString) => {
+      const date = new Date(dateString);
+      const now = new Date();
+      const diffMs = now - date;
+      const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+      const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
+      const diffMinutes = Math.floor(diffMs / (1000 * 60));
+      
+      if (diffDays > 0) return `${diffDays} day${diffDays > 1 ? 's' : ''} ago`;
+      if (diffHours > 0) return `${diffHours} hour${diffHours > 1 ? 's' : ''} ago`;
+      return `${diffMinutes} minute${diffMinutes > 1 ? 's' : ''} ago`;
+    };
+
+    return (
+      <div className="admin-complaints-section">
+        {/* View Mode Toggle */}
+        <div className="complaints-header">
+          <div className="view-mode-toggle">
+            <button 
+              className={`view-mode-btn ${complaintViewMode === 'dashboard' ? 'active' : ''}`}
+              onClick={() => setComplaintViewMode('dashboard')}
+            >
+              <i className="fas fa-th-large"></i> Dashboard
+            </button>
+            <button 
+              className={`view-mode-btn ${complaintViewMode === 'list' ? 'active' : ''}`}
+              onClick={() => setComplaintViewMode('list')}
+            >
+              <i className="fas fa-list"></i> All Complaints
+            </button>
+          </div>
+        </div>
+
+        {complaintViewMode === 'dashboard' ? (
+          <>
+            {/* Complaints Overview Stats */}
+            <div className="complaints-stats-grid">
+              <div className="complaint-stat-card total">
+                <div className="stat-icon">
+                  <i className="fas fa-clipboard-list"></i>
+                </div>
+                <div className="stat-info">
+                  <h3>{complaints.length}</h3>
+                  <p>Total Complaints</p>
+                </div>
+              </div>
+              <div className="complaint-stat-card open">
+                <div className="stat-icon">
+                  <i className="fas fa-exclamation-circle"></i>
+                </div>
+                <div className="stat-info">
+                  <h3>{openComplaints}</h3>
+                  <p>Open</p>
+                </div>
+                {highPriorityOpen > 0 && (
+                  <span className="urgent-badge">{highPriorityOpen} High Priority</span>
+                )}
+              </div>
+              <div className="complaint-stat-card inprogress">
+                <div className="stat-icon">
+                  <i className="fas fa-spinner"></i>
+                </div>
+                <div className="stat-info">
+                  <h3>{inProgressComplaints}</h3>
+                  <p>In Progress</p>
+                </div>
+              </div>
+              <div className="complaint-stat-card resolved">
+                <div className="stat-icon">
+                  <i className="fas fa-check-circle"></i>
+                </div>
+                <div className="stat-info">
+                  <h3>{resolvedComplaints}</h3>
+                  <p>Resolved</p>
+                </div>
+              </div>
+            </div>
+
+            {/* Customer vs Partner Complaints */}
+            <div className="complaints-category-section">
+              <div className="complaints-category-card customer">
+                <div className="category-header">
+                  <div className="category-icon customer">
+                    <i className="fas fa-users"></i>
+                  </div>
+                  <div className="category-title">
+                    <h3>Customer Complaints</h3>
+                    <span className="category-count">{customerComplaints.length} Total</span>
+                  </div>
+                </div>
+                <div className="category-breakdown">
+                  <div className="breakdown-item">
+                    <i className="fas fa-car"></i>
+                    <span className="breakdown-label">Vehicle Related</span>
+                    <span className="breakdown-count">{vehicleComplaints}</span>
+                  </div>
+                  <div className="breakdown-item">
+                    <i className="fas fa-umbrella-beach"></i>
+                    <span className="breakdown-label">Holiday Related</span>
+                    <span className="breakdown-count">{holidayComplaints}</span>
+                  </div>
+                  <div className="breakdown-item">
+                    <i className="fas fa-hand-holding-usd"></i>
+                    <span className="breakdown-label">Refund Related</span>
+                    <span className="breakdown-count">{refundComplaints}</span>
+                  </div>
+                  <div className="breakdown-item">
+                    <i className="fas fa-calendar-check"></i>
+                    <span className="breakdown-label">Booking Related</span>
+                    <span className="breakdown-count">{bookingComplaints}</span>
+                  </div>
+                </div>
+                <div className="category-status-bar">
+                  <div className="status-bar-item open" style={{width: `${(customerComplaints.filter(c => c.status === 'open').length / Math.max(customerComplaints.length, 1)) * 100}%`}}>
+                    <span>Open: {customerComplaints.filter(c => c.status === 'open').length}</span>
+                  </div>
+                  <div className="status-bar-item inprogress" style={{width: `${(customerComplaints.filter(c => c.status === 'in-progress').length / Math.max(customerComplaints.length, 1)) * 100}%`}}>
+                    <span>In Progress: {customerComplaints.filter(c => c.status === 'in-progress').length}</span>
+                  </div>
+                  <div className="status-bar-item resolved" style={{width: `${(customerComplaints.filter(c => c.status === 'resolved').length / Math.max(customerComplaints.length, 1)) * 100}%`}}>
+                    <span>Resolved: {customerComplaints.filter(c => c.status === 'resolved').length}</span>
+                  </div>
+                </div>
+              </div>
+
+              <div className="complaints-category-card partner">
+                <div className="category-header">
+                  <div className="category-icon partner">
+                    <i className="fas fa-handshake"></i>
+                  </div>
+                  <div className="category-title">
+                    <h3>Partner Complaints</h3>
+                    <span className="category-count">{partnerComplaints.length} Total</span>
+                  </div>
+                </div>
+                <div className="category-breakdown">
+                  <div className="breakdown-item">
+                    <i className="fas fa-credit-card"></i>
+                    <span className="breakdown-label">Payment Issues</span>
+                    <span className="breakdown-count">{paymentComplaints}</span>
+                  </div>
+                  <div className="breakdown-item">
+                    <i className="fas fa-cog"></i>
+                    <span className="breakdown-label">Technical Issues</span>
+                    <span className="breakdown-count">{technicalComplaints}</span>
+                  </div>
+                  <div className="breakdown-item">
+                    <i className="fas fa-calendar-check"></i>
+                    <span className="breakdown-label">Booking Issues</span>
+                    <span className="breakdown-count">{partnerBookingComplaints}</span>
+                  </div>
+                </div>
+                <div className="category-status-bar">
+                  <div className="status-bar-item open" style={{width: `${(partnerComplaints.filter(c => c.status === 'open').length / Math.max(partnerComplaints.length, 1)) * 100}%`}}>
+                    <span>Open: {partnerComplaints.filter(c => c.status === 'open').length}</span>
+                  </div>
+                  <div className="status-bar-item inprogress" style={{width: `${(partnerComplaints.filter(c => c.status === 'in-progress').length / Math.max(partnerComplaints.length, 1)) * 100}%`}}>
+                    <span>In Progress: {partnerComplaints.filter(c => c.status === 'in-progress').length}</span>
+                  </div>
+                  <div className="status-bar-item resolved" style={{width: `${(partnerComplaints.filter(c => c.status === 'resolved').length / Math.max(partnerComplaints.length, 1)) * 100}%`}}>
+                    <span>Resolved: {partnerComplaints.filter(c => c.status === 'resolved').length}</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Recent Open Complaints */}
+            <div className="recent-complaints-section">
+              <div className="section-header">
+                <h3><i className="fas fa-exclamation-triangle"></i> Recent Open Complaints</h3>
+                <button className="view-all-btn" onClick={() => setComplaintViewMode('list')}>
+                  View All <i className="fas fa-arrow-right"></i>
+                </button>
+              </div>
+              <div className="complaints-cards-grid">
+                {complaints
+                  .filter(c => c.status === 'open')
+                  .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
+                  .slice(0, 6)
+                  .map(complaint => (
+                    <div 
+                      key={complaint.id} 
+                      className={`complaint-card ${complaint.type} ${complaint.priority}`}
+                      onClick={() => { setSelectedComplaint(complaint); setShowComplaintModal(true); }}
+                    >
+                      <div className="complaint-card-header">
+                        <span className={`complaint-type-badge ${complaint.type}`}>
+                          <i className={complaint.type === 'customer' ? 'fas fa-user' : 'fas fa-handshake'}></i>
+                          {complaint.type === 'customer' ? 'Customer' : 'Partner'}
+                        </span>
+                        {getPriorityBadge(complaint.priority)}
+                      </div>
+                      <h4 className="complaint-subject">{complaint.subject}</h4>
+                      <p className="complaint-preview">{complaint.description?.substring(0, 80)}...</p>
+                      <div className="complaint-meta">
+                        <span className="complaint-from">
+                          <i className="fas fa-user-circle"></i>
+                          {complaint.type === 'customer' ? complaint.customerName : complaint.partnerName}
+                        </span>
+                        <span className="complaint-time">
+                          <i className="fas fa-clock"></i>
+                          {getTimeAgo(complaint.createdAt)}
+                        </span>
+                      </div>
+                      <div className="complaint-category">
+                        <i className={getCategoryIcon(complaint.category)}></i>
+                        {complaint.category} - {complaint.subCategory}
+                      </div>
+                    </div>
+                  ))}
+              </div>
+            </div>
+          </>
+        ) : (
+          <>
+            {/* Filters */}
+            <div className="complaints-filters">
+              <div className="search-box">
+                <i className="fas fa-search"></i>
+                <input
+                  type="text"
+                  placeholder="Search complaints..."
+                  value={complaintSearch}
+                  onChange={(e) => setComplaintSearch(e.target.value)}
+                />
+              </div>
+              <div className="filter-group">
+                <select value={complaintSourceFilter} onChange={(e) => setComplaintSourceFilter(e.target.value)}>
+                  <option value="all">All Sources</option>
+                  <option value="customer">Customer</option>
+                  <option value="partner">Partner</option>
+                </select>
+                <select value={complaintStatusFilter} onChange={(e) => setComplaintStatusFilter(e.target.value)}>
+                  <option value="all">All Status</option>
+                  <option value="open">Open</option>
+                  <option value="in-progress">In Progress</option>
+                  <option value="resolved">Resolved</option>
+                </select>
+                <select value={complaintTypeFilter} onChange={(e) => setComplaintTypeFilter(e.target.value)}>
+                  <option value="all">All Categories</option>
+                  <option value="booking">Booking</option>
+                  <option value="vehicle">Vehicle</option>
+                  <option value="holiday">Holiday</option>
+                  <option value="refund">Refund</option>
+                  <option value="payment">Payment</option>
+                  <option value="technical">Technical</option>
+                </select>
+              </div>
+            </div>
+
+            {/* Complaints Table */}
+            <div className="admin-table-container complaints-table">
+              {loading ? (
+                <div className="loading-state">
+                  <i className="fas fa-spinner fa-spin"></i>
+                  <p>Loading complaints...</p>
+                </div>
+              ) : filteredComplaints.length === 0 ? (
+                <div className="empty-state">
+                  <i className="fas fa-clipboard-check"></i>
+                  <p>No complaints found</p>
+                </div>
+              ) : (
+                <table>
+                  <thead>
+                    <tr>
+                      <th>ID</th>
+                      <th>Source</th>
+                      <th>From</th>
+                      <th>Category</th>
+                      <th>Subject</th>
+                      <th>Priority</th>
+                      <th>Status</th>
+                      <th>Created</th>
+                      <th>Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {filteredComplaints.map(complaint => (
+                      <tr key={complaint.id} onClick={() => { setSelectedComplaint(complaint); setShowComplaintModal(true); }}>
+                        <td className="complaint-id" title={complaint.id}>#{complaint.id.substring(0, 8)}...</td>
+                        <td>
+                          <span className={`source-badge ${complaint.type}`}>
+                            <i className={complaint.type === 'customer' ? 'fas fa-user' : 'fas fa-handshake'}></i>
+                            {complaint.type === 'customer' ? 'Customer' : 'Partner'}
+                          </span>
+                        </td>
+                        <td className="complaint-from-cell">
+                          <div className="from-info">
+                            <span className="from-name">{complaint.type === 'customer' ? complaint.customerName : complaint.partnerName}</span>
+                            <span className="from-email">{complaint.type === 'customer' ? complaint.customerEmail : complaint.partnerEmail}</span>
+                          </div>
+                        </td>
+                        <td>
+                          <span className="category-tag">
+                            <i className={getCategoryIcon(complaint.category)}></i>
+                            {complaint.category}
+                          </span>
+                        </td>
+                        <td className="complaint-subject-cell">{complaint.subject}</td>
+                        <td>{getPriorityBadge(complaint.priority)}</td>
+                        <td>{getComplaintStatusBadge(complaint.status)}</td>
+                        <td className="complaint-date">{formatDate(complaint.createdAt)}</td>
+                        <td className="actions-cell">
+                          <button 
+                            className="action-btn view"
+                            onClick={(e) => { e.stopPropagation(); setSelectedComplaint(complaint); setShowComplaintModal(true); }}
+                          >
+                            <i className="fas fa-eye"></i>
+                          </button>
+                          {complaint.status !== 'resolved' && (
+                            <button 
+                              className="action-btn resolve"
+                              onClick={(e) => { e.stopPropagation(); handleResolveComplaint(complaint); }}
+                              disabled={actionLoading}
+                            >
+                              <i className="fas fa-check"></i>
+                            </button>
+                          )}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              )}
+            </div>
+          </>
+        )}
+
+        {/* Complaint Detail Modal */}
+        {showComplaintModal && selectedComplaint && createPortal(
+          <div className="admin-modal-overlay" onClick={() => setShowComplaintModal(false)}>
+            <div className="admin-modal complaint-detail-modal" onClick={e => e.stopPropagation()}>
+              <button className="modal-close-btn" onClick={() => setShowComplaintModal(false)}>
+                <i className="fas fa-times"></i>
+              </button>
+              
+              <div className="complaint-modal-header">
+                <div className={`complaint-type-icon ${selectedComplaint.type}`}>
+                  <i className={selectedComplaint.type === 'customer' ? 'fas fa-user' : 'fas fa-handshake'}></i>
+                </div>
+                <div className="complaint-header-info">
+                  <h2>{selectedComplaint.subject}</h2>
+                  <div className="complaint-header-meta">
+                    <span className={`source-badge ${selectedComplaint.type}`}>
+                      {selectedComplaint.type === 'customer' ? 'Customer Complaint' : 'Partner Complaint'}
+                    </span>
+                    {getPriorityBadge(selectedComplaint.priority)}
+                    {getComplaintStatusBadge(selectedComplaint.status)}
+                  </div>
+                </div>
+              </div>
+
+              <div className="complaint-modal-body">
+                {/* Complaint Info */}
+                <div className="complaint-info-section">
+                  <div className="info-grid">
+                    <div className="info-item">
+                      <label>Complaint ID</label>
+                      <span>{selectedComplaint.id}</span>
+                    </div>
+                    <div className="info-item">
+                      <label>Category</label>
+                      <span><i className={getCategoryIcon(selectedComplaint.category)}></i> {selectedComplaint.category} - {selectedComplaint.subCategory}</span>
+                    </div>
+                    <div className="info-item">
+                      <label>Created</label>
+                      <span>{formatDate(selectedComplaint.createdAt)}</span>
+                    </div>
+                    {selectedComplaint.resolvedAt && (
+                      <div className="info-item">
+                        <label>Resolved</label>
+                        <span>{formatDate(selectedComplaint.resolvedAt)}</span>
+                      </div>
+                    )}
+                    {selectedComplaint.bookingId && (
+                      <div className="info-item">
+                        <label>Booking ID</label>
+                        <span>{selectedComplaint.bookingId}</span>
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                {/* Complainant Info */}
+                <div className="complainant-info-section">
+                  <h3><i className="fas fa-user-circle"></i> {selectedComplaint.type === 'customer' ? 'Customer' : 'Partner'} Details</h3>
+                  <div className="complainant-card">
+                    <div className="complainant-avatar">
+                      <i className={selectedComplaint.type === 'customer' ? 'fas fa-user' : 'fas fa-building'}></i>
+                    </div>
+                    <div className="complainant-details">
+                      <h4>{selectedComplaint.type === 'customer' ? selectedComplaint.customerName : selectedComplaint.partnerName}</h4>
+                      <p><i className="fas fa-envelope"></i> {selectedComplaint.type === 'customer' ? selectedComplaint.customerEmail : selectedComplaint.partnerEmail}</p>
+                      <p><i className="fas fa-phone"></i> {selectedComplaint.type === 'customer' ? selectedComplaint.customerPhone : selectedComplaint.partnerPhone}</p>
+                      <p><i className="fas fa-id-badge"></i> ID: {selectedComplaint.type === 'customer' ? selectedComplaint.customerId : selectedComplaint.partnerId}</p>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Complaint Description */}
+                <div className="complaint-description-section">
+                  <h3><i className="fas fa-align-left"></i> Complaint Description</h3>
+                  <div className="description-box">
+                    {selectedComplaint.description}
+                  </div>
+                </div>
+
+                {/* Response History */}
+                <div className="response-history-section">
+                  <h3><i className="fas fa-comments"></i> Response History ({selectedComplaint.responses?.length || 0})</h3>
+                  <div className="responses-timeline">
+                    {selectedComplaint.responses?.length > 0 ? (
+                      selectedComplaint.responses.map((response, index) => (
+                        <div key={index} className="response-item">
+                          <div className="response-avatar">
+                            <i className="fas fa-user-shield"></i>
+                          </div>
+                          <div className="response-content">
+                            <div className="response-header">
+                              <span className="responder-name">{response.respondedBy}</span>
+                              <span className="response-time">{formatDate(response.respondedAt)}</span>
+                            </div>
+                            <p className="response-message">{response.message}</p>
+                          </div>
+                        </div>
+                      ))
+                    ) : (
+                      <div className="no-responses">
+                        <i className="fas fa-inbox"></i>
+                        <p>No responses yet</p>
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                {/* Add Response */}
+                {selectedComplaint.status !== 'resolved' && (
+                  <div className="add-response-section">
+                    <h3><i className="fas fa-reply"></i> Add Response</h3>
+                    <div className="response-form">
+                      <textarea
+                        value={complaintResponse}
+                        onChange={(e) => setComplaintResponse(e.target.value)}
+                        placeholder="Type your response here..."
+                        rows={4}
+                      />
+                      <div className="response-actions">
+                        <button 
+                          className="send-response-btn"
+                          onClick={handleComplaintResponse}
+                          disabled={actionLoading || !complaintResponse.trim()}
+                        >
+                          {actionLoading ? <i className="fas fa-spinner fa-spin"></i> : <i className="fas fa-paper-plane"></i>}
+                          Send Response
+                        </button>
+                        <button 
+                          className="resolve-btn"
+                          onClick={() => handleResolveComplaint(selectedComplaint)}
+                          disabled={actionLoading}
+                        >
+                          <i className="fas fa-check-circle"></i>
+                          Mark as Resolved
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>,
+          document.body
+        )}
+      </div>
+    );
+  };
+
   // Render Tab Content
   const renderTabContent = () => {
     switch (activeSection) {
@@ -3419,6 +4124,8 @@ const AdminPortal = () => {
         return canAccessPartners ? renderPartners() : renderAccessDenied('Partners');
       case 'bookings':
         return canAccessBookings ? renderBookings() : renderAccessDenied('Bookings');
+      case 'complaints':
+        return canAccessComplaints ? renderComplaints() : renderAccessDenied('Complaints');
       default:
         return renderOverview();
     }

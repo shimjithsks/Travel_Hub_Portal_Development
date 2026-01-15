@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { collection, query, where, getDocs, doc, getDoc, setDoc, updateDoc, increment } from 'firebase/firestore';
+import { collection, query, where, getDocs, doc, getDoc, setDoc, updateDoc, increment, addDoc } from 'firebase/firestore';
 import { db } from '../../firebase/firebase';
 import { updateProfile, updatePassword, EmailAuthProvider, reauthenticateWithCredential, sendPasswordResetEmail } from 'firebase/auth';
 import { auth } from '../../firebase/firebase';
@@ -90,6 +90,48 @@ export default function CustomerDashboard() {
     vehicleType: ''
   });
   
+  // Complaint Form states
+  const [complaintForm, setComplaintForm] = useState({
+    bookingId: '',
+    issueType: '',
+    description: '',
+    contactNumber: ''
+  });
+  const [complaintSubmitting, setComplaintSubmitting] = useState(false);
+  const [complaintSuccess, setComplaintSuccess] = useState(false);
+  const [myComplaints, setMyComplaints] = useState([]);
+  const [vehicleSupportTab, setVehicleSupportTab] = useState('support'); // 'support', 'complaints'
+  const [selectedComplaint, setSelectedComplaint] = useState(null);
+  const [showComplaintDetailModal, setShowComplaintDetailModal] = useState(false);
+  
+  // Holiday Support states
+  const [holidaySupportTab, setHolidaySupportTab] = useState('support'); // 'support', 'complaints'
+  const [holidayComplaintForm, setHolidayComplaintForm] = useState({
+    bookingId: '',
+    issueType: '',
+    description: '',
+    contactNumber: ''
+  });
+  const [holidayComplaintSubmitting, setHolidayComplaintSubmitting] = useState(false);
+  const [holidayComplaintSuccess, setHolidayComplaintSuccess] = useState(false);
+  const [myHolidayComplaints, setMyHolidayComplaints] = useState([]);
+  const [selectedHolidayComplaint, setSelectedHolidayComplaint] = useState(null);
+  const [showHolidayComplaintDetailModal, setShowHolidayComplaintDetailModal] = useState(false);
+  
+  // Refund Support states
+  const [refundSupportTab, setRefundSupportTab] = useState('support'); // 'support', 'complaints'
+  const [refundComplaintForm, setRefundComplaintForm] = useState({
+    bookingId: '',
+    issueType: '',
+    description: '',
+    contactNumber: ''
+  });
+  const [refundComplaintSubmitting, setRefundComplaintSubmitting] = useState(false);
+  const [refundComplaintSuccess, setRefundComplaintSuccess] = useState(false);
+  const [myRefundComplaints, setMyRefundComplaints] = useState([]);
+  const [selectedRefundComplaint, setSelectedRefundComplaint] = useState(null);
+  const [showRefundComplaintDetailModal, setShowRefundComplaintDetailModal] = useState(false);
+  
   // Mobile sidebar
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
@@ -103,8 +145,9 @@ export default function CustomerDashboard() {
     { id: 'track-refund', label: 'Track Refund', icon: 'fas fa-search-dollar' },
     { id: 'complete-booking', label: 'Complete Booking', icon: 'fas fa-clipboard-check' },
     { id: 'make-payment', label: 'Make Payment', icon: 'fas fa-credit-card' },
-    { id: 'holiday-booking', label: 'Holiday Booking', icon: 'fas fa-umbrella-beach' },
-    { id: 'vehicle-support', label: 'Vehicle Support', icon: 'fas fa-car-side' }
+    { id: 'holiday-support', label: 'Holiday Support', icon: 'fas fa-umbrella-beach' },
+    { id: 'vehicle-support', label: 'Vehicle Support', icon: 'fas fa-car-side' },
+    { id: 'refund-support', label: 'Refund Support', icon: 'fas fa-hand-holding-usd' }
   ];
 
   // Update URL when tab changes
@@ -135,7 +178,8 @@ export default function CustomerDashboard() {
       await Promise.all([
         fetchBookings(),
         fetchECashData(),
-        fetchProfileData()
+        fetchProfileData(),
+        fetchAllComplaints()
       ]);
     } catch (error) {
       console.error('Error fetching data:', error);
@@ -207,6 +251,275 @@ export default function CustomerDashboard() {
       }
     } catch (error) {
       console.error('Error fetching profile:', error);
+    }
+  };
+
+  // Fetch customer's complaints - categorized by type
+  const fetchAllComplaints = async () => {
+    if (!user) return;
+    try {
+      const complaintsRef = collection(db, 'complaints');
+      const q = query(complaintsRef, where('customerId', '==', user.uid));
+      const querySnapshot = await getDocs(q);
+      const complaintsData = querySnapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data()
+      }));
+      
+      // Categorize complaints by source
+      const vehicleComplaints = complaintsData.filter(c => c.source === 'vehicle' || c.category === 'vehicle');
+      const holidayComplaints = complaintsData.filter(c => c.source === 'holiday' || c.category === 'holiday');
+      const refundComplaints = complaintsData.filter(c => c.source === 'refund' || c.category === 'refund');
+      
+      setMyComplaints(vehicleComplaints);
+      setMyHolidayComplaints(holidayComplaints);
+      setMyRefundComplaints(refundComplaints);
+    } catch (error) {
+      console.error('Error fetching complaints:', error);
+    }
+  };
+
+  // Handle Vehicle complaint form submission
+  const handleComplaintSubmit = async (e) => {
+    e.preventDefault();
+    
+    if (!complaintForm.bookingId || !complaintForm.issueType || !complaintForm.description || !complaintForm.contactNumber) {
+      alert('Please fill all required fields');
+      return;
+    }
+
+    setComplaintSubmitting(true);
+    try {
+      // Map issue types to categories
+      const categoryMap = {
+        'driver': { category: 'vehicle', subCategory: 'Driver Issue' },
+        'vehicle': { category: 'vehicle', subCategory: 'Vehicle Condition' },
+        'delay': { category: 'vehicle', subCategory: 'Delay / No Show' },
+        'route': { category: 'vehicle', subCategory: 'Route Issue' },
+        'payment': { category: 'booking', subCategory: 'Payment Issue' },
+        'cancel': { category: 'booking', subCategory: 'Cancellation' },
+        'modify': { category: 'booking', subCategory: 'Modification Request' },
+        'other': { category: 'booking', subCategory: 'Other' }
+      };
+
+      const categoryInfo = categoryMap[complaintForm.issueType] || { category: 'booking', subCategory: 'Other' };
+
+      // Determine priority based on issue type
+      const priorityMap = {
+        'driver': 'high',
+        'delay': 'high',
+        'payment': 'high',
+        'vehicle': 'medium',
+        'cancel': 'medium',
+        'modify': 'low',
+        'route': 'medium',
+        'other': 'low'
+      };
+
+      const complaintData = {
+        type: 'customer',
+        source: 'vehicle',
+        category: 'vehicle',
+        subCategory: categoryInfo.subCategory,
+        subject: `Vehicle: ${categoryInfo.subCategory} - Booking ${complaintForm.bookingId}`,
+        description: complaintForm.description,
+        customerName: profile?.name || user?.displayName || 'Customer',
+        customerEmail: user?.email || '',
+        customerPhone: complaintForm.contactNumber,
+        customerId: user.uid,
+        bookingId: complaintForm.bookingId,
+        status: 'open',
+        priority: priorityMap[complaintForm.issueType] || 'medium',
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+        responses: []
+      };
+
+      // Save to Firestore
+      await addDoc(collection(db, 'complaints'), complaintData);
+
+      // Reset form and show success
+      setComplaintForm({
+        bookingId: '',
+        issueType: '',
+        description: '',
+        contactNumber: ''
+      });
+      setComplaintSuccess(true);
+      
+      // Refresh complaints list
+      await fetchAllComplaints();
+
+      // Auto-hide success message after 5 seconds
+      setTimeout(() => {
+        setComplaintSuccess(false);
+      }, 5000);
+
+    } catch (error) {
+      console.error('Error submitting complaint:', error);
+      alert('Failed to submit complaint: ' + (error.message || 'Please try again.'));
+    } finally {
+      setComplaintSubmitting(false);
+    }
+  };
+
+  // Handle Holiday complaint form submission
+  const handleHolidayComplaintSubmit = async (e) => {
+    e.preventDefault();
+    
+    if (!holidayComplaintForm.bookingId || !holidayComplaintForm.issueType || !holidayComplaintForm.description || !holidayComplaintForm.contactNumber) {
+      alert('Please fill all required fields');
+      return;
+    }
+
+    setHolidayComplaintSubmitting(true);
+    try {
+      // Map issue types to categories for holiday
+      const categoryMap = {
+        'itinerary': { subCategory: 'Itinerary Issue' },
+        'hotel': { subCategory: 'Hotel/Accommodation Issue' },
+        'transport': { subCategory: 'Transport Issue' },
+        'guide': { subCategory: 'Tour Guide Issue' },
+        'meal': { subCategory: 'Meals Issue' },
+        'cancel': { subCategory: 'Cancellation Request' },
+        'modify': { subCategory: 'Modification Request' },
+        'refund': { subCategory: 'Refund Request' },
+        'other': { subCategory: 'Other Issue' }
+      };
+
+      const categoryInfo = categoryMap[holidayComplaintForm.issueType] || { subCategory: 'Other Issue' };
+
+      // Determine priority
+      const priorityMap = {
+        'hotel': 'high',
+        'transport': 'high',
+        'cancel': 'high',
+        'refund': 'high',
+        'itinerary': 'medium',
+        'guide': 'medium',
+        'meal': 'medium',
+        'modify': 'low',
+        'other': 'low'
+      };
+
+      const complaintData = {
+        type: 'customer',
+        source: 'holiday',
+        category: 'holiday',
+        subCategory: categoryInfo.subCategory,
+        subject: `Holiday: ${categoryInfo.subCategory} - Booking ${holidayComplaintForm.bookingId}`,
+        description: holidayComplaintForm.description,
+        customerName: profile?.name || user?.displayName || 'Customer',
+        customerEmail: user?.email || '',
+        customerPhone: holidayComplaintForm.contactNumber,
+        customerId: user.uid,
+        bookingId: holidayComplaintForm.bookingId,
+        status: 'open',
+        priority: priorityMap[holidayComplaintForm.issueType] || 'medium',
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+        responses: []
+      };
+
+      await addDoc(collection(db, 'complaints'), complaintData);
+
+      setHolidayComplaintForm({
+        bookingId: '',
+        issueType: '',
+        description: '',
+        contactNumber: ''
+      });
+      setHolidayComplaintSuccess(true);
+      await fetchAllComplaints();
+
+      setTimeout(() => {
+        setHolidayComplaintSuccess(false);
+      }, 5000);
+
+    } catch (error) {
+      console.error('Error submitting holiday complaint:', error);
+      alert('Failed to submit complaint: ' + (error.message || 'Please try again.'));
+    } finally {
+      setHolidayComplaintSubmitting(false);
+    }
+  };
+
+  // Handle Refund complaint form submission
+  const handleRefundComplaintSubmit = async (e) => {
+    e.preventDefault();
+    
+    if (!refundComplaintForm.bookingId || !refundComplaintForm.issueType || !refundComplaintForm.description || !refundComplaintForm.contactNumber) {
+      alert('Please fill all required fields');
+      return;
+    }
+
+    setRefundComplaintSubmitting(true);
+    try {
+      // Map issue types to categories for refund
+      const categoryMap = {
+        'not-received': { subCategory: 'Refund Not Received' },
+        'partial': { subCategory: 'Partial Refund Issue' },
+        'delay': { subCategory: 'Refund Delayed' },
+        'wrong-amount': { subCategory: 'Wrong Refund Amount' },
+        'status': { subCategory: 'Refund Status Query' },
+        'cancel': { subCategory: 'Cancel & Refund Request' },
+        'account': { subCategory: 'Wrong Account Credited' },
+        'other': { subCategory: 'Other Refund Issue' }
+      };
+
+      const categoryInfo = categoryMap[refundComplaintForm.issueType] || { subCategory: 'Other Refund Issue' };
+
+      // Determine priority - all refund issues are generally high priority
+      const priorityMap = {
+        'not-received': 'high',
+        'wrong-amount': 'high',
+        'partial': 'high',
+        'account': 'high',
+        'delay': 'medium',
+        'status': 'medium',
+        'cancel': 'medium',
+        'other': 'low'
+      };
+
+      const complaintData = {
+        type: 'customer',
+        source: 'refund',
+        category: 'refund',
+        subCategory: categoryInfo.subCategory,
+        subject: `Refund: ${categoryInfo.subCategory} - Booking ${refundComplaintForm.bookingId}`,
+        description: refundComplaintForm.description,
+        customerName: profile?.name || user?.displayName || 'Customer',
+        customerEmail: user?.email || '',
+        customerPhone: refundComplaintForm.contactNumber,
+        customerId: user.uid,
+        bookingId: refundComplaintForm.bookingId,
+        status: 'open',
+        priority: priorityMap[refundComplaintForm.issueType] || 'medium',
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+        responses: []
+      };
+
+      await addDoc(collection(db, 'complaints'), complaintData);
+
+      setRefundComplaintForm({
+        bookingId: '',
+        issueType: '',
+        description: '',
+        contactNumber: ''
+      });
+      setRefundComplaintSuccess(true);
+      await fetchAllComplaints();
+
+      setTimeout(() => {
+        setRefundComplaintSuccess(false);
+      }, 5000);
+
+    } catch (error) {
+      console.error('Error submitting refund complaint:', error);
+      alert('Failed to submit complaint: ' + (error.message || 'Please try again.'));
+    } finally {
+      setRefundComplaintSubmitting(false);
     }
   };
 
@@ -436,10 +749,12 @@ export default function CustomerDashboard() {
         return renderCompleteBooking();
       case 'make-payment':
         return renderMakePayment();
-      case 'holiday-booking':
-        return renderHolidayBooking();
+      case 'holiday-support':
+        return renderHolidaySupport();
       case 'vehicle-support':
         return renderVehicleSupport();
+      case 'refund-support':
+        return renderRefundSupport();
       default:
         return renderOverview();
     }
@@ -1005,53 +1320,407 @@ export default function CustomerDashboard() {
     </div>
   );
 
-  // Holiday Booking Tab
-  const renderHolidayBooking = () => (
-    <div className="holiday-booking-content">
+  // Holiday Support Tab
+  const renderHolidaySupport = () => (
+    <div className="holiday-support-content">
       <div className="content-header">
-        <h2><i className="fas fa-umbrella-beach"></i> Holiday Booking</h2>
-        <p>Complete your dream vacation package</p>
+        <h2><i className="fas fa-umbrella-beach"></i> Holiday Booking Support</h2>
+        <p>Get help with your holiday package issues</p>
       </div>
 
-      <div className="form-card holiday">
-        <div className="form-card-icon holiday">
-          <i className="fas fa-palm-tree"></i>
-        </div>
-        <h3>Holiday Package Details</h3>
-        <form onSubmit={handleMakePayment}>
-          <div className="form-group">
-            <label>Booking Reference Number *</label>
-            <input
-              type="text"
-              value={bookingRef}
-              onChange={(e) => setBookingRef(e.target.value)}
-              placeholder="Enter booking reference"
-              required
-            />
-          </div>
-          <div className="form-group">
-            <label>Your Email ID *</label>
-            <input
-              type="email"
-              value={bookingEmail}
-              onChange={(e) => setBookingEmail(e.target.value)}
-              placeholder="Enter your email"
-              required
-            />
-          </div>
-          <button type="submit" className="submit-btn holiday">
-            <i className="fas fa-check-circle"></i> Complete Holiday Booking
-          </button>
-        </form>
-        <div className="benefits-box">
-          <h4>Why Book With Us?</h4>
-          <div className="benefits-grid">
-            <span><i className="fas fa-tag"></i> Best Prices</span>
-            <span><i className="fas fa-shield-alt"></i> Secure Payment</span>
-            <span><i className="fas fa-headset"></i> 24/7 Support</span>
-          </div>
-        </div>
+      {/* Sub-tabs for Holiday Support */}
+      <div className="vehicle-support-tabs">
+        <button 
+          className={`vs-tab ${holidaySupportTab === 'support' ? 'active' : ''}`}
+          onClick={() => setHolidaySupportTab('support')}
+        >
+          <i className="fas fa-headset"></i>
+          <span>Get Support</span>
+        </button>
+        <button 
+          className={`vs-tab ${holidaySupportTab === 'complaints' ? 'active' : ''}`}
+          onClick={() => setHolidaySupportTab('complaints')}
+        >
+          <i className="fas fa-clipboard-list"></i>
+          <span>My Complaints</span>
+          {myHolidayComplaints.length > 0 && <span className="complaint-count">{myHolidayComplaints.length}</span>}
+        </button>
       </div>
+
+      {holidaySupportTab === 'support' ? (
+        <>
+          <div className="support-grid">
+            {/* Track Holiday Booking */}
+            <div className="form-card vehicle-support holiday-support">
+              <div className="form-card-icon holiday">
+                <i className="fas fa-search-location"></i>
+              </div>
+              <h3>Track Your Holiday Booking</h3>
+              <form onSubmit={handleMakePayment}>
+                <div className="form-group">
+                  <label><i className="fas fa-ticket-alt"></i> Holiday Booking ID *</label>
+                  <input
+                    type="text"
+                    value={bookingRef}
+                    onChange={(e) => setBookingRef(e.target.value)}
+                    placeholder="Enter your holiday booking ID"
+                    required
+                  />
+                </div>
+                <div className="form-group">
+                  <label><i className="fas fa-envelope"></i> Registered Email *</label>
+                  <input
+                    type="email"
+                    value={bookingEmail}
+                    onChange={(e) => setBookingEmail(e.target.value)}
+                    placeholder="Enter your registered email"
+                    required
+                  />
+                </div>
+                <button type="submit" className="submit-btn holiday">
+                  <i className="fas fa-search"></i> Track Booking
+                </button>
+              </form>
+            </div>
+
+            {/* Report Holiday Issue */}
+            <div className="form-card vehicle-issue holiday-issue">
+              <div className="form-card-icon issue">
+                <i className="fas fa-exclamation-triangle"></i>
+              </div>
+              <h3>Report an Issue</h3>
+              {holidayComplaintSuccess && (
+                <div className="success-message">
+                  <i className="fas fa-check-circle"></i>
+                  <span>Your holiday complaint has been submitted successfully! Our team will review and respond shortly.</span>
+                </div>
+              )}
+              <form onSubmit={handleHolidayComplaintSubmit}>
+                <div className="form-group">
+                  <label><i className="fas fa-ticket-alt"></i> Holiday Booking ID *</label>
+                  <input
+                    type="text"
+                    value={holidayComplaintForm.bookingId}
+                    onChange={(e) => setHolidayComplaintForm({...holidayComplaintForm, bookingId: e.target.value})}
+                    placeholder="Enter your holiday booking ID"
+                    required
+                  />
+                </div>
+                <div className="form-group">
+                  <label><i className="fas fa-list"></i> Issue Type *</label>
+                  <select 
+                    value={holidayComplaintForm.issueType}
+                    onChange={(e) => setHolidayComplaintForm({...holidayComplaintForm, issueType: e.target.value})}
+                    required
+                  >
+                    <option value="">Select issue type</option>
+                    <option value="itinerary">Itinerary Issue</option>
+                    <option value="hotel">Hotel / Accommodation Issue</option>
+                    <option value="transport">Transport Issue</option>
+                    <option value="guide">Tour Guide Issue</option>
+                    <option value="meal">Meals Issue</option>
+                    <option value="cancel">Cancellation Request</option>
+                    <option value="modify">Modification Request</option>
+                    <option value="refund">Refund Request</option>
+                    <option value="other">Other Issue</option>
+                  </select>
+                </div>
+                <div className="form-group">
+                  <label><i className="fas fa-comment-alt"></i> Describe Your Issue *</label>
+                  <textarea
+                    value={holidayComplaintForm.description}
+                    onChange={(e) => setHolidayComplaintForm({...holidayComplaintForm, description: e.target.value})}
+                    placeholder="Please describe your issue in detail..."
+                    rows={4}
+                    required
+                  />
+                </div>
+                <div className="form-group">
+                  <label><i className="fas fa-phone"></i> Contact Number *</label>
+                  <input
+                    type="tel"
+                    value={holidayComplaintForm.contactNumber}
+                    onChange={(e) => setHolidayComplaintForm({...holidayComplaintForm, contactNumber: e.target.value})}
+                    placeholder="Enter your contact number"
+                    required
+                  />
+                </div>
+                <button type="submit" className="submit-btn issue" disabled={holidayComplaintSubmitting}>
+                  {holidayComplaintSubmitting ? (
+                    <>
+                      <i className="fas fa-spinner fa-spin"></i> Submitting...
+                    </>
+                  ) : (
+                    <>
+                      <i className="fas fa-paper-plane"></i> Submit Issue
+                    </>
+                  )}
+                </button>
+              </form>
+            </div>
+          </div>
+
+          {/* Quick Help Options for Holiday */}
+          <div className="quick-help-section">
+            <h3><i className="fas fa-hands-helping"></i> Quick Help</h3>
+            <div className="quick-help-cards">
+              <div className="quick-help-card">
+                <div className="help-icon cancel">
+                  <i className="fas fa-ban"></i>
+                </div>
+                <h4>Cancel Package</h4>
+                <p>Cancel your holiday package and request a refund</p>
+                <button className="help-btn" onClick={() => {
+                  setHolidayComplaintForm({...holidayComplaintForm, issueType: 'cancel'});
+                  setHolidaySupportTab('support');
+                }}>Cancel Package</button>
+              </div>
+              <div className="quick-help-card">
+                <div className="help-icon modify">
+                  <i className="fas fa-edit"></i>
+                </div>
+                <h4>Modify Booking</h4>
+                <p>Change dates, add travelers or upgrade package</p>
+                <button className="help-btn" onClick={() => {
+                  setHolidayComplaintForm({...holidayComplaintForm, issueType: 'modify'});
+                  setHolidaySupportTab('support');
+                }}>Modify Booking</button>
+              </div>
+              <div className="quick-help-card">
+                <div className="help-icon driver">
+                  <i className="fas fa-concierge-bell"></i>
+                </div>
+                <h4>Hotel Issues</h4>
+                <p>Report hotel or accommodation problems</p>
+                <button className="help-btn" onClick={() => {
+                  setHolidayComplaintForm({...holidayComplaintForm, issueType: 'hotel'});
+                  setHolidaySupportTab('support');
+                }}>Report Issue</button>
+              </div>
+              <div className="quick-help-card">
+                <div className="help-icon refund">
+                  <i className="fas fa-money-bill-wave"></i>
+                </div>
+                <h4>Request Refund</h4>
+                <p>Submit your refund request for holiday package</p>
+                <button className="help-btn" onClick={() => {
+                  setHolidayComplaintForm({...holidayComplaintForm, issueType: 'refund'});
+                  setHolidaySupportTab('support');
+                }}>Request Refund</button>
+              </div>
+            </div>
+          </div>
+
+          {/* FAQ Section for Holiday */}
+          <div className="vehicle-faq-section">
+            <h3><i className="fas fa-question-circle"></i> Frequently Asked Questions</h3>
+            <div className="faq-list">
+              <div className="faq-item">
+                <div className="faq-question">
+                  <i className="fas fa-chevron-right"></i>
+                  <span>How do I cancel my holiday package?</span>
+                </div>
+                <p className="faq-answer">You can cancel your holiday package up to 7 days before departure. Refund will be processed based on our cancellation policy within 10-15 business days.</p>
+              </div>
+              <div className="faq-item">
+                <div className="faq-question">
+                  <i className="fas fa-chevron-right"></i>
+                  <span>Can I change my travel dates?</span>
+                </div>
+                <p className="faq-answer">Yes, you can modify your travel dates up to 14 days before departure. Additional charges may apply based on availability.</p>
+              </div>
+              <div className="faq-item">
+                <div className="faq-question">
+                  <i className="fas fa-chevron-right"></i>
+                  <span>What if my hotel is not as described?</span>
+                </div>
+                <p className="faq-answer">If your hotel doesn't match the description, report it immediately using the form above. We'll arrange an alternative or provide compensation.</p>
+              </div>
+              <div className="faq-item">
+                <div className="faq-question">
+                  <i className="fas fa-chevron-right"></i>
+                  <span>How do I add more travelers?</span>
+                </div>
+                <p className="faq-answer">You can add travelers up to 5 days before departure. Use the Modify Booking option and provide traveler details.</p>
+              </div>
+            </div>
+          </div>
+
+          {/* Contact Support */}
+          <div className="contact-support-box">
+            <div className="support-icon">
+              <i className="fas fa-headset"></i>
+            </div>
+            <div className="support-info">
+              <h4>Need More Help?</h4>
+              <p>Our holiday support team is available 24/7 to assist you</p>
+              <div className="support-contacts">
+                <span><i className="fas fa-phone"></i> +91 1800-XXX-XXXX</span>
+                <span><i className="fas fa-envelope"></i> holiday.support@travelaxis.com</span>
+              </div>
+            </div>
+          </div>
+        </>
+      ) : (
+        /* My Holiday Complaints Tab */
+        <div className="my-complaints-tab">
+          {myHolidayComplaints.length === 0 ? (
+            <div className="no-complaints">
+              <div className="no-complaints-icon">
+                <i className="fas fa-clipboard-check"></i>
+              </div>
+              <h3>No Complaints Yet</h3>
+              <p>You haven't submitted any holiday complaints. If you face any issues with your holiday booking, report them using the "Get Support" tab.</p>
+              <button className="go-support-btn" onClick={() => setHolidaySupportTab('support')}>
+                <i className="fas fa-headset"></i> Get Support
+              </button>
+            </div>
+          ) : (
+            <div className="complaints-list-view">
+              {myHolidayComplaints.map(complaint => (
+                <div 
+                  key={complaint.id} 
+                  className={`complaint-card-item ${complaint.status}`}
+                  onClick={() => { setSelectedHolidayComplaint(complaint); setShowHolidayComplaintDetailModal(true); }}
+                >
+                  <div className="complaint-card-left">
+                    <div className={`complaint-status-icon ${complaint.status}`}>
+                      {complaint.status === 'open' && <i className="fas fa-exclamation-circle"></i>}
+                      {complaint.status === 'in-progress' && <i className="fas fa-clock"></i>}
+                      {complaint.status === 'resolved' && <i className="fas fa-check-circle"></i>}
+                    </div>
+                  </div>
+                  <div className="complaint-card-content">
+                    <div className="complaint-card-header">
+                      <h4>{complaint.subject}</h4>
+                      <span className={`status-tag ${complaint.status}`}>
+                        {complaint.status === 'open' && 'Open'}
+                        {complaint.status === 'in-progress' && 'In Progress'}
+                        {complaint.status === 'resolved' && 'Resolved'}
+                      </span>
+                    </div>
+                    <p className="complaint-card-desc">{complaint.description.substring(0, 100)}{complaint.description.length > 100 ? '...' : ''}</p>
+                    <div className="complaint-card-footer">
+                      <span className="complaint-date">
+                        <i className="fas fa-calendar-alt"></i>
+                        {new Date(complaint.createdAt).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}
+                      </span>
+                      <span className="complaint-category">
+                        <i className="fas fa-tag"></i>
+                        {complaint.subCategory}
+                      </span>
+                      {complaint.responses && complaint.responses.length > 0 && (
+                        <span className="response-count">
+                          <i className="fas fa-reply"></i>
+                          {complaint.responses.length} Response{complaint.responses.length > 1 ? 's' : ''}
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                  <div className="complaint-card-arrow">
+                    <i className="fas fa-chevron-right"></i>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Holiday Complaint Detail Modal */}
+      {showHolidayComplaintDetailModal && selectedHolidayComplaint && (
+        <div className="modal-overlay complaint-detail-overlay" onClick={() => setShowHolidayComplaintDetailModal(false)}>
+          <div className="modal-content complaint-detail-modal" onClick={e => e.stopPropagation()}>
+            <button className="modal-close" onClick={() => setShowHolidayComplaintDetailModal(false)}>
+              <i className="fas fa-times"></i>
+            </button>
+            
+            <div className="complaint-detail-header">
+              <div className={`detail-status-icon ${selectedHolidayComplaint.status}`}>
+                {selectedHolidayComplaint.status === 'open' && <i className="fas fa-exclamation-circle"></i>}
+                {selectedHolidayComplaint.status === 'in-progress' && <i className="fas fa-clock"></i>}
+                {selectedHolidayComplaint.status === 'resolved' && <i className="fas fa-check-circle"></i>}
+              </div>
+              <div className="detail-header-info">
+                <h3>{selectedHolidayComplaint.subject}</h3>
+                <span className={`detail-status-badge ${selectedHolidayComplaint.status}`}>
+                  {selectedHolidayComplaint.status === 'open' && 'Open'}
+                  {selectedHolidayComplaint.status === 'in-progress' && 'In Progress'}
+                  {selectedHolidayComplaint.status === 'resolved' && 'Resolved'}
+                </span>
+              </div>
+            </div>
+
+            <div className="complaint-detail-body">
+              <div className="detail-info-grid">
+                <div className="detail-info-item">
+                  <label>Complaint ID</label>
+                  <span>#{selectedHolidayComplaint.id.substring(0, 12)}</span>
+                </div>
+                <div className="detail-info-item">
+                  <label>Category</label>
+                  <span>{selectedHolidayComplaint.subCategory}</span>
+                </div>
+                <div className="detail-info-item">
+                  <label>Booking ID</label>
+                  <span>{selectedHolidayComplaint.bookingId || 'N/A'}</span>
+                </div>
+                <div className="detail-info-item">
+                  <label>Submitted On</label>
+                  <span>{new Date(selectedHolidayComplaint.createdAt).toLocaleDateString('en-IN', { day: 'numeric', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit' })}</span>
+                </div>
+              </div>
+
+              <div className="detail-description">
+                <h4><i className="fas fa-align-left"></i> Issue Description</h4>
+                <p>{selectedHolidayComplaint.description}</p>
+              </div>
+
+              <div className="detail-responses">
+                <h4><i className="fas fa-comments"></i> Updates & Responses ({selectedHolidayComplaint.responses?.length || 0})</h4>
+                {selectedHolidayComplaint.responses && selectedHolidayComplaint.responses.length > 0 ? (
+                  <div className="responses-timeline">
+                    {selectedHolidayComplaint.responses.map((response, idx) => (
+                      <div key={idx} className="timeline-item">
+                        <div className="timeline-icon">
+                          <i className="fas fa-user-shield"></i>
+                        </div>
+                        <div className="timeline-content">
+                          <div className="timeline-header">
+                            <span className="timeline-author">{response.respondedBy}</span>
+                            <span className="timeline-date">
+                              {new Date(response.respondedAt).toLocaleDateString('en-IN', { 
+                                day: 'numeric', 
+                                month: 'short', 
+                                year: 'numeric',
+                                hour: '2-digit', 
+                                minute: '2-digit' 
+                              })}
+                            </span>
+                          </div>
+                          <p className="timeline-message">{response.message}</p>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="no-responses-yet">
+                    <i className="fas fa-hourglass-half"></i>
+                    <p>No responses yet. Our team will review your complaint and respond shortly.</p>
+                  </div>
+                )}
+              </div>
+
+              {selectedHolidayComplaint.status === 'resolved' && (
+                <div className="resolved-banner">
+                  <i className="fas fa-check-circle"></i>
+                  <span>This complaint has been resolved on {new Date(selectedHolidayComplaint.resolvedAt || selectedHolidayComplaint.updatedAt).toLocaleDateString('en-IN', { day: 'numeric', month: 'long', year: 'numeric' })}</span>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 
@@ -1063,180 +1732,820 @@ export default function CustomerDashboard() {
         <p>Get help with your vehicle booking issues</p>
       </div>
 
-      <div className="support-grid">
-        {/* Track Vehicle Booking */}
-        <div className="form-card vehicle-support">
-          <div className="form-card-icon vehicle">
-            <i className="fas fa-search-location"></i>
-          </div>
-          <h3>Track Your Vehicle Booking</h3>
-          <form onSubmit={handleMakePayment}>
-            <div className="form-group">
-              <label><i className="fas fa-ticket-alt"></i> Vehicle Booking ID *</label>
-              <input
-                type="text"
-                value={bookingRef}
-                onChange={(e) => setBookingRef(e.target.value)}
-                placeholder="Enter your vehicle booking ID"
-                required
-              />
-            </div>
-            <div className="form-group">
-              <label><i className="fas fa-envelope"></i> Registered Email *</label>
-              <input
-                type="email"
-                value={bookingEmail}
-                onChange={(e) => setBookingEmail(e.target.value)}
-                placeholder="Enter your registered email"
-                required
-              />
-            </div>
-            <button type="submit" className="submit-btn vehicle">
-              <i className="fas fa-search"></i> Track Booking
-            </button>
-          </form>
-        </div>
-
-        {/* Report Issue */}
-        <div className="form-card vehicle-issue">
-          <div className="form-card-icon issue">
-            <i className="fas fa-exclamation-triangle"></i>
-          </div>
-          <h3>Report an Issue</h3>
-          <form onSubmit={handleMakePayment}>
-            <div className="form-group">
-              <label><i className="fas fa-ticket-alt"></i> Vehicle Booking ID *</label>
-              <input
-                type="text"
-                placeholder="Enter your vehicle booking ID"
-                required
-              />
-            </div>
-            <div className="form-group">
-              <label><i className="fas fa-list"></i> Issue Type *</label>
-              <select required>
-                <option value="">Select issue type</option>
-                <option value="driver">Driver Related Issue</option>
-                <option value="vehicle">Vehicle Condition Issue</option>
-                <option value="delay">Delay / No Show</option>
-                <option value="route">Route / Navigation Issue</option>
-                <option value="payment">Payment / Billing Issue</option>
-                <option value="cancel">Cancellation Request</option>
-                <option value="modify">Modify Booking</option>
-                <option value="other">Other Issue</option>
-              </select>
-            </div>
-            <div className="form-group">
-              <label><i className="fas fa-comment-alt"></i> Describe Your Issue *</label>
-              <textarea
-                placeholder="Please describe your issue in detail..."
-                rows={4}
-                required
-              />
-            </div>
-            <div className="form-group">
-              <label><i className="fas fa-phone"></i> Contact Number *</label>
-              <input
-                type="tel"
-                placeholder="Enter your contact number"
-                required
-              />
-            </div>
-            <button type="submit" className="submit-btn issue">
-              <i className="fas fa-paper-plane"></i> Submit Issue
-            </button>
-          </form>
-        </div>
-      </div>
-
-      {/* Quick Help Options */}
-      <div className="quick-help-section">
-        <h3><i className="fas fa-hands-helping"></i> Quick Help</h3>
-        <div className="quick-help-cards">
-          <div className="quick-help-card">
-            <div className="help-icon cancel">
-              <i className="fas fa-ban"></i>
-            </div>
-            <h4>Cancel Booking</h4>
-            <p>Need to cancel? Get a refund based on our cancellation policy</p>
-            <button className="help-btn" onClick={() => setShowCancelVehicleModal(true)}>Cancel Booking</button>
-          </div>
-          <div className="quick-help-card">
-            <div className="help-icon modify">
-              <i className="fas fa-edit"></i>
-            </div>
-            <h4>Modify Booking</h4>
-            <p>Change pickup time, location or vehicle type</p>
-            <button className="help-btn" onClick={() => setShowModifyVehicleModal(true)}>Modify Details</button>
-          </div>
-          <div className="quick-help-card">
-            <div className="help-icon driver">
-              <i className="fas fa-user-tie"></i>
-            </div>
-            <h4>Contact Driver</h4>
-            <p>Get driver details and contact information</p>
-            <button className="help-btn" onClick={() => setShowDriverContactModal(true)}>Get Details</button>
-          </div>
-          <div className="quick-help-card">
-            <div className="help-icon refund">
-              <i className="fas fa-money-bill-wave"></i>
-            </div>
-            <h4>Request Refund</h4>
-            <p>Eligible for refund? Submit your request here</p>
-            <button className="help-btn" onClick={() => setShowVehicleRefundModal(true)}>Request Refund</button>
-          </div>
-        </div>
-      </div>
-
-      {/* FAQ Section */}
-      <div className="vehicle-faq-section">
-        <h3><i className="fas fa-question-circle"></i> Frequently Asked Questions</h3>
-        <div className="faq-list">
-          <div className="faq-item">
-            <div className="faq-question">
-              <i className="fas fa-chevron-right"></i>
-              <span>How do I cancel my vehicle booking?</span>
-            </div>
-            <p className="faq-answer">You can cancel your booking up to 2 hours before pickup. Go to Track Booking, enter your booking ID, and click on Cancel. Refund will be processed within 5-7 business days.</p>
-          </div>
-          <div className="faq-item">
-            <div className="faq-question">
-              <i className="fas fa-chevron-right"></i>
-              <span>What if my driver doesn't arrive on time?</span>
-            </div>
-            <p className="faq-answer">If your driver is delayed by more than 15 minutes, please report the issue using the form above. You may be eligible for a discount or full refund.</p>
-          </div>
-          <div className="faq-item">
-            <div className="faq-question">
-              <i className="fas fa-chevron-right"></i>
-              <span>Can I change my pickup location?</span>
-            </div>
-            <p className="faq-answer">Yes, you can modify your pickup location up to 1 hour before the scheduled pickup time. Use the Modify Booking option above.</p>
-          </div>
-          <div className="faq-item">
-            <div className="faq-question">
-              <i className="fas fa-chevron-right"></i>
-              <span>How do I contact my driver?</span>
-            </div>
-            <p className="faq-answer">Driver details including contact number will be shared 30 minutes before pickup. You can also track your booking to get live driver location.</p>
-          </div>
-        </div>
-      </div>
-
-      {/* Contact Support */}
-      <div className="contact-support-box">
-        <div className="support-icon">
+      {/* Sub-tabs for Vehicle Support */}
+      <div className="vehicle-support-tabs">
+        <button 
+          className={`vs-tab ${vehicleSupportTab === 'support' ? 'active' : ''}`}
+          onClick={() => setVehicleSupportTab('support')}
+        >
           <i className="fas fa-headset"></i>
+          <span>Get Support</span>
+        </button>
+        <button 
+          className={`vs-tab ${vehicleSupportTab === 'complaints' ? 'active' : ''}`}
+          onClick={() => setVehicleSupportTab('complaints')}
+        >
+          <i className="fas fa-clipboard-list"></i>
+          <span>My Complaints</span>
+          {myComplaints.length > 0 && <span className="complaint-count">{myComplaints.length}</span>}
+        </button>
+      </div>
+
+      {vehicleSupportTab === 'support' ? (
+        <>
+          <div className="support-grid">
+            {/* Track Vehicle Booking */}
+            <div className="form-card vehicle-support">
+              <div className="form-card-icon vehicle">
+                <i className="fas fa-search-location"></i>
+              </div>
+              <h3>Track Your Vehicle Booking</h3>
+              <form onSubmit={handleMakePayment}>
+                <div className="form-group">
+                  <label><i className="fas fa-ticket-alt"></i> Vehicle Booking ID *</label>
+                  <input
+                    type="text"
+                    value={bookingRef}
+                    onChange={(e) => setBookingRef(e.target.value)}
+                    placeholder="Enter your vehicle booking ID"
+                    required
+                  />
+                </div>
+                <div className="form-group">
+                  <label><i className="fas fa-envelope"></i> Registered Email *</label>
+                  <input
+                    type="email"
+                    value={bookingEmail}
+                    onChange={(e) => setBookingEmail(e.target.value)}
+                    placeholder="Enter your registered email"
+                    required
+                  />
+                </div>
+                <button type="submit" className="submit-btn vehicle">
+                  <i className="fas fa-search"></i> Track Booking
+                </button>
+              </form>
+            </div>
+
+            {/* Report Issue */}
+            <div className="form-card vehicle-issue">
+              <div className="form-card-icon issue">
+                <i className="fas fa-exclamation-triangle"></i>
+              </div>
+              <h3>Report an Issue</h3>
+              {complaintSuccess && (
+                <div className="success-message">
+                  <i className="fas fa-check-circle"></i>
+                  <span>Your complaint has been submitted successfully! Our team will review and respond shortly.</span>
+                </div>
+              )}
+              <form onSubmit={handleComplaintSubmit}>
+                <div className="form-group">
+                  <label><i className="fas fa-ticket-alt"></i> Vehicle Booking ID *</label>
+                  <input
+                    type="text"
+                    value={complaintForm.bookingId}
+                    onChange={(e) => setComplaintForm({...complaintForm, bookingId: e.target.value})}
+                    placeholder="Enter your vehicle booking ID"
+                    required
+                  />
+                </div>
+                <div className="form-group">
+                  <label><i className="fas fa-list"></i> Issue Type *</label>
+                  <select 
+                    value={complaintForm.issueType}
+                    onChange={(e) => setComplaintForm({...complaintForm, issueType: e.target.value})}
+                    required
+                  >
+                    <option value="">Select issue type</option>
+                    <option value="driver">Driver Related Issue</option>
+                    <option value="vehicle">Vehicle Condition Issue</option>
+                    <option value="delay">Delay / No Show</option>
+                    <option value="route">Route / Navigation Issue</option>
+                    <option value="payment">Payment / Billing Issue</option>
+                    <option value="cancel">Cancellation Request</option>
+                    <option value="modify">Modify Booking</option>
+                    <option value="other">Other Issue</option>
+                  </select>
+                </div>
+                <div className="form-group">
+                  <label><i className="fas fa-comment-alt"></i> Describe Your Issue *</label>
+                  <textarea
+                    value={complaintForm.description}
+                    onChange={(e) => setComplaintForm({...complaintForm, description: e.target.value})}
+                    placeholder="Please describe your issue in detail..."
+                    rows={4}
+                    required
+                  />
+                </div>
+                <div className="form-group">
+                  <label><i className="fas fa-phone"></i> Contact Number *</label>
+                  <input
+                    type="tel"
+                    value={complaintForm.contactNumber}
+                    onChange={(e) => setComplaintForm({...complaintForm, contactNumber: e.target.value})}
+                    placeholder="Enter your contact number"
+                    required
+                  />
+                </div>
+                <button type="submit" className="submit-btn issue" disabled={complaintSubmitting}>
+                  {complaintSubmitting ? (
+                    <>
+                      <i className="fas fa-spinner fa-spin"></i> Submitting...
+                    </>
+                  ) : (
+                    <>
+                      <i className="fas fa-paper-plane"></i> Submit Issue
+                    </>
+                  )}
+                </button>
+              </form>
+            </div>
+          </div>
+
+          {/* Quick Help Options */}
+          <div className="quick-help-section">
+            <h3><i className="fas fa-hands-helping"></i> Quick Help</h3>
+            <div className="quick-help-cards">
+              <div className="quick-help-card">
+                <div className="help-icon cancel">
+                  <i className="fas fa-ban"></i>
+                </div>
+                <h4>Cancel Booking</h4>
+                <p>Need to cancel? Get a refund based on our cancellation policy</p>
+                <button className="help-btn" onClick={() => setShowCancelVehicleModal(true)}>Cancel Booking</button>
+              </div>
+              <div className="quick-help-card">
+                <div className="help-icon modify">
+                  <i className="fas fa-edit"></i>
+                </div>
+                <h4>Modify Booking</h4>
+                <p>Change pickup time, location or vehicle type</p>
+                <button className="help-btn" onClick={() => setShowModifyVehicleModal(true)}>Modify Details</button>
+              </div>
+              <div className="quick-help-card">
+                <div className="help-icon driver">
+                  <i className="fas fa-user-tie"></i>
+                </div>
+                <h4>Contact Driver</h4>
+                <p>Get driver details and contact information</p>
+                <button className="help-btn" onClick={() => setShowDriverContactModal(true)}>Get Details</button>
+              </div>
+              <div className="quick-help-card">
+                <div className="help-icon refund">
+                  <i className="fas fa-money-bill-wave"></i>
+                </div>
+                <h4>Request Refund</h4>
+                <p>Eligible for refund? Submit your request here</p>
+                <button className="help-btn" onClick={() => setShowVehicleRefundModal(true)}>Request Refund</button>
+              </div>
+            </div>
+          </div>
+
+          {/* FAQ Section */}
+          <div className="vehicle-faq-section">
+            <h3><i className="fas fa-question-circle"></i> Frequently Asked Questions</h3>
+            <div className="faq-list">
+              <div className="faq-item">
+                <div className="faq-question">
+                  <i className="fas fa-chevron-right"></i>
+                  <span>How do I cancel my vehicle booking?</span>
+                </div>
+                <p className="faq-answer">You can cancel your booking up to 2 hours before pickup. Go to Track Booking, enter your booking ID, and click on Cancel. Refund will be processed within 5-7 business days.</p>
+              </div>
+              <div className="faq-item">
+                <div className="faq-question">
+                  <i className="fas fa-chevron-right"></i>
+                  <span>What if my driver doesn't arrive on time?</span>
+                </div>
+                <p className="faq-answer">If your driver is delayed by more than 15 minutes, please report the issue using the form above. You may be eligible for a discount or full refund.</p>
+              </div>
+              <div className="faq-item">
+                <div className="faq-question">
+                  <i className="fas fa-chevron-right"></i>
+                  <span>Can I change my pickup location?</span>
+                </div>
+                <p className="faq-answer">Yes, you can modify your pickup location up to 1 hour before the scheduled pickup time. Use the Modify Booking option above.</p>
+              </div>
+              <div className="faq-item">
+                <div className="faq-question">
+                  <i className="fas fa-chevron-right"></i>
+                  <span>How do I contact my driver?</span>
+                </div>
+                <p className="faq-answer">Driver details including contact number will be shared 30 minutes before pickup. You can also track your booking to get live driver location.</p>
+              </div>
+            </div>
+          </div>
+
+          {/* Contact Support */}
+          <div className="contact-support-box">
+            <div className="support-icon">
+              <i className="fas fa-headset"></i>
+            </div>
+            <div className="support-info">
+              <h4>Need More Help?</h4>
+              <p>Our support team is available 24/7 to assist you</p>
+              <div className="support-contacts">
+                <span><i className="fas fa-phone"></i> +91 1800-XXX-XXXX</span>
+                <span><i className="fas fa-envelope"></i> vehicle.support@travelaxis.com</span>
+              </div>
+            </div>
+          </div>
+        </>
+      ) : (
+        /* My Complaints Tab */
+        <div className="my-complaints-tab">
+          {myComplaints.length === 0 ? (
+            <div className="no-complaints">
+              <div className="no-complaints-icon">
+                <i className="fas fa-clipboard-check"></i>
+              </div>
+              <h3>No Complaints Yet</h3>
+              <p>You haven't submitted any complaints. If you face any issues with your vehicle booking, report them using the "Get Support" tab.</p>
+              <button className="go-support-btn" onClick={() => setVehicleSupportTab('support')}>
+                <i className="fas fa-headset"></i> Get Support
+              </button>
+            </div>
+          ) : (
+            <div className="complaints-list-view">
+              {myComplaints.map(complaint => (
+                <div 
+                  key={complaint.id} 
+                  className={`complaint-card-item ${complaint.status}`}
+                  onClick={() => { setSelectedComplaint(complaint); setShowComplaintDetailModal(true); }}
+                >
+                  <div className="complaint-card-left">
+                    <div className={`complaint-status-icon ${complaint.status}`}>
+                      {complaint.status === 'open' && <i className="fas fa-exclamation-circle"></i>}
+                      {complaint.status === 'in-progress' && <i className="fas fa-clock"></i>}
+                      {complaint.status === 'resolved' && <i className="fas fa-check-circle"></i>}
+                    </div>
+                  </div>
+                  <div className="complaint-card-content">
+                    <div className="complaint-card-header">
+                      <h4>{complaint.subject}</h4>
+                      <span className={`status-tag ${complaint.status}`}>
+                        {complaint.status === 'open' && 'Open'}
+                        {complaint.status === 'in-progress' && 'In Progress'}
+                        {complaint.status === 'resolved' && 'Resolved'}
+                      </span>
+                    </div>
+                    <p className="complaint-card-desc">{complaint.description.substring(0, 100)}{complaint.description.length > 100 ? '...' : ''}</p>
+                    <div className="complaint-card-footer">
+                      <span className="complaint-date">
+                        <i className="fas fa-calendar-alt"></i>
+                        {new Date(complaint.createdAt).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}
+                      </span>
+                      <span className="complaint-category">
+                        <i className="fas fa-tag"></i>
+                        {complaint.subCategory}
+                      </span>
+                      {complaint.responses && complaint.responses.length > 0 && (
+                        <span className="response-count">
+                          <i className="fas fa-reply"></i>
+                          {complaint.responses.length} Response{complaint.responses.length > 1 ? 's' : ''}
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                  <div className="complaint-card-arrow">
+                    <i className="fas fa-chevron-right"></i>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
-        <div className="support-info">
-          <h4>Need More Help?</h4>
-          <p>Our support team is available 24/7 to assist you</p>
-          <div className="support-contacts">
-            <span><i className="fas fa-phone"></i> +91 1800-XXX-XXXX</span>
-            <span><i className="fas fa-envelope"></i> vehicle.support@travelaxis.com</span>
+      )}
+
+      {/* Complaint Detail Modal */}
+      {showComplaintDetailModal && selectedComplaint && (
+        <div className="modal-overlay complaint-detail-overlay" onClick={() => setShowComplaintDetailModal(false)}>
+          <div className="modal-content complaint-detail-modal" onClick={e => e.stopPropagation()}>
+            <button className="modal-close" onClick={() => setShowComplaintDetailModal(false)}>
+              <i className="fas fa-times"></i>
+            </button>
+            
+            <div className="complaint-detail-header">
+              <div className={`detail-status-icon ${selectedComplaint.status}`}>
+                {selectedComplaint.status === 'open' && <i className="fas fa-exclamation-circle"></i>}
+                {selectedComplaint.status === 'in-progress' && <i className="fas fa-clock"></i>}
+                {selectedComplaint.status === 'resolved' && <i className="fas fa-check-circle"></i>}
+              </div>
+              <div className="detail-header-info">
+                <h3>{selectedComplaint.subject}</h3>
+                <span className={`detail-status-badge ${selectedComplaint.status}`}>
+                  {selectedComplaint.status === 'open' && 'Open'}
+                  {selectedComplaint.status === 'in-progress' && 'In Progress'}
+                  {selectedComplaint.status === 'resolved' && 'Resolved'}
+                </span>
+              </div>
+            </div>
+
+            <div className="complaint-detail-body">
+              <div className="detail-info-grid">
+                <div className="detail-info-item">
+                  <label>Complaint ID</label>
+                  <span>#{selectedComplaint.id.substring(0, 12)}</span>
+                </div>
+                <div className="detail-info-item">
+                  <label>Category</label>
+                  <span>{selectedComplaint.subCategory}</span>
+                </div>
+                <div className="detail-info-item">
+                  <label>Booking ID</label>
+                  <span>{selectedComplaint.bookingId || 'N/A'}</span>
+                </div>
+                <div className="detail-info-item">
+                  <label>Submitted On</label>
+                  <span>{new Date(selectedComplaint.createdAt).toLocaleDateString('en-IN', { day: 'numeric', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit' })}</span>
+                </div>
+              </div>
+
+              <div className="detail-description">
+                <h4><i className="fas fa-align-left"></i> Issue Description</h4>
+                <p>{selectedComplaint.description}</p>
+              </div>
+
+              <div className="detail-responses">
+                <h4><i className="fas fa-comments"></i> Updates & Responses ({selectedComplaint.responses?.length || 0})</h4>
+                {selectedComplaint.responses && selectedComplaint.responses.length > 0 ? (
+                  <div className="responses-timeline">
+                    {selectedComplaint.responses.map((response, idx) => (
+                      <div key={idx} className="timeline-item">
+                        <div className="timeline-icon">
+                          <i className="fas fa-user-shield"></i>
+                        </div>
+                        <div className="timeline-content">
+                          <div className="timeline-header">
+                            <span className="timeline-author">{response.respondedBy}</span>
+                            <span className="timeline-date">
+                              {new Date(response.respondedAt).toLocaleDateString('en-IN', { 
+                                day: 'numeric', 
+                                month: 'short', 
+                                year: 'numeric',
+                                hour: '2-digit', 
+                                minute: '2-digit' 
+                              })}
+                            </span>
+                          </div>
+                          <p className="timeline-message">{response.message}</p>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="no-responses-yet">
+                    <i className="fas fa-hourglass-half"></i>
+                    <p>Waiting for admin response. We'll get back to you shortly.</p>
+                  </div>
+                )}
+              </div>
+
+              {selectedComplaint.resolvedAt && (
+                <div className="resolved-banner">
+                  <i className="fas fa-check-double"></i>
+                  <span>This complaint was resolved on {new Date(selectedComplaint.resolvedAt).toLocaleDateString('en-IN', { day: 'numeric', month: 'long', year: 'numeric' })}</span>
+                </div>
+              )}
+            </div>
           </div>
         </div>
+      )}
+    </div>
+  );
+
+  // Refund Support Tab
+  const renderRefundSupport = () => (
+    <div className="refund-support-content">
+      <div className="content-header">
+        <h2><i className="fas fa-hand-holding-usd"></i> Refund Support</h2>
+        <p>Get help with your refund issues and track refund status</p>
       </div>
+
+      {/* Sub-tabs for Refund Support */}
+      <div className="vehicle-support-tabs">
+        <button 
+          className={`vs-tab ${refundSupportTab === 'support' ? 'active' : ''}`}
+          onClick={() => setRefundSupportTab('support')}
+        >
+          <i className="fas fa-headset"></i>
+          <span>Raise Issue</span>
+        </button>
+        <button 
+          className={`vs-tab ${refundSupportTab === 'complaints' ? 'active' : ''}`}
+          onClick={() => setRefundSupportTab('complaints')}
+        >
+          <i className="fas fa-clipboard-list"></i>
+          <span>My Tickets</span>
+          {myRefundComplaints.length > 0 && <span className="complaint-count">{myRefundComplaints.length}</span>}
+        </button>
+      </div>
+
+      {refundSupportTab === 'support' ? (
+        <>
+          <div className="support-grid">
+            {/* Track Refund Status */}
+            <div className="form-card vehicle-support refund-support">
+              <div className="form-card-icon refund">
+                <i className="fas fa-search-dollar"></i>
+              </div>
+              <h3>Track Your Refund</h3>
+              <form onSubmit={handleMakePayment}>
+                <div className="form-group">
+                  <label><i className="fas fa-ticket-alt"></i> Booking ID *</label>
+                  <input
+                    type="text"
+                    value={bookingRef}
+                    onChange={(e) => setBookingRef(e.target.value)}
+                    placeholder="Enter your booking ID"
+                    required
+                  />
+                </div>
+                <div className="form-group">
+                  <label><i className="fas fa-envelope"></i> Registered Email *</label>
+                  <input
+                    type="email"
+                    value={bookingEmail}
+                    onChange={(e) => setBookingEmail(e.target.value)}
+                    placeholder="Enter your registered email"
+                    required
+                  />
+                </div>
+                <button type="submit" className="submit-btn refund">
+                  <i className="fas fa-search"></i> Track Refund
+                </button>
+              </form>
+            </div>
+
+            {/* Report Refund Issue */}
+            <div className="form-card vehicle-issue refund-issue">
+              <div className="form-card-icon issue">
+                <i className="fas fa-exclamation-triangle"></i>
+              </div>
+              <h3>Report Refund Issue</h3>
+              {refundComplaintSuccess && (
+                <div className="success-message">
+                  <i className="fas fa-check-circle"></i>
+                  <span>Your refund ticket has been submitted successfully! Our team will review and respond shortly.</span>
+                </div>
+              )}
+              <form onSubmit={handleRefundComplaintSubmit}>
+                <div className="form-group">
+                  <label><i className="fas fa-ticket-alt"></i> Booking ID *</label>
+                  <input
+                    type="text"
+                    value={refundComplaintForm.bookingId}
+                    onChange={(e) => setRefundComplaintForm({...refundComplaintForm, bookingId: e.target.value})}
+                    placeholder="Enter your booking ID"
+                    required
+                  />
+                </div>
+                <div className="form-group">
+                  <label><i className="fas fa-list"></i> Issue Type *</label>
+                  <select 
+                    value={refundComplaintForm.issueType}
+                    onChange={(e) => setRefundComplaintForm({...refundComplaintForm, issueType: e.target.value})}
+                    required
+                  >
+                    <option value="">Select issue type</option>
+                    <option value="not-received">Refund Not Received</option>
+                    <option value="partial">Partial Refund Issue</option>
+                    <option value="delay">Refund Delayed</option>
+                    <option value="wrong-amount">Wrong Refund Amount</option>
+                    <option value="status">Refund Status Query</option>
+                    <option value="cancel">Cancel & Refund Request</option>
+                    <option value="account">Wrong Account Credited</option>
+                    <option value="other">Other Issue</option>
+                  </select>
+                </div>
+                <div className="form-group">
+                  <label><i className="fas fa-comment-alt"></i> Describe Your Issue *</label>
+                  <textarea
+                    value={refundComplaintForm.description}
+                    onChange={(e) => setRefundComplaintForm({...refundComplaintForm, description: e.target.value})}
+                    placeholder="Please describe your refund issue in detail. Include expected amount, refund request date, etc..."
+                    rows={4}
+                    required
+                  />
+                </div>
+                <div className="form-group">
+                  <label><i className="fas fa-phone"></i> Contact Number *</label>
+                  <input
+                    type="tel"
+                    value={refundComplaintForm.contactNumber}
+                    onChange={(e) => setRefundComplaintForm({...refundComplaintForm, contactNumber: e.target.value})}
+                    placeholder="Enter your contact number"
+                    required
+                  />
+                </div>
+                <button type="submit" className="submit-btn issue" disabled={refundComplaintSubmitting}>
+                  {refundComplaintSubmitting ? (
+                    <>
+                      <i className="fas fa-spinner fa-spin"></i> Submitting...
+                    </>
+                  ) : (
+                    <>
+                      <i className="fas fa-paper-plane"></i> Submit Ticket
+                    </>
+                  )}
+                </button>
+              </form>
+            </div>
+          </div>
+
+          {/* Quick Help Options for Refund */}
+          <div className="quick-help-section">
+            <h3><i className="fas fa-hands-helping"></i> Common Refund Issues</h3>
+            <div className="quick-help-cards">
+              <div className="quick-help-card">
+                <div className="help-icon cancel">
+                  <i className="fas fa-clock"></i>
+                </div>
+                <h4>Refund Delayed</h4>
+                <p>Refund taking longer than expected? Report here</p>
+                <button className="help-btn" onClick={() => {
+                  setRefundComplaintForm({...refundComplaintForm, issueType: 'delay'});
+                }}>Report Delay</button>
+              </div>
+              <div className="quick-help-card">
+                <div className="help-icon modify">
+                  <i className="fas fa-times-circle"></i>
+                </div>
+                <h4>Not Received</h4>
+                <p>Refund not credited to your account?</p>
+                <button className="help-btn" onClick={() => {
+                  setRefundComplaintForm({...refundComplaintForm, issueType: 'not-received'});
+                }}>Report Issue</button>
+              </div>
+              <div className="quick-help-card">
+                <div className="help-icon driver">
+                  <i className="fas fa-calculator"></i>
+                </div>
+                <h4>Wrong Amount</h4>
+                <p>Received less than expected amount?</p>
+                <button className="help-btn" onClick={() => {
+                  setRefundComplaintForm({...refundComplaintForm, issueType: 'wrong-amount'});
+                }}>Report Issue</button>
+              </div>
+              <div className="quick-help-card">
+                <div className="help-icon refund">
+                  <i className="fas fa-university"></i>
+                </div>
+                <h4>Wrong Account</h4>
+                <p>Refund credited to wrong account?</p>
+                <button className="help-btn" onClick={() => {
+                  setRefundComplaintForm({...refundComplaintForm, issueType: 'account'});
+                }}>Report Issue</button>
+              </div>
+            </div>
+          </div>
+
+          {/* Refund Info Section */}
+          <div className="refund-info-section">
+            <h3><i className="fas fa-info-circle"></i> Refund Processing Timeline</h3>
+            <div className="refund-timeline">
+              <div className="refund-step">
+                <div className="step-number">1</div>
+                <div className="step-content">
+                  <h4>Request Submitted</h4>
+                  <p>Your cancellation/refund request is received</p>
+                </div>
+              </div>
+              <div className="refund-step">
+                <div className="step-number">2</div>
+                <div className="step-content">
+                  <h4>Under Review</h4>
+                  <p>Our team reviews your request (1-2 days)</p>
+                </div>
+              </div>
+              <div className="refund-step">
+                <div className="step-number">3</div>
+                <div className="step-content">
+                  <h4>Refund Initiated</h4>
+                  <p>Refund is processed to your payment method</p>
+                </div>
+              </div>
+              <div className="refund-step">
+                <div className="step-number">4</div>
+                <div className="step-content">
+                  <h4>Amount Credited</h4>
+                  <p>Amount reflects in your account (5-7 business days)</p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* FAQ Section for Refund */}
+          <div className="vehicle-faq-section">
+            <h3><i className="fas fa-question-circle"></i> Frequently Asked Questions</h3>
+            <div className="faq-list">
+              <div className="faq-item">
+                <div className="faq-question">
+                  <i className="fas fa-chevron-right"></i>
+                  <span>How long does a refund take?</span>
+                </div>
+                <p className="faq-answer">Refunds typically take 5-7 business days to reflect in your account after approval. Credit card refunds may take up to 10 business days.</p>
+              </div>
+              <div className="faq-item">
+                <div className="faq-question">
+                  <i className="fas fa-chevron-right"></i>
+                  <span>Why is my refund amount less than expected?</span>
+                </div>
+                <p className="faq-answer">Refund amounts may be deducted based on our cancellation policy. Cancellation charges, payment gateway fees, and timing of cancellation affect the final amount.</p>
+              </div>
+              <div className="faq-item">
+                <div className="faq-question">
+                  <i className="fas fa-chevron-right"></i>
+                  <span>Can I get my refund to a different account?</span>
+                </div>
+                <p className="faq-answer">Refunds are processed to the original payment method only. For exceptional cases, please raise a support ticket with proper documentation.</p>
+              </div>
+              <div className="faq-item">
+                <div className="faq-question">
+                  <i className="fas fa-chevron-right"></i>
+                  <span>What if my refund fails?</span>
+                </div>
+                <p className="faq-answer">If a refund fails, we'll notify you via email. The amount can be credited to your eCash wallet or re-processed to another account.</p>
+              </div>
+            </div>
+          </div>
+
+          {/* Contact Support */}
+          <div className="contact-support-box">
+            <div className="support-icon">
+              <i className="fas fa-headset"></i>
+            </div>
+            <div className="support-info">
+              <h4>Need Urgent Help?</h4>
+              <p>Our refund support team is available to assist you</p>
+              <div className="support-contacts">
+                <span><i className="fas fa-phone"></i> +91 1800-XXX-XXXX</span>
+                <span><i className="fas fa-envelope"></i> refunds@travelaxis.com</span>
+              </div>
+            </div>
+          </div>
+        </>
+      ) : (
+        /* My Refund Tickets Tab */
+        <div className="my-complaints-tab">
+          {myRefundComplaints.length === 0 ? (
+            <div className="no-complaints">
+              <div className="no-complaints-icon">
+                <i className="fas fa-receipt"></i>
+              </div>
+              <h3>No Refund Tickets Yet</h3>
+              <p>You haven't raised any refund issues. If you face any problems with your refund, use the "Raise Issue" tab.</p>
+              <button className="go-support-btn" onClick={() => setRefundSupportTab('support')}>
+                <i className="fas fa-plus-circle"></i> Raise Issue
+              </button>
+            </div>
+          ) : (
+            <div className="complaints-list-view">
+              {myRefundComplaints.map(complaint => (
+                <div 
+                  key={complaint.id} 
+                  className={`complaint-card-item ${complaint.status}`}
+                  onClick={() => { setSelectedRefundComplaint(complaint); setShowRefundComplaintDetailModal(true); }}
+                >
+                  <div className="complaint-card-left">
+                    <div className={`complaint-status-icon ${complaint.status}`}>
+                      {complaint.status === 'open' && <i className="fas fa-exclamation-circle"></i>}
+                      {complaint.status === 'in-progress' && <i className="fas fa-clock"></i>}
+                      {complaint.status === 'resolved' && <i className="fas fa-check-circle"></i>}
+                    </div>
+                  </div>
+                  <div className="complaint-card-content">
+                    <div className="complaint-card-header">
+                      <h4>{complaint.subject}</h4>
+                      <span className={`status-tag ${complaint.status}`}>
+                        {complaint.status === 'open' && 'Open'}
+                        {complaint.status === 'in-progress' && 'In Progress'}
+                        {complaint.status === 'resolved' && 'Resolved'}
+                      </span>
+                    </div>
+                    <p className="complaint-card-desc">{complaint.description.substring(0, 100)}{complaint.description.length > 100 ? '...' : ''}</p>
+                    <div className="complaint-card-footer">
+                      <span className="complaint-date">
+                        <i className="fas fa-calendar-alt"></i>
+                        {new Date(complaint.createdAt).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}
+                      </span>
+                      <span className="complaint-category">
+                        <i className="fas fa-tag"></i>
+                        {complaint.subCategory}
+                      </span>
+                      {complaint.responses && complaint.responses.length > 0 && (
+                        <span className="response-count">
+                          <i className="fas fa-reply"></i>
+                          {complaint.responses.length} Response{complaint.responses.length > 1 ? 's' : ''}
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                  <div className="complaint-card-arrow">
+                    <i className="fas fa-chevron-right"></i>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Refund Complaint Detail Modal */}
+      {showRefundComplaintDetailModal && selectedRefundComplaint && (
+        <div className="modal-overlay complaint-detail-overlay" onClick={() => setShowRefundComplaintDetailModal(false)}>
+          <div className="modal-content complaint-detail-modal" onClick={e => e.stopPropagation()}>
+            <button className="modal-close" onClick={() => setShowRefundComplaintDetailModal(false)}>
+              <i className="fas fa-times"></i>
+            </button>
+            
+            <div className="complaint-detail-header">
+              <div className={`detail-status-icon ${selectedRefundComplaint.status}`}>
+                {selectedRefundComplaint.status === 'open' && <i className="fas fa-exclamation-circle"></i>}
+                {selectedRefundComplaint.status === 'in-progress' && <i className="fas fa-clock"></i>}
+                {selectedRefundComplaint.status === 'resolved' && <i className="fas fa-check-circle"></i>}
+              </div>
+              <div className="detail-header-info">
+                <h3>{selectedRefundComplaint.subject}</h3>
+                <span className={`detail-status-badge ${selectedRefundComplaint.status}`}>
+                  {selectedRefundComplaint.status === 'open' && 'Open'}
+                  {selectedRefundComplaint.status === 'in-progress' && 'In Progress'}
+                  {selectedRefundComplaint.status === 'resolved' && 'Resolved'}
+                </span>
+              </div>
+            </div>
+
+            <div className="complaint-detail-body">
+              <div className="detail-info-grid">
+                <div className="detail-info-item">
+                  <label>Ticket ID</label>
+                  <span>#{selectedRefundComplaint.id.substring(0, 12)}</span>
+                </div>
+                <div className="detail-info-item">
+                  <label>Issue Type</label>
+                  <span>{selectedRefundComplaint.subCategory}</span>
+                </div>
+                <div className="detail-info-item">
+                  <label>Booking ID</label>
+                  <span>{selectedRefundComplaint.bookingId || 'N/A'}</span>
+                </div>
+                <div className="detail-info-item">
+                  <label>Submitted On</label>
+                  <span>{new Date(selectedRefundComplaint.createdAt).toLocaleDateString('en-IN', { day: 'numeric', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit' })}</span>
+                </div>
+              </div>
+
+              <div className="detail-description">
+                <h4><i className="fas fa-align-left"></i> Issue Description</h4>
+                <p>{selectedRefundComplaint.description}</p>
+              </div>
+
+              <div className="detail-responses">
+                <h4><i className="fas fa-comments"></i> Updates & Responses ({selectedRefundComplaint.responses?.length || 0})</h4>
+                {selectedRefundComplaint.responses && selectedRefundComplaint.responses.length > 0 ? (
+                  <div className="responses-timeline">
+                    {selectedRefundComplaint.responses.map((response, idx) => (
+                      <div key={idx} className="timeline-item">
+                        <div className="timeline-icon">
+                          <i className="fas fa-user-shield"></i>
+                        </div>
+                        <div className="timeline-content">
+                          <div className="timeline-header">
+                            <span className="timeline-author">{response.respondedBy}</span>
+                            <span className="timeline-date">
+                              {new Date(response.respondedAt).toLocaleDateString('en-IN', { 
+                                day: 'numeric', 
+                                month: 'short', 
+                                year: 'numeric',
+                                hour: '2-digit', 
+                                minute: '2-digit' 
+                              })}
+                            </span>
+                          </div>
+                          <p className="timeline-message">{response.message}</p>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="no-responses-yet">
+                    <i className="fas fa-hourglass-half"></i>
+                    <p>No responses yet. Our refund team will review your ticket and respond shortly.</p>
+                  </div>
+                )}
+              </div>
+
+              {selectedRefundComplaint.status === 'resolved' && (
+                <div className="resolved-banner">
+                  <i className="fas fa-check-circle"></i>
+                  <span>This ticket has been resolved on {new Date(selectedRefundComplaint.resolvedAt || selectedRefundComplaint.updatedAt).toLocaleDateString('en-IN', { day: 'numeric', month: 'long', year: 'numeric' })}</span>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 
