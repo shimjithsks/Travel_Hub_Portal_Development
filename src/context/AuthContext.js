@@ -27,7 +27,7 @@ export function AuthProvider({ children }) {
     setProfile(prev => prev ? { ...prev, ...updates } : updates);
   }, []);
 
-  // Real-time listener for profile changes (to detect deactivation)
+  // Real-time listener for profile changes (to detect deactivation or role changes)
   useEffect(() => {
     if (!user || !db) return;
 
@@ -35,6 +35,30 @@ export function AuthProvider({ children }) {
     const unsubscribeProfile = onSnapshot(profileRef, async (snap) => {
       if (snap.exists()) {
         const profileData = snap.data();
+        const role = profileData.role || '';
+        
+        // List of management/employee roles that cannot use customer portal
+        const restrictedRoles = [
+          'super-admin', 
+          'delegated-super-admin', 
+          'admin', 
+          'admin-customers', 
+          'admin-partners', 
+          'admin-bookings',
+          'employee'
+        ];
+        
+        // Check if role is restricted or starts with 'admin'
+        const isRestrictedUser = restrictedRoles.includes(role) || role.startsWith('admin');
+        
+        // If user's role changed to a restricted role, sign them out
+        if (isRestrictedUser) {
+          await firebaseSignOut(auth);
+          setUser(null);
+          setProfile(null);
+          alert('This account is registered as an employee/admin. Please use the Admin Portal to login.');
+          return;
+        }
         
         // Check if account is deactivated or status is inactive
         if (profileData.accountStatus === 'inactive' || profileData.status === 'inactive') {
@@ -78,6 +102,33 @@ export function AuthProvider({ children }) {
         
         if (snap.exists()) {
           const profileData = snap.data();
+          const role = profileData.role || '';
+          
+          // List of management/employee roles that cannot login to customer portal
+          const restrictedRoles = [
+            'super-admin', 
+            'delegated-super-admin', 
+            'admin', 
+            'admin-customers', 
+            'admin-partners', 
+            'admin-bookings',
+            'employee'
+          ];
+          
+          // Check if role is restricted or starts with 'admin'
+          const isRestrictedUser = restrictedRoles.includes(role) || role.startsWith('admin');
+          
+          // If this is a restricted user trying to access customer portal, sign them out
+          if (isRestrictedUser) {
+            await firebaseSignOut(auth);
+            setUser(null);
+            setProfile(null);
+            setLoading(false);
+            setTimeout(() => {
+              alert('This account is registered as an employee/admin. Please use the Admin Portal to login.');
+            }, 100);
+            return;
+          }
           
           // Check if account is deactivated
           if (profileData.accountStatus === 'inactive' || profileData.status === 'inactive') {
