@@ -1337,22 +1337,30 @@
 
 .customize-btn {
   width: 100%;
-  padding: 14px;
+  padding: 16px;
   background: white;
-  color: #0f172a;
-  border: 2px solid #0f172a;
-  border-radius: 12px;
+  color: #0d9488;
+  border: 2px solid #14b8a6;
+  border-radius: 14px;
   font-size: 15px;
-  font-weight: 600;
+  font-weight: 700;
   cursor: pointer;
-  transition: all 0.3s;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   margin-bottom: 16px;
   margin-top: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
 }
 
 .customize-btn:hover {
-  background: #0f172a;
-  color: white;
+  background: linear-gradient(135deg, #f0fdfa 0%, #ccfbf1 100%);
+  border-color: #0d9488;
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(20, 184, 166, 0.2);
 }
 
 .booking-features {

@@ -32,7 +32,7 @@ export default function ForgotPassword() {
       <div className="login-page">
         {/* Left Side - Branding */}
         <div className="login-branding">
-          <div className="branding-content">
+          <div className="branding-content">bwb2b2v2v2
             <h1>Partner Portal</h1>
             <p>Reset your password securely and get back to managing your travel business.</p>
           </div>

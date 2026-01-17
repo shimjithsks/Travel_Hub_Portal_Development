@@ -42,6 +42,8 @@ import HotelReview from './pages/HotelReview';
 import Flights from './pages/Flights';
 import FleetResults from './pages/FleetResults';
 import VehicleDetails from './pages/VehicleDetails';
+import SendEnquiry from './pages/SendEnquiry';
+import BookVehicle from './pages/BookVehicle';
 import DashboardRedirect from './components/auth/DashboardRedirect';
 import RequireRole from './components/auth/RequireRole';
 import OperatorDashboard from './pages/operator/OperatorDashboard';
@@ -192,6 +194,10 @@ function App() {
         <Route path="/flights" element={<Flights />} />
         <Route path="/fleet-results" element={<FleetResults />} />
         <Route path="/vehicle-details/:id" element={<VehicleDetails />} />
+        <Route path="/send-enquiry/:type/:id" element={<SendEnquiry />} />
+        <Route path="/send-enquiry" element={<SendEnquiry />} />
+        <Route path="/book-vehicle/:type/:id" element={<BookVehicle />} />
+        <Route path="/book-vehicle" element={<BookVehicle />} />
         <Route path="/gallery" element={<Gallery />} />
         <Route path="/blog" element={<Blog />} />
         <Route path="/blog/:id" element={<BlogDetail />} />

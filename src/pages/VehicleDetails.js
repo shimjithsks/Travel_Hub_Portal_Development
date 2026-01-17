@@ -1,5 +1,8 @@
 import React, { useState, useMemo } from 'react';
 import { useParams, useNavigate, useLocation, useSearchParams } from 'react-router-dom';
+import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
+import { db } from '../firebase/firebase';
+import { useAuth } from '../context/AuthContext';
 import '../styles/vehicleDetails.css';
 
 export default function VehicleDetails() {
@@ -8,6 +11,7 @@ export default function VehicleDetails() {
   const location = useLocation();
   const [urlSearchParams] = useSearchParams();
   const offerCode = urlSearchParams.get('code') || '';
+  const { user, profile } = useAuth();
 
   // Vehicles database for direct navigation (when not coming from fleet results)
   const vehiclesDatabase = useMemo(() => [
@@ -207,6 +211,30 @@ export default function VehicleDetails() {
   const [additionalRequirements, setAdditionalRequirements] = useState('');
   const [selectedImage, setSelectedImage] = useState(0);
   const [showOfferBanner, setShowOfferBanner] = useState(!!appliedOffer);
+  
+  // Enquiry Modal States
+  const [showEnquiryModal, setShowEnquiryModal] = useState(false);
+  const [enquirySubmitting, setEnquirySubmitting] = useState(false);
+  const [enquirySuccess, setEnquirySuccess] = useState(false);
+  const [enquiryError, setEnquiryError] = useState('');
+  const [enquiryForm, setEnquiryForm] = useState({
+    name: '',
+    email: '',
+    phone: '',
+    message: '',
+    numberOfPersons: 1,
+    pickupTime: '09:00',
+    dropoffTime: '18:00',
+    tripType: 'round-trip',
+    pickupAddress: '',
+    dropoffAddress: '',
+    specialRequirements: []
+  });
+  
+  // Enquiry modal editable dates
+  const [modalPickupDate, setModalPickupDate] = useState('');
+  const [modalReturnDate, setModalReturnDate] = useState('');
+  const [modalPickupLocation, setModalPickupLocation] = useState('');
 
   // Get today's date in YYYY-MM-DD format
   const today = new Date().toISOString().split('T')[0];
@@ -263,34 +291,193 @@ export default function VehicleDetails() {
     { id: 3, name: 'Mohammed Ali', rating: 5, date: '3 weeks ago', comment: 'Best rental experience. Great value for money!' }
   ];
 
-  const handleEnquiry = () => {
+  // Navigate to send enquiry page
+  const goToEnquiryPage = () => {
+    navigate(`/send-enquiry/vehicle/${vehicleData.id}`, {
+      state: {
+        vehicleData: vehicleData,
+        searchParams: {
+          date: pickupDate,
+          dropoffDate: returnDate,
+          location: pickupLocation
+        },
+        appliedOffer: appliedOffer
+      }
+    });
+  };
+
+  // Open enquiry modal (kept for backward compatibility)
+  const openEnquiryModal = () => {
+    // Pre-fill form with user data if logged in
+    if (user && profile) {
+      setEnquiryForm({
+        name: profile.name || profile.fullName || '',
+        email: profile.email || user.email || '',
+        phone: profile.phone || '',
+        message: additionalRequirements || '',
+        numberOfPersons: 1,
+        pickupTime: '09:00',
+        dropoffTime: '18:00',
+        tripType: 'round-trip',
+        pickupAddress: '',
+        dropoffAddress: '',
+        specialRequirements: []
+      });
+    } else {
+      setEnquiryForm({
+        name: '',
+        email: '',
+        phone: '',
+        message: additionalRequirements || '',
+        numberOfPersons: 1,
+        pickupTime: '09:00',
+        dropoffTime: '18:00',
+        tripType: 'round-trip',
+        pickupAddress: '',
+        dropoffAddress: '',
+        specialRequirements: []
+      });
+    }
+    // Initialize modal dates from main form
+    setModalPickupDate(pickupDate);
+    setModalReturnDate(returnDate);
+    setModalPickupLocation(pickupLocation);
+    setEnquirySuccess(false);
+    setEnquiryError('');
+    setShowEnquiryModal(true);
+  };
+
+  // Handle special requirements toggle
+  const toggleSpecialRequirement = (requirement) => {
+    setEnquiryForm(prev => ({
+      ...prev,
+      specialRequirements: prev.specialRequirements.includes(requirement)
+        ? prev.specialRequirements.filter(r => r !== requirement)
+        : [...prev.specialRequirements, requirement]
+    }));
+  };
+
+  // Handle enquiry form submission
+  const handleEnquirySubmit = async (e) => {
+    e.preventDefault();
+    setEnquiryError('');
+    setEnquirySubmitting(true);
+
     // Validate required fields
-    if (!pickupDate) {
-      alert('Please select a pickup date');
+    if (!enquiryForm.name.trim()) {
+      setEnquiryError('Please enter your name');
+      setEnquirySubmitting(false);
       return;
     }
-    if (!returnDate) {
-      alert('Please select a return date');
+    if (!enquiryForm.email.trim()) {
+      setEnquiryError('Please enter your email');
+      setEnquirySubmitting(false);
+      return;
+    }
+    if (!enquiryForm.phone.trim()) {
+      setEnquiryError('Please enter your phone number');
+      setEnquirySubmitting(false);
       return;
     }
     if (!pickupLocation) {
-      alert('Please enter a pickup location');
+      setEnquiryError('Please enter a pickup location');
+      setEnquirySubmitting(false);
       return;
     }
 
-    // Handle enquiry logic here
-    const enquiryData = {
-      vehicle: vehicleData.name,
-      operator: vehicleData.operatorName,
-      pickupDate: pickupDate,
-      returnDate: returnDate,
-      pickupLocation: pickupLocation,
-      vehicleCategory: vehicleData.category,
-      additionalRequirements,
-      appliedOfferCode: appliedOffer?.code || null
-    };
-    console.log('Enquiry submitted:', enquiryData);
-    alert('Enquiry submitted! Our team will contact you soon.');
+    try {
+      // Calculate number of days using modal dates
+      const start = new Date(modalPickupDate);
+      const end = new Date(modalReturnDate);
+      const diffTime = Math.abs(end - start);
+      const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) || 1;
+
+      // Calculate estimated price
+      const basePrice = vehicleData.pricePerDay * diffDays;
+      let discount = 0;
+      if (appliedOffer) {
+        if (appliedOffer.discount.includes('%')) {
+          discount = (basePrice * parseInt(appliedOffer.discount)) / 100;
+        } else if (appliedOffer.discount.includes('₹')) {
+          discount = parseInt(appliedOffer.discount.replace('₹', ''));
+        }
+      }
+      const estimatedTotal = basePrice - discount;
+
+      // Create enquiry data
+      const enquiryData = {
+        // Customer Details
+        customerName: enquiryForm.name.trim(),
+        customerEmail: enquiryForm.email.trim(),
+        customerPhone: enquiryForm.phone.trim(),
+        customerId: user?.uid || null,
+        
+        // Vehicle Details
+        vehicleId: vehicleData.id,
+        vehicleName: vehicleData.name,
+        vehicleCategory: vehicleData.category,
+        vehicleType: vehicleData.type,
+        operatorName: vehicleData.operatorName,
+        vehicleImage: vehicleData.image,
+        seatingCapacity: vehicleData.seatingCapacity,
+        
+        // Booking Details
+        pickupLocation: modalPickupLocation,
+        pickupAddress: enquiryForm.pickupAddress.trim(),
+        dropoffAddress: enquiryForm.dropoffAddress.trim(),
+        pickupDate: modalPickupDate,
+        returnDate: modalReturnDate,
+        pickupTime: enquiryForm.pickupTime,
+        dropoffTime: enquiryForm.dropoffTime,
+        numberOfDays: diffDays,
+        numberOfPersons: enquiryForm.numberOfPersons,
+        tripType: enquiryForm.tripType,
+        
+        // Pricing
+        pricePerDay: vehicleData.pricePerDay,
+        basePrice: basePrice,
+        appliedOfferCode: appliedOffer?.code || null,
+        discount: discount,
+        estimatedTotal: estimatedTotal,
+        
+        // Additional Info
+        message: enquiryForm.message.trim() || additionalRequirements || '',
+        specialRequirements: enquiryForm.specialRequirements,
+        
+        // Meta
+        enquiryType: 'vehicle',
+        status: 'pending',
+        createdAt: serverTimestamp(),
+        source: 'website'
+      };
+
+      // Save to Firestore
+      if (db) {
+        await addDoc(collection(db, 'enquiries'), enquiryData);
+      }
+
+      setEnquirySuccess(true);
+      setEnquirySubmitting(false);
+    } catch (error) {
+      console.error('Enquiry submission error:', error);
+      setEnquiryError('Failed to submit enquiry. Please try again.');
+      setEnquirySubmitting(false);
+    }
+  };
+
+  const handleEnquiry = () => {
+    // Navigate to booking page with vehicle data
+    navigate(`/book-vehicle/vehicle/${vehicleData.id}`, {
+      state: {
+        vehicleData: vehicleData,
+        searchParams: {
+          date: pickupDate,
+          dropoffDate: returnDate,
+          location: pickupLocation
+        },
+        appliedOffer: appliedOffer
+      }
+    });
   };
 
   // Check if vehicle data exists
@@ -738,21 +925,11 @@ export default function VehicleDetails() {
                     </div>
                   </div>
 
-                  <div className="form-group">
-                    <label>Additional Requirements</label>
-                    <textarea 
-                      rows="3"
-                      placeholder="Any special requests or requirements..."
-                      value={additionalRequirements}
-                      onChange={(e) => setAdditionalRequirements(e.target.value)}
-                    ></textarea>
-                  </div>
-
                   <button onClick={handleEnquiry} className="book-now-btn">
                     <i className="fas fa-check-circle"></i> Book Now
                   </button>
 
-                  <button onClick={handleEnquiry} className="contact-btn">
+                  <button onClick={goToEnquiryPage} className="contact-btn">
                     <i className="fas fa-paper-plane"></i> Send Enquiry
                   </button>
                 </div>
@@ -776,6 +953,387 @@ export default function VehicleDetails() {
           </div>
         </div>
       </div>
+
+      {/* Send Enquiry Modal */}
+      {showEnquiryModal && (
+        <div className="enquiry-modal-overlay" onClick={() => setShowEnquiryModal(false)}>
+          <div className="enquiry-modal enquiry-modal-large" onClick={(e) => e.stopPropagation()}>
+            <button className="enquiry-modal-close" onClick={() => setShowEnquiryModal(false)}>
+              <i className="fas fa-times"></i>
+            </button>
+
+            {!enquirySuccess ? (
+              <div className="enquiry-modal-content">
+                <div className="enquiry-modal-header">
+                  <div className="enquiry-icon">
+                    <i className="fas fa-paper-plane"></i>
+                  </div>
+                  <h2>Send Enquiry</h2>
+                  <p>Fill in the details and our team will get back to you shortly</p>
+                </div>
+
+                <div className="enquiry-modal-body">
+                  {/* Left Column - Vehicle & Trip Details */}
+                  <div className="enquiry-left-column">
+                    {/* Vehicle Summary */}
+                    <div className="enquiry-vehicle-summary">
+                      <img src={vehicleData.image} alt={vehicleData.name} />
+                      <div className="vehicle-summary-info">
+                        <h4>{vehicleData.name}</h4>
+                        <p><i className="fas fa-building"></i> {vehicleData.operatorName}</p>
+                        <div className="summary-details">
+                          <span><i className="fas fa-users"></i> {vehicleData.seatingCapacity} Seats</span>
+                          <span><i className="fas fa-star"></i> {vehicleData.rating}</span>
+                        </div>
+                        <div className="price-tag">
+                          <span className="price">₹{vehicleData.pricePerDay}</span>
+                          <span className="per-day">/ day</span>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Trip Type Selection */}
+                    <div className="enquiry-section">
+                      <h5><i className="fas fa-route"></i> Trip Type</h5>
+                      <div className="trip-type-options">
+                        <label className={`trip-option ${enquiryForm.tripType === 'one-way' ? 'active' : ''}`}>
+                          <input
+                            type="radio"
+                            name="tripType"
+                            value="one-way"
+                            checked={enquiryForm.tripType === 'one-way'}
+                            onChange={(e) => setEnquiryForm({...enquiryForm, tripType: e.target.value})}
+                          />
+                          <i className="fas fa-arrow-right"></i>
+                          <span>One Way</span>
+                        </label>
+                        <label className={`trip-option ${enquiryForm.tripType === 'round-trip' ? 'active' : ''}`}>
+                          <input
+                            type="radio"
+                            name="tripType"
+                            value="round-trip"
+                            checked={enquiryForm.tripType === 'round-trip'}
+                            onChange={(e) => setEnquiryForm({...enquiryForm, tripType: e.target.value})}
+                          />
+                          <i className="fas fa-exchange-alt"></i>
+                          <span>Round Trip</span>
+                        </label>
+                        <label className={`trip-option ${enquiryForm.tripType === 'multi-city' ? 'active' : ''}`}>
+                          <input
+                            type="radio"
+                            name="tripType"
+                            value="multi-city"
+                            checked={enquiryForm.tripType === 'multi-city'}
+                            onChange={(e) => setEnquiryForm({...enquiryForm, tripType: e.target.value})}
+                          />
+                          <i className="fas fa-map-marked-alt"></i>
+                          <span>Multi City</span>
+                        </label>
+                      </div>
+                    </div>
+
+                    {/* Date & Time Selection */}
+                    <div className="enquiry-section">
+                      <h5><i className="fas fa-calendar-alt"></i> Schedule</h5>
+                      <div className="date-time-grid">
+                        <div className="form-group">
+                          <label>Pickup Date *</label>
+                          <input
+                            type="date"
+                            value={modalPickupDate}
+                            min={today}
+                            onChange={(e) => {
+                              setModalPickupDate(e.target.value);
+                              if (e.target.value > modalReturnDate) {
+                                setModalReturnDate(e.target.value);
+                              }
+                            }}
+                            className="date-input"
+                          />
+                        </div>
+                        <div className="form-group">
+                          <label>Pickup Time *</label>
+                          <input
+                            type="time"
+                            value={enquiryForm.pickupTime}
+                            onChange={(e) => setEnquiryForm({...enquiryForm, pickupTime: e.target.value})}
+                            className="time-input"
+                          />
+                        </div>
+                        <div className="form-group">
+                          <label>Return Date *</label>
+                          <input
+                            type="date"
+                            value={modalReturnDate}
+                            min={modalPickupDate || today}
+                            onChange={(e) => setModalReturnDate(e.target.value)}
+                            className="date-input"
+                          />
+                        </div>
+                        <div className="form-group">
+                          <label>Drop-off Time *</label>
+                          <input
+                            type="time"
+                            value={enquiryForm.dropoffTime}
+                            onChange={(e) => setEnquiryForm({...enquiryForm, dropoffTime: e.target.value})}
+                            className="time-input"
+                          />
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Location Details */}
+                    <div className="enquiry-section">
+                      <h5><i className="fas fa-map-marker-alt"></i> Location Details</h5>
+                      <div className="form-group">
+                        <label>Pickup City *</label>
+                        <input
+                          type="text"
+                          placeholder="Enter pickup city"
+                          value={modalPickupLocation}
+                          onChange={(e) => setModalPickupLocation(e.target.value)}
+                        />
+                      </div>
+                      <div className="form-group">
+                        <label>Pickup Address (Optional)</label>
+                        <input
+                          type="text"
+                          placeholder="Enter detailed pickup address"
+                          value={enquiryForm.pickupAddress}
+                          onChange={(e) => setEnquiryForm({...enquiryForm, pickupAddress: e.target.value})}
+                        />
+                      </div>
+                      {enquiryForm.tripType !== 'one-way' && (
+                        <div className="form-group">
+                          <label>Drop-off Address (Optional)</label>
+                          <input
+                            type="text"
+                            placeholder="Enter drop-off address"
+                            value={enquiryForm.dropoffAddress}
+                            onChange={(e) => setEnquiryForm({...enquiryForm, dropoffAddress: e.target.value})}
+                          />
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Number of Persons */}
+                    <div className="enquiry-section">
+                      <h5><i className="fas fa-users"></i> Passengers</h5>
+                      <div className="persons-selector">
+                        <button
+                          type="button"
+                          className="persons-btn"
+                          onClick={() => setEnquiryForm({...enquiryForm, numberOfPersons: Math.max(1, enquiryForm.numberOfPersons - 1)})}
+                        >
+                          <i className="fas fa-minus"></i>
+                        </button>
+                        <div className="persons-display">
+                          <span className="persons-count">{enquiryForm.numberOfPersons}</span>
+                          <span className="persons-label">Person{enquiryForm.numberOfPersons > 1 ? 's' : ''}</span>
+                        </div>
+                        <button
+                          type="button"
+                          className="persons-btn"
+                          onClick={() => setEnquiryForm({...enquiryForm, numberOfPersons: Math.min(parseInt(vehicleData.seatingCapacity) || 50, enquiryForm.numberOfPersons + 1)})}
+                        >
+                          <i className="fas fa-plus"></i>
+                        </button>
+                      </div>
+                      <p className="capacity-note">
+                        <i className="fas fa-info-circle"></i>
+                        Maximum capacity: {vehicleData.seatingCapacity} passengers
+                      </p>
+                    </div>
+
+                    {/* Special Requirements */}
+                    <div className="enquiry-section">
+                      <h5><i className="fas fa-cog"></i> Special Requirements</h5>
+                      <div className="special-requirements-grid">
+                        {[
+                          { id: 'child-seat', icon: 'fa-baby', label: 'Child Seat' },
+                          { id: 'wheelchair', icon: 'fa-wheelchair', label: 'Wheelchair Access' },
+                          { id: 'luggage', icon: 'fa-suitcase-rolling', label: 'Extra Luggage' },
+                          { id: 'wifi', icon: 'fa-wifi', label: 'WiFi Required' },
+                          { id: 'pet-friendly', icon: 'fa-paw', label: 'Pet Friendly' },
+                          { id: 'smoking', icon: 'fa-smoking-ban', label: 'Non-Smoking' }
+                        ].map(req => (
+                          <label
+                            key={req.id}
+                            className={`requirement-option ${enquiryForm.specialRequirements.includes(req.id) ? 'active' : ''}`}
+                          >
+                            <input
+                              type="checkbox"
+                              checked={enquiryForm.specialRequirements.includes(req.id)}
+                              onChange={() => toggleSpecialRequirement(req.id)}
+                            />
+                            <i className={`fas ${req.icon}`}></i>
+                            <span>{req.label}</span>
+                          </label>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Right Column - Contact & Submit */}
+                  <div className="enquiry-right-column">
+                    {/* Price Summary */}
+                    <div className="enquiry-price-summary">
+                      <h5>Estimated Price</h5>
+                      <div className="price-breakdown">
+                        <div className="price-row">
+                          <span>Base Price</span>
+                          <span>₹{vehicleData.pricePerDay} × {Math.max(1, Math.ceil(Math.abs(new Date(modalReturnDate) - new Date(modalPickupDate)) / (1000 * 60 * 60 * 24))) || 1} days</span>
+                        </div>
+                        <div className="price-row">
+                          <span>Subtotal</span>
+                          <span>₹{vehicleData.pricePerDay * (Math.max(1, Math.ceil(Math.abs(new Date(modalReturnDate) - new Date(modalPickupDate)) / (1000 * 60 * 60 * 24))) || 1)}</span>
+                        </div>
+                        {appliedOffer && (
+                          <div className="price-row discount">
+                            <span><i className="fas fa-tag"></i> {appliedOffer.code}</span>
+                            <span>-{appliedOffer.discount}</span>
+                          </div>
+                        )}
+                        <div className="price-row total">
+                          <span>Estimated Total</span>
+                          <span>₹{vehicleData.pricePerDay * (Math.max(1, Math.ceil(Math.abs(new Date(modalReturnDate) - new Date(modalPickupDate)) / (1000 * 60 * 60 * 24))) || 1)}</span>
+                        </div>
+                      </div>
+                      <p className="price-note">* Final price may vary based on actual usage</p>
+                    </div>
+
+                    {enquiryError && (
+                      <div className="enquiry-error">
+                        <i className="fas fa-exclamation-circle"></i>
+                        {enquiryError}
+                      </div>
+                    )}
+
+                    <form onSubmit={handleEnquirySubmit} className="enquiry-form">
+                      <h5><i className="fas fa-user-circle"></i> Contact Information</h5>
+                      
+                      <div className="form-group">
+                        <label><i className="fas fa-user"></i> Full Name *</label>
+                        <input
+                          type="text"
+                          placeholder="Enter your full name"
+                          value={enquiryForm.name}
+                          onChange={(e) => setEnquiryForm({...enquiryForm, name: e.target.value})}
+                          required
+                        />
+                      </div>
+                      
+                      <div className="form-row">
+                        <div className="form-group">
+                          <label><i className="fas fa-envelope"></i> Email *</label>
+                          <input
+                            type="email"
+                            placeholder="your@email.com"
+                            value={enquiryForm.email}
+                            onChange={(e) => setEnquiryForm({...enquiryForm, email: e.target.value})}
+                            required
+                          />
+                        </div>
+                        <div className="form-group">
+                          <label><i className="fas fa-phone"></i> Phone *</label>
+                          <input
+                            type="tel"
+                            placeholder="+91 XXXXX XXXXX"
+                            value={enquiryForm.phone}
+                            onChange={(e) => setEnquiryForm({...enquiryForm, phone: e.target.value})}
+                            required
+                          />
+                        </div>
+                      </div>
+
+                      <div className="form-group">
+                        <label><i className="fas fa-comment-alt"></i> Additional Message (Optional)</label>
+                        <textarea
+                          rows="3"
+                          placeholder="Any specific requirements, questions, or special instructions..."
+                          value={enquiryForm.message}
+                          onChange={(e) => setEnquiryForm({...enquiryForm, message: e.target.value})}
+                        ></textarea>
+                      </div>
+
+                      <button type="submit" className="enquiry-submit-btn" disabled={enquirySubmitting}>
+                        {enquirySubmitting ? (
+                          <>
+                            <i className="fas fa-spinner fa-spin"></i> Sending Enquiry...
+                          </>
+                        ) : (
+                          <>
+                            <i className="fas fa-paper-plane"></i> Send Enquiry
+                          </>
+                        )}
+                      </button>
+                    </form>
+
+                    <div className="enquiry-trust-badges">
+                      <div className="trust-item">
+                        <i className="fas fa-shield-alt"></i>
+                        <span>Secure & Private</span>
+                      </div>
+                      <div className="trust-item">
+                        <i className="fas fa-clock"></i>
+                        <span>Quick Response</span>
+                      </div>
+                      <div className="trust-item">
+                        <i className="fas fa-headset"></i>
+                        <span>24/7 Support</span>
+                      </div>
+                    </div>
+
+                    <p className="enquiry-note">
+                      <i className="fas fa-info-circle"></i>
+                      Our team will contact you within 2 hours during business hours (9 AM - 8 PM).
+                    </p>
+                  </div>
+                </div>
+              </div>
+            ) : (
+              <div className="enquiry-success">
+                <div className="success-icon">
+                  <i className="fas fa-check-circle"></i>
+                </div>
+                <h2>Enquiry Sent Successfully!</h2>
+                <p>Thank you for your interest in <strong>{vehicleData.name}</strong></p>
+                
+                <div className="success-summary">
+                  <div className="summary-row">
+                    <i className="fas fa-calendar"></i>
+                    <span>{new Date(modalPickupDate).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })} - {new Date(modalReturnDate).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}</span>
+                  </div>
+                  <div className="summary-row">
+                    <i className="fas fa-clock"></i>
+                    <span>{enquiryForm.pickupTime} - {enquiryForm.dropoffTime}</span>
+                  </div>
+                  <div className="summary-row">
+                    <i className="fas fa-users"></i>
+                    <span>{enquiryForm.numberOfPersons} Passenger{enquiryForm.numberOfPersons > 1 ? 's' : ''}</span>
+                  </div>
+                  <div className="summary-row">
+                    <i className="fas fa-map-marker-alt"></i>
+                    <span>{modalPickupLocation}</span>
+                  </div>
+                </div>
+                
+                <div className="success-details">
+                  <p><i className="fas fa-envelope"></i> Confirmation sent to <strong>{enquiryForm.email}</strong></p>
+                  <p><i className="fas fa-phone"></i> We'll call you at <strong>{enquiryForm.phone}</strong></p>
+                </div>
+                <div className="success-info">
+                  <i className="fas fa-clock"></i>
+                  <span>Our team will contact you within 2 hours during business hours (9 AM - 8 PM)</span>
+                </div>
+                <button className="enquiry-close-btn" onClick={() => setShowEnquiryModal(false)}>
+                  <i className="fas fa-check"></i> Done
+                </button>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
 }

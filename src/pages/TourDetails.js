@@ -165,7 +165,61 @@ export default function TourDetails() {
   ];
 
   const handleBooking = () => {
-    alert('Booking initiated! You will be redirected to the payment page.');
+    // Navigate to booking page with tour data
+    navigate(`/book-vehicle/tour/${id}`, {
+      state: {
+        tourData: {
+          id: id,
+          name: tour.title,
+          title: tour.title,
+          price: tour.price,
+          pricePerDay: tour.price,
+          image: tour.mainImage,
+          mainImage: tour.mainImage,
+          category: 'Tour Package',
+          operatorName: tour.operatorName,
+          rating: tour.rating,
+          seatingCapacity: '20',
+          duration: tour.duration,
+          location: tour.location
+        },
+        searchParams: {
+          date: new Date().toISOString().split('T')[0],
+          dropoffDate: new Date().toISOString().split('T')[0],
+          location: tour.destinations?.[0] || tour.location
+        },
+        appliedOffer: null
+      }
+    });
+  };
+
+  const handleEnquiry = () => {
+    // Navigate to enquiry page with tour data
+    navigate(`/send-enquiry/tour/${id}`, {
+      state: {
+        tourData: {
+          id: id,
+          name: tour.title,
+          title: tour.title,
+          price: tour.price,
+          pricePerDay: tour.price,
+          image: tour.mainImage,
+          mainImage: tour.mainImage,
+          category: 'Tour Package',
+          operatorName: tour.operatorName,
+          rating: tour.rating,
+          seatingCapacity: '20',
+          duration: tour.duration,
+          location: tour.location
+        },
+        searchParams: {
+          date: new Date().toISOString().split('T')[0],
+          dropoffDate: new Date().toISOString().split('T')[0],
+          location: tour.destinations?.[0] || tour.location
+        },
+        appliedOffer: null
+      }
+    });
   };
 
   const getInclusionIcon = (inclusion) => {
@@ -606,8 +660,8 @@ export default function TourDetails() {
                   Book Now
                 </button>
 
-                <button className="customize-btn">
-                  <i className="fas fa-edit"></i> Customize Tour
+                <button className="customize-btn" onClick={handleEnquiry}>
+                  <i className="fas fa-paper-plane"></i> Send Enquiry
                 </button>
 
                 <div className="booking-features">
