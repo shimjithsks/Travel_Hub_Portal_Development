@@ -37,6 +37,14 @@ export function AuthProvider({ children }) {
         const profileData = snap.data();
         const role = profileData.role || '';
         
+        // Check if we're on a management/admin route - don't block admin users there
+        const currentPath = window.location.hash || window.location.pathname;
+        const isManagementRoute = currentPath.includes('management-portal') || 
+                                   currentPath.includes('management-login') ||
+                                   currentPath.includes('admin-login') ||
+                                   currentPath.includes('admin') ||
+                                   currentPath.includes('operator');
+        
         // List of management/employee roles that cannot use customer portal
         const restrictedRoles = [
           'super-admin', 
@@ -51,8 +59,8 @@ export function AuthProvider({ children }) {
         // Check if role is restricted or starts with 'admin'
         const isRestrictedUser = restrictedRoles.includes(role) || role.startsWith('admin');
         
-        // If user's role changed to a restricted role, sign them out
-        if (isRestrictedUser) {
+        // If user's role changed to a restricted role AND they're on customer portal, sign them out
+        if (isRestrictedUser && !isManagementRoute) {
           await firebaseSignOut(auth);
           setUser(null);
           setProfile(null);
@@ -104,6 +112,14 @@ export function AuthProvider({ children }) {
           const profileData = snap.data();
           const role = profileData.role || '';
           
+          // Check if we're on a management/admin route - don't block admin users there
+          const currentPath = window.location.hash || window.location.pathname;
+          const isManagementRoute = currentPath.includes('management-portal') || 
+                                     currentPath.includes('management-login') ||
+                                     currentPath.includes('admin-login') ||
+                                     currentPath.includes('admin') ||
+                                     currentPath.includes('operator');
+          
           // List of management/employee roles that cannot login to customer portal
           const restrictedRoles = [
             'super-admin', 
@@ -119,7 +135,7 @@ export function AuthProvider({ children }) {
           const isRestrictedUser = restrictedRoles.includes(role) || role.startsWith('admin');
           
           // If this is a restricted user trying to access customer portal, sign them out
-          if (isRestrictedUser) {
+          if (isRestrictedUser && !isManagementRoute) {
             await firebaseSignOut(auth);
             setUser(null);
             setProfile(null);
